@@ -17,21 +17,101 @@
 
 #include <TRegexp.h>
 #include <fastjet/ClusterSequence.hh>
-class T3params
+#include <fstream>
+
+class Histogram
 {
   public:
-    T3params() { init(0); }
-    void init(const TString* opt);
-    double OptF(const TString subopt);
-    int OptI(const TString subopt);
+    Histogram(const TString& filename_, const TString& name_,
+              int nbin_, double x1_, double x2_);
+    virtual ~Histogram() {};
 
-    int njet;
+    virtual void bin(int nextevt, double x, double w) = 0;
+    void print(std::ostream& stream, const TString& runname, bool unweight=true);
+
+    TString getFile() const;
+
+  protected:
+    void flush();
+    void setedges();
+    void fill(int evt, int n, double w);
+
+    TString filename;
+    TString name;
+
+    double x1, x2, x12;
+    const int nbin;
+    int prevevt, lastidx;
+    std::vector<int> curidx;
+    std::vector<int> events;
+    std::vector<double> curwgt;
+    std::vector<double> wgt;
+    std::vector<double> wgt2;
+    std::vector<double> bwidth;
+    std::vector<double> edge;
+};
+
+class LinearHistogram : public Histogram
+{
+  public:
+    LinearHistogram(const TString& filename_, const TString& name_,
+                    int nbin_, double x1_, double x2_);
+    void bin(int nextevt, double x, double w);
+};
+
+
+class QuadraticHistogram : public Histogram
+{
+  public:
+    QuadraticHistogram(const TString& filename_, const TString& name_,
+                       int nbin_, double x1_, double x2_, double f);
+    void bin(int nextevt, double x, double w);
+
+  private:
+    const double step;
+    const double slope;
+};
+
+class T3analysis
+{
+  public:
+    T3analysis();
+    void setN(const unsigned njet_);
+    void init(const TString* opt);
+
+    void analysis_bin(const Int_t id, const Double_t weight,
+                      const std::vector<fastjet::PseudoJet>& jets);
+    void analysis_finalize();
+
+    unsigned njet;
     fastjet::JetAlgorithm jetalgo;
     fastjet::JetDefinition jetdef;
     double jetR;
     double ptmin;
     double jet1ptmin;
     double etacut;
+
+    LinearHistogram* jet_exclusive;
+    LinearHistogram* jet_inclusive;
+    std::vector<std::vector<Histogram*> > jet_pt_n;
+    std::vector<std::vector<Histogram*> > jet_eta_n;
+
+    TString runname;
+
+    void reset();
+
+    void addPtLinearHistograms(TString filename, int nbins, std::vector<int> ptlimits);
+    void addPtQuadraticHistograms(TString filename, int nbins, double f, std::vector<int> ptlimits);
+    void addEtaLinearHistograms(TString filename, int nbins);
+    void addEtaQuadraticHistograms(TString filename, int nbins, double f);
+
+  private:
+    double OptF(const TString subopt);
+    int OptI(const TString subopt);
+
+    std::set<TString> outputfiles;
+
+    void clear();
 };
 
 // Header file for the classes stored in the TTree if any.
@@ -126,9 +206,9 @@ class T3selector : public TSelector
     virtual void    SlaveTerminate();
     virtual void    Terminate();
 
-    ClassDef(T3selector,0);
+    ClassDef(T3selector, 0);
 
-    T3params params;
+    T3analysis analysis;
 };
 
 #endif

@@ -2,10 +2,16 @@
 
 import ROOT
 
-ROOT.gSystem.Load('libfastjet.so')
+# load fastjet
+ROOT.gSystem.Load("libfastjet.so")
+
+# we want to handle Ctrl+C
+sh = ROOT.TSignalHandler(ROOT.kSigInterrupt, False)
+sh.Add()
+sh.Connect("Notified()", "TROOT", ROOT.gROOT, "SetInterrupt()")
 
 chain = ROOT.TChain("t3")
-chain.Add('RS*.root')
+chain.Add("B*.root")
 #f = ROOT.TFile('Bevent1.root')
 #t3 = f.Get('t3')
 #t3.SetBranchStatus("*", 0)
@@ -13,16 +19,19 @@ chain.Add('RS*.root')
 #t3.SetBranchStatus("weight", 1);
 #t3.SetBranchStatus("nuwgt", 1);
 
-chain.Process("T3selector.C+", "N=3 algo=antikt Pt=30 Eta=2.8")
+ROOT.gROOT.LoadMacro("T3selector.C+")
+selector = ROOT.T3selector()
 
-#seen = set()
+maxpt = ROOT.std.vector(int)()
+maxpt.push_back(1000)
+maxpt.push_back(700)
 
-#n = 0
-#w = 0
-#for e in chain:
-    #n, w, nw = e.id, e.weight, e.nuwgt
-    #if nw not in seen:
-        #print nw
-        #seen.add(nw)
-    ##else:
-        ##print n
+selector.analysis.setN(3)
+selector.analysis.addPtLinearHistograms("hist_linear_20.txt", 20, maxpt)
+selector.analysis.addEtaLinearHistograms("hist_linear_20.txt", 20)
+selector.analysis.addPtLinearHistograms("hist_linear_40.txt", 40, maxpt)
+selector.analysis.addEtaLinearHistograms("hist_linear_40.txt", 40)
+
+chain.Process(selector, "Test analysis! algo=antikt Pt=30 Eta=2.8")
+
+

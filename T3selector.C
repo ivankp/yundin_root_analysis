@@ -441,7 +441,7 @@ Bool_t T3selector::Process(Long64_t entry)
 
   std::vector<fastjet::PseudoJet> input;
   for (int i=0; i<nparticle; i++) {
-    input.push_back(fastjet::PseudoJet(E[i], px[i], py[i], pz[i]));
+    input.push_back(fastjet::PseudoJet(px[i], py[i], pz[i], E[i]));
   }
   fastjet::ClusterSequence cs(input, analysis.jetdef);
   std::vector<fastjet::PseudoJet> fjets = fastjet::sorted_by_pt(cs.inclusive_jets(analysis.ptmin));

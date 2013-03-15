@@ -32,6 +32,6 @@ selector.analysis.addEtaLinearHistograms("hist_linear_20.txt", 20)
 selector.analysis.addPtLinearHistograms("hist_linear_40.txt", 40, maxpt)
 selector.analysis.addEtaLinearHistograms("hist_linear_40.txt", 40)
 
-chain.Process(selector, "Test analysis! algo=antikt Pt=30 Eta=2.8")
+chain.Process(selector, "Test_analysis! algo=antikt R=0.4 Pt=60 Pt1=80 Eta=2.8")
 
 

@@ -27,7 +27,7 @@ class Histogram
     virtual ~Histogram() {};
 
     virtual void bin(int nextevt, double x, double w) = 0;
-    void print(std::ostream& stream, const TString& runname, bool unweight=true);
+    void print(std::ostream& stream, const TString& runname, double count, bool unweight=true);
 
     TString getFile() const;
 
@@ -77,7 +77,7 @@ class T3analysis
   public:
     T3analysis();
     void setN(const unsigned njet_);
-    void init(const TString* opt);
+    void init(const TString& opt);
 
     void analysis_bin(const Int_t id, const Double_t weight,
                       const std::vector<fastjet::PseudoJet>& jets);
@@ -90,6 +90,8 @@ class T3analysis
     double ptmin;
     double jet1ptmin;
     double etacut;
+
+    double event_count;
 
     LinearHistogram* jet_exclusive;
     LinearHistogram* jet_inclusive;

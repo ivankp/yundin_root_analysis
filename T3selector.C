@@ -49,7 +49,7 @@ TString Histogram::getFile() const
   return filename;
 }
 
-void Histogram::print(std::ostream& stream, const TString& runname, bool unweight)
+void Histogram::print(std::ostream& stream, const TString& runname, double count, bool unweight)
 {
   flush();
   stream << "# BEGIN HISTOGRAM /" << runname << "/" << name << std::endl;
@@ -57,13 +57,8 @@ void Histogram::print(std::ostream& stream, const TString& runname, bool unweigh
   stream << "Title=" << std::endl;
 
   double area = 0.;
-  double count = 0;
   for (int i=0; i<nbin; i++) {
     area += wgt[i];
-    count += events[i];
-  }
-  if (count == 0.) {
-    count = 1.;
   }
   area /= count;
   stream << "## Area: " << area << std::endl;
@@ -181,7 +176,7 @@ void QuadraticHistogram::bin(int nextevt, double x, double w)
 T3analysis::T3analysis()
   : jet_exclusive(0), jet_inclusive(0)
 {
-  init(0);
+  init(TString(""));
 }
 
 void T3analysis::clear()
@@ -223,6 +218,7 @@ void T3analysis::reset()
   jet_inclusive = new LinearHistogram("!", "jet_multi_inclusive", njet+3, -0.5, njet+3-0.5);
   jet_pt_n.resize(njet+1);
   jet_eta_n.resize(njet+1);
+  event_count = 0.;
 }
 
 void T3analysis::addPtLinearHistograms(TString filename, int nbins, std::vector<int> ptlimits)
@@ -289,7 +285,7 @@ void T3analysis::setN(const unsigned njet_)
   reset();
 }
 
-void T3analysis::init(const TString* opt_)
+void T3analysis::init(const TString& opt)
 {
   ptmin = 30.;
   jet1ptmin = ptmin;
@@ -297,8 +293,7 @@ void T3analysis::init(const TString* opt_)
   jetR = 0.4;
   jetalgo = fastjet::antikt_algorithm;
 
-  if (opt_) {
-    const TString& opt = *opt_;
+  if (opt.Length()) {
 
     TSubString subopt = opt(TRegexp("^[^!]+"));
     if (subopt.Length()) {
@@ -368,18 +363,18 @@ void T3analysis::analysis_finalize()
     std::ofstream outfile = std::ofstream(it->Data());
     outfile.precision(7);
     outfile.setf(std::ios::scientific);
-    jet_exclusive->print(outfile, runname);
-    jet_inclusive->print(outfile, runname);
+    jet_exclusive->print(outfile, runname, event_count);
+    jet_inclusive->print(outfile, runname, event_count);
 
     for (unsigned i=0; i<=njet; i++) {
       for (unsigned k=0; k<jet_pt_n[i].size(); k++) {
         if (*it == jet_pt_n[i][k]->getFile()) {
-          jet_pt_n[i][k]->print(outfile, runname);
+          jet_pt_n[i][k]->print(outfile, runname, event_count);
         }
       }
       for (unsigned k=0; k<jet_eta_n[i].size(); k++) {
         if (*it == jet_eta_n[i][k]->getFile()) {
-          jet_eta_n[i][k]->print(outfile, runname);
+          jet_eta_n[i][k]->print(outfile, runname, event_count);
         }
       }
     }
@@ -409,7 +404,7 @@ void T3selector::SlaveBegin(TTree * /*tree*/)
 
   fastjet::ClusterSequence::set_fastjet_banner_stream(0); // silence fastjet
   TString option = GetOption();
-  analysis.init(&option);
+  analysis.init(option);
 }
 
 Bool_t T3selector::Process(Long64_t entry)
@@ -438,6 +433,7 @@ Bool_t T3selector::Process(Long64_t entry)
   }
 
   GetEntry(entry);
+  analysis.event_count += 1;
 
   std::vector<fastjet::PseudoJet> input;
   for (int i=0; i<nparticle; i++) {

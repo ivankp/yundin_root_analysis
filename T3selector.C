@@ -31,6 +31,8 @@
   #include <iostream>
 #endif
 
+#include <LHAPDF.h>
+
 // --------------------------------------------------------------------------- //
 // Histograms
 // --------------------------------------------------------------------------- //
@@ -252,7 +254,7 @@ void T3analysis::addPtQuadraticHistograms(TString filename, int nbins, double f,
 void T3analysis::addEtaLinearHistograms(TString filename, int nbins)
 {
   for (unsigned i=0; i<=njet; i++) {
-    stringstream etaname;
+    std::stringstream etaname;
     etaname << "jet_eta_" << i+1;
     jet_eta_n[i].push_back(new LinearHistogram(filename, etaname.str(), nbins, -etacut, etacut));
   }
@@ -262,7 +264,7 @@ void T3analysis::addEtaLinearHistograms(TString filename, int nbins)
 void T3analysis::addEtaQuadraticHistograms(TString filename, int nbins, double f)
 {
   for (unsigned i=0; i<=njet; i++) {
-    stringstream etaname;
+    std::stringstream etaname;
     etaname << "jet_eta_" << i+1;
     jet_eta_n[i].push_back(new QuadraticHistogram(filename, etaname.str(), nbins, -etacut, etacut, f));
   }
@@ -408,6 +410,64 @@ void T3selector::SlaveBegin(TTree * /*tree*/)
   TString option = GetOption();
 }
 
+static LHAPDF::Flavour pdg2lha(int pdgnum)
+{
+  switch (pdgnum) {
+    case 21:
+      return LHAPDF::GLUON;
+    case 1:
+      return LHAPDF::DOWN;
+    case -1:
+      return LHAPDF::DBAR;
+    case 2:
+      return LHAPDF::UP;
+    case -2:
+      return LHAPDF::UBAR;
+    case 3:
+      return LHAPDF::STRANGE;
+    case -3:
+      return LHAPDF::SBAR;
+    case 4:
+      return LHAPDF::CHARM;
+    case -4:
+      return LHAPDF::CBAR;
+    case 5:
+      return LHAPDF::BOTTOM;
+    case -5:
+      return LHAPDF::BBAR;
+    case 6:
+      return LHAPDF::TOP;
+    case -6:
+      return LHAPDF::TBAR;
+    default:
+      throw;
+  }
+}
+
+void T3selector::reweight()
+{
+  double xfx1 = LHAPDF::xfx(1, x1, fac_scale, pdg2lha(id1));
+  double xfx2 = LHAPDF::xfx(1, x2, fac_scale, pdg2lha(id2));
+//   std::cout << x1 << " " << x2 << " " << fac_scale << " " << pdg2lha(id1) << " " << pdg2lha(id2) << std::endl;
+  std::cout << (me_wgt*xfx1*xfx2/(x1*x2)) << " = " << weight << std::endl;
+}
+
+void T3selector::initFromPDF(const std::string& filename, int member)
+{
+  initPDF(1, filename, member);
+}
+
+void T3selector::initToPDF(const std::string& filename, int member)
+{
+  initPDF(2, filename, member);
+}
+
+void T3selector::initPDF(int setid, const std::string& filename, int member)
+{
+  std::cout << "initPDF(" << setid <<", " << filename <<", " << member << ")\n";
+  LHAPDF::initPDFByName(setid, filename, member);
+}
+
 Bool_t T3selector::Process(Long64_t entry)
 {
   // The Process() function is called for each entry in the tree (or possibly
@@ -449,7 +509,7 @@ Bool_t T3selector::Process(Long64_t entry)
     }
   }
   if (jets.size() > 1 && jets[0].pt() >= analysis.jet1ptmin) {
-//     reweight(); // reweight event in-place
+    reweight(); // reweight event in-place
     analysis.analysis_bin(id, weight, jets);
   }
 

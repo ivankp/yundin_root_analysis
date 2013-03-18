@@ -326,9 +326,11 @@ void T3analysis::init(const TString& opt)
     }
 
     if (opt.Contains("algo=kt")) {
+      std::cout << "algo = kt" << std::endl;
       jetalgo = fastjet::kt_algorithm;
     }
     if (opt.Contains("algo=antikt")) {
+      std::cout << "algo = antikt" << std::endl;
       jetalgo = fastjet::antikt_algorithm;
     }
   }
@@ -404,7 +406,6 @@ void T3selector::SlaveBegin(TTree * /*tree*/)
 
   fastjet::ClusterSequence::set_fastjet_banner_stream(0); // silence fastjet
   TString option = GetOption();
-  analysis.init(option);
 }
 
 Bool_t T3selector::Process(Long64_t entry)

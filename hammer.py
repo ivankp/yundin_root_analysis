@@ -64,10 +64,16 @@ def process(params):
                 pdf, m = params.topdf.split(':')
             ROOT.LHAPDF.initPDFByName(selector.TOPDF, pdf, int(m));
 
-        print "Scale: %f, AlphaPow %d, PDF1 %d PDF2 %d" % (selector.scalefactor,
-                        selector.alphapower, selector.FROMPDF, selector.TOPDF)
-        ROOT.LHAPDF.getDescription(selector.TOPDF)
+        print "Scale: %f, AlphaPow %d" % (selector.scalefactor, selector.alphapower)
+        print "------------- FROMPDF %d - %s ---------------" % (selector.FROMPDF, params.frompdf)
+        print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
+        print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
         ROOT.LHAPDF.getDescription(selector.FROMPDF)
+        print "------------- TOPDF %d - %s -----------------" % (selector.TOPDF, params.topdf)
+        print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.TOPDF, qn) for qn in [1,2,3,4,5,6]])
+        print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.TOPDF, qn) for qn in [1,2,3,4,5,6]])
+        ROOT.LHAPDF.getDescription(selector.TOPDF)
+        print "--------------------------------------------------"
 
     # add histograms
     selector.analysis.addPtLinearHistograms(params.output % "l64_l20", 64, maxpt)

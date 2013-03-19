@@ -213,14 +213,13 @@ class T3selector : public TSelector
     // analysis stuff
     T3analysis analysis;
 
-    void initFromPDF(const std::string& filename, int member=0);
-    void initToPDF(const std::string& filename, int member=0);
-    double alphapow, scalefactor;
-    bool repdf, rescale, realpha;
+    int alphapower;
+    double scalefactor;
+
+    int FROMPDF, TOPDF;
 
   protected:
     void reweight();
-    void initPDF(int setid, const std::string& filename, int member);
 };
 
 #endif

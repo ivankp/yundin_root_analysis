@@ -36,37 +36,38 @@ def process(params):
     selector.analysis.init("%s! algo=antikt R=0.4 Pt=60 Pt1=80 Eta=2.8" % params.runname)
 
     # Initialize reweighting
+    selector.FROMPDF = 1
+    selector.TOPDF = 1
+    selector.scalefactor = 1
+    selector.alphapower = 0
     if params.frompdf is not None:
         ROOT.LHAPDF.setVerbosity(0)  # comment out for more output
 
-        if selector.alphapow != 1:
-            selector.alphapow = float(params.power)
-            selector.realpha = True
+        selector.scalefactor = params.scale
+        selector.alphapower = params.power
 
-        if params.topdf != params.frompdf:
-            # init fromPDF (we can also do it directly from here via ROOT.LHAPDF)
+        # FROMPDF is always initialized
+        if True:
+            selector.FROMPDF = 1
+            pdf, m = params.frompdf, 0
             if params.frompdf.find(':') >= 0:
                 pdf, m = params.frompdf.split(':')
-                selector.initFromPDF(pdf, int(m))
-            else:
-                pdf = params.frompdf
-                selector.initFromPDF(pdf)
+            ROOT.LHAPDF.initPDFByName(selector.FROMPDF, pdf, int(m));
 
-            # init toPDF (we can also do it directly from here via ROOT.LHAPDF)
+        # TOPDF is initialized is it is different
+        if params.topdf == params.frompdf:
+            selector.TOPDF = 1
+        else:
+            selector.TOPDF = 2
+            pdf, m = params.topdf, 0
             if params.topdf.find(':') >= 0:
                 pdf, m = params.topdf.split(':')
-                selector.initToPDF(pdf, int(m))
-            else:
-                pdf = params.topdf
-                selector.initToPDF(pdf)
+            ROOT.LHAPDF.initPDFByName(selector.TOPDF, pdf, int(m));
 
-            selector.repdf = True
-            #ROOT.LHAPDF.getDescription(1)
-            #ROOT.LHAPDF.getDescription(2)
-
-        if params.scale != 1.:
-            selector.scalefactor = params.scale
-            selector.rescale = True
+        print "Scale: %f, AlphaPow %d, PDF1 %d PDF2 %d" % (selector.scalefactor,
+                        selector.alphapower, selector.FROMPDF, selector.TOPDF)
+        ROOT.LHAPDF.getDescription(selector.TOPDF)
+        ROOT.LHAPDF.getDescription(selector.FROMPDF)
 
     # add histograms
     selector.analysis.addPtLinearHistograms(params.output % "l64_l20", 64, maxpt)
@@ -77,7 +78,7 @@ def process(params):
 
 def usage():
     print """\
-Usage: reweight [OPTION...] [FILE]
+Usage: hammer [OPTION...] [FILE]
 Reweight events
   -n, --njet                Number of jets
   -r, --runname='Test'      Run name

@@ -446,26 +446,63 @@ static LHAPDF::Flavour pdg2lha(int pdgnum)
 
 void T3selector::reweight()
 {
-  double xfx1 = LHAPDF::xfx(1, x1, fac_scale, pdg2lha(id1));
-  double xfx2 = LHAPDF::xfx(1, x2, fac_scale, pdg2lha(id2));
-//   std::cout << x1 << " " << x2 << " " << fac_scale << " " << pdg2lha(id1) << " " << pdg2lha(id2) << std::endl;
-  std::cout << (me_wgt*xfx1*xfx2/(x1*x2)) << " = " << weight << std::endl;
-}
+  if (FROMPDF == TOPDF and scalefactor == 1.) {
+    return;
+  }
+  const int flav1 = pdg2lha(id1);
+  const int flav2 = pdg2lha(id2);
 
-void T3selector::initFromPDF(const std::string& filename, int member)
-{
-  initPDF(1, filename, member);
-}
+  const double fx1 = LHAPDF::xfx(FROMPDF, x1, fac_scale, flav1)/x1;
+  const double fx2 = LHAPDF::xfx(FROMPDF, x2, fac_scale, flav2)/x2;
 
-void T3selector::initToPDF(const std::string& filename, int member)
-{
-  initPDF(2, filename, member);
-}
+  const double calc_weight = me_wgt*(fx1*fx2);
+  if (std::fabs((calc_weight - weight)/weight) > 1e-10) {
+    std::cout << "Check your FROMPDF! (" << id << ") " << calc_weight << " != " << weight << std::endl;
+  }
 
-void T3selector::initPDF(int setid, const std::string& filename, int member)
-{
-  std::cout << "initPDF(" << setid <<", " << filename <<", " << member << ")\n";
-  LHAPDF::initPDFByName(setid, filename, member);
+  const double new_fx1 = LHAPDF::xfx(TOPDF, x1, fac_scale*scalefactor, pdg2lha(id1))/x1;
+  const double new_fx2 = LHAPDF::xfx(TOPDF, x2, fac_scale*scalefactor, pdg2lha(id2))/x2;
+  const double alphafactor = LHAPDF::alphasPDF(TOPDF, ren_scale*scalefactor)/alphas; //LHAPDF::alphasPDF(FROMPDF, ren_scale);
+  if (nuwgt == 0) {
+    weight = me_wgt*(new_fx1*new_fx2);
+  } else if (nuwgt == 2) {
+    const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
+    weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2);
+  } else if (nuwgt == 18) {
+    const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
+    const double lf = log(scalefactor*scalefactor);  // log(mufnew^2/mufold^2)
+    double w[8];
+    for (int i=0; i<8; i++) {
+      w[i] = usr_wgts[2+i] + usr_wgts[10+i]*lf;
+    }
+    double pdfx1[13]; LHAPDF::xfx(TOPDF, x1, fac_scale*scalefactor, pdfx1);
+    double pdfx2[13]; LHAPDF::xfx(TOPDF, x2, fac_scale*scalefactor, pdfx2);
+
+    double pdfx1p[13]; LHAPDF::xfx(TOPDF, x1/x1p, fac_scale*scalefactor, pdfx1p);
+    double pdfx2p[13]; LHAPDF::xfx(TOPDF, x2/x2p, fac_scale*scalefactor, pdfx2p);
+
+    double f1[4];
+    double f2[4];
+
+    f1[0] = flav1 != 0 ? pdfx1[6+flav1] : (pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]);  // no top pdf
+    f2[0] = flav2 != 0 ? pdfx2[6+flav2] : (pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]);  // no top pdf
+
+    f1[1] = flav1 != 0 ? pdfx1p[6+flav1] : (pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]);  // no top pdf
+    f2[1] = flav2 != 0 ? pdfx2p[6+flav2] : (pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]);  // no top pdf
+
+    f1[2] = pdfx1[6];
+    f2[2] = pdfx2[6];
+
+    f1[3] = pdfx1p[6];
+    f2[3] = pdfx2p[6];
+
+    weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2)
+           + (w[0]*f1[0]/x1 + w[1]*f1[1]/x1 + w[2]*f1[2]/x1 + w[3]*f1[3]/x1)*new_fx2
+           + (w[4]*f2[0]/x2 + w[5]*f2[1]/x2 + w[6]*f2[2]/x2 + w[7]*f2[3]/x2)*new_fx1;
+  } else {
+    std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
+  }
+  weight *= pow(alphafactor, alphapower);
 }
 
 Bool_t T3selector::Process(Long64_t entry)

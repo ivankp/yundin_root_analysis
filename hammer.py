@@ -76,7 +76,7 @@ def process(params):
         ROOT.LHAPDF.getDescription(selector.TOPDF)
         print "--------------------------------------------------"
 
-        if True:
+        if False:
             print "Using SHERPA running AlphaS!"
             order = ROOT.LHAPDF.getOrderAlphaS(selector.FROMPDF)
             # MUST set mZ, asMZ and qmass exactly as in Sherpa

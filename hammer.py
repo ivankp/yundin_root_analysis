@@ -17,8 +17,9 @@ def process(params):
     ROOT.gSystem.Load("libLHAPDF.so")
 
     # load macros
-    ROOT.gROOT.LoadMacro("T3selector.C+")
     ROOT.gROOT.LoadMacro("LHAPDF.h+")
+    ROOT.gROOT.LoadMacro("SherpaAlphaS.C+")
+    ROOT.gROOT.LoadMacro("T3selector.C+")
 
     # create a chain
     chain = ROOT.TChain("t3")
@@ -65,15 +66,28 @@ def process(params):
             ROOT.LHAPDF.initPDFByName(selector.TOPDF, pdf, int(m));
 
         print "Scale: %f, AlphaPow %d" % (selector.scalefactor, selector.alphapower)
-        print "------------- FROMPDF %d - %s ---------------" % (selector.FROMPDF, params.frompdf)
+        print "------------- FROMPDF %d - %s (Nf=%d) ---------------" % (selector.FROMPDF, params.frompdf, ROOT.LHAPDF.getNf(selector.FROMPDF))
         print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
         print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
         ROOT.LHAPDF.getDescription(selector.FROMPDF)
-        print "------------- TOPDF %d - %s -----------------" % (selector.TOPDF, params.topdf)
+        print "------------- TOPDF %d - %s (Nf=%d) -----------------" % (selector.TOPDF, params.topdf, ROOT.LHAPDF.getNf(selector.TOPDF))
         print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.TOPDF, qn) for qn in [1,2,3,4,5,6]])
         print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.TOPDF, qn) for qn in [1,2,3,4,5,6]])
         ROOT.LHAPDF.getDescription(selector.TOPDF)
         print "--------------------------------------------------"
+
+        if True:
+            print "Using SHERPA running AlphaS!"
+            order = ROOT.LHAPDF.getOrderAlphaS(selector.FROMPDF)
+            # MUST set mZ, asMZ and qmass exactly as in Sherpa
+            mZ = 91.188
+            asMZ = 0.12018
+            qmass = ROOT.std.vector('double')()
+            for m in [0., 0.01, 0.005, 0.2, 1.42, 4.8, 1e10]:
+                qmass.push_back(m)
+            print "ALPHA_S(mZ) = %f, mZ = %f, order = %d, qM = %s" % (asMZ, mZ, order, repr(qmass))
+            selector.initAS(order, asMZ, mZ*mZ, qmass)
+            selector.use_sherpa_alphas = True
 
     # add histograms
     selector.analysis.addPtLinearHistograms(params.output % "l64_l20", 64, maxpt)

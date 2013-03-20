@@ -19,6 +19,8 @@
 #include <fastjet/ClusterSequence.hh>
 #include <fstream>
 
+#include "SherpaAlphaS.h"
+
 class Histogram
 {
   public:
@@ -180,7 +182,11 @@ class T3selector : public TSelector
     TBranch        *b_alphasPower;   //!
     TBranch        *b_part;   //!
 
-    T3selector(TTree * /*tree*/ =0) : fChain(0) { }
+    T3selector(TTree * /*tree*/ =0)
+    : fChain(0),
+      use_sherpa_alphas(false), sherpa_alphas(0)
+    { }
+
     virtual ~T3selector() { }
     virtual Int_t   Version() const {
       return 2;
@@ -217,6 +223,11 @@ class T3selector : public TSelector
     double scalefactor;
 
     int FROMPDF, TOPDF;
+
+    bool use_sherpa_alphas;
+    void initAS(const int order, const double asMZ, const double mZ2,
+                const std::vector<double>& qmasses);
+    SHERPA::One_Running_AlphaS* sherpa_alphas;
 
   protected:
     void reweight();

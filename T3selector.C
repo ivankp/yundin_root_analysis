@@ -446,6 +446,8 @@ static LHAPDF::Flavour pdg2lha(int pdgnum)
 
 void T3selector::reweight()
 {
+//   fac_scale *= 2.;
+//   ren_scale *= 2.;
   if (FROMPDF == TOPDF and scalefactor == 1.) {
     return;
   }
@@ -456,13 +458,20 @@ void T3selector::reweight()
   const double fx2 = LHAPDF::xfx(FROMPDF, x2, fac_scale, flav2)/x2;
 
   const double calc_weight = me_wgt*(fx1*fx2);
-  if (std::fabs((calc_weight - weight)/weight) > 1e-10) {
+  if (std::fabs((calc_weight - weight)/weight) > 1e-10 and nuwgt != 18) {  // this simple check does not work for I-part
     std::cout << "Check your FROMPDF! (" << id << ") " << calc_weight << " != " << weight << std::endl;
   }
 
   const double new_fx1 = LHAPDF::xfx(TOPDF, x1, fac_scale*scalefactor, pdg2lha(id1))/x1;
   const double new_fx2 = LHAPDF::xfx(TOPDF, x2, fac_scale*scalefactor, pdg2lha(id2))/x2;
-  const double alphafactor = LHAPDF::alphasPDF(TOPDF, ren_scale*scalefactor)/alphas; //LHAPDF::alphasPDF(FROMPDF, ren_scale);
+
+  double alphafactor = 0;
+  if (use_sherpa_alphas) {
+    alphafactor = sherpa_alphas->AlphaS(ren_scale*ren_scale*scalefactor*scalefactor)/alphas;
+  } else {
+    alphafactor = LHAPDF::alphasPDF(TOPDF, ren_scale*scalefactor)/alphas;
+  }
+
   if (nuwgt == 0) {
     weight = me_wgt*(new_fx1*new_fx2);
   } else if (nuwgt == 2) {
@@ -484,11 +493,16 @@ void T3selector::reweight()
     double f1[4];
     double f2[4];
 
-    f1[0] = flav1 != 0 ? pdfx1[6+flav1] : (pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]);  // no top pdf
-    f2[0] = flav2 != 0 ? pdfx2[6+flav2] : (pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]);  // no top pdf
+    // no top pdf below
+    f1[0] = (flav1 != 0) ? pdfx1[6+flav1] : (  pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]
+                                             + pdfx1[1] + pdfx1[2] + pdfx1[3] + pdfx1[4] + pdfx1[5]);
+    f2[0] = (flav2 != 0) ? pdfx2[6+flav2] : (  pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]
+                                             + pdfx2[1] + pdfx2[2] + pdfx2[3] + pdfx2[4] + pdfx2[5]);
 
-    f1[1] = flav1 != 0 ? pdfx1p[6+flav1] : (pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]);  // no top pdf
-    f2[1] = flav2 != 0 ? pdfx2p[6+flav2] : (pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]);  // no top pdf
+    f1[1] = (flav1 != 0) ? pdfx1p[6+flav1] : (  pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]
+                                              + pdfx1p[1] + pdfx1p[2] + pdfx1p[3] + pdfx1p[4] + pdfx1p[5]);
+    f2[1] = (flav2 != 0) ? pdfx2p[6+flav2] : (  pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]
+                                              + pdfx2p[1] + pdfx2p[2] + pdfx2p[3] + pdfx2p[4] + pdfx2p[5]);
 
     f1[2] = pdfx1[6];
     f2[2] = pdfx2[6];
@@ -503,6 +517,12 @@ void T3selector::reweight()
     std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
   }
   weight *= pow(alphafactor, alphapower);
+}
+
+void T3selector::initAS(const int order, const double asMZ, const double mZ2,
+                        const std::vector<double>& qmasses)
+{
+  sherpa_alphas = new SHERPA::One_Running_AlphaS(order, asMZ, mZ2, qmasses);
 }
 
 Bool_t T3selector::Process(Long64_t entry)

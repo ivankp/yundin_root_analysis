@@ -76,8 +76,8 @@ def process(params):
         ROOT.LHAPDF.getDescription(selector.TOPDF)
         print "--------------------------------------------------"
 
-        if False:
-            print "Using SHERPA running AlphaS!"
+        if params.debug:
+            print "WARNING! using SHERPA running AlphaS!"
             order = ROOT.LHAPDF.getOrderAlphaS(selector.FROMPDF)
             # MUST set mZ, asMZ and qmass exactly as in Sherpa
             mZ = 91.188
@@ -85,9 +85,14 @@ def process(params):
             qmass = ROOT.std.vector('double')()
             for m in [0., 0.01, 0.005, 0.2, 1.42, 4.8, 1e10]:
                 qmass.push_back(m)
-            print "ALPHA_S(mZ) = %f, mZ = %f, order = %d, qM = %s" % (asMZ, mZ, order, repr(qmass))
+            print "ALPHA_S(mZ) = %f, mZ = %f, order = %d, qM = %s" % (asMZ,
+                mZ, order, repr(["%e" % x for x in qmass]))
             selector.initAS(order, asMZ, mZ*mZ, qmass)
             selector.use_sherpa_alphas = True
+
+        if params.beta0fix:
+            selector.beta0fix = 99
+            print "WARNING! nonsense beta0 fix enabled with for m_oqcd = %d" % selector.beta0fix
 
     # add histograms
     selector.analysis.addPtLinearHistograms(params.output % "l64_l20", 64, maxpt)
@@ -109,6 +114,9 @@ Reweight events
   -f, --frompdf             From PDF set
   -t, --topdf               To PDF set (equal to "frompdf" does nothing)
 
+  -b, --beta0fix            Fix comix beta0 weight
+  -d, --debug               Use sherpa alphas
+
 Other options:
   -h, --help                show this help message
 """
@@ -117,8 +125,9 @@ Other options:
 class Params:
     def __init__(self):
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "n:s:p:o:r:f:t:h",
-                                 ["njet", "scale", "power", "output", "runname", "frompdf", "topdf", "help"])
+            opts, args = getopt.getopt(sys.argv[1:], "n:s:p:o:r:f:t:bdh",
+                                 ["njet=", "scale=", "power=", "output=", "runname=",
+                                  "frompdf=", "topdf=", "beta0fix", "debug", "help"])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -131,6 +140,8 @@ class Params:
         self.power = None
         self.frompdf = None
         self.topdf = None
+        self.beta0fix = False
+        self.debug = False
 
         for op, oparg in opts:
             if op in ("-h", "--help"):
@@ -150,6 +161,10 @@ class Params:
                 self.frompdf = oparg
             elif op in ("-t", "--topdf"):
                 self.topdf = oparg
+            elif op in ("-b", "--beta0fix"):
+                self.beta0fix = True
+            elif op in ("-d", "--debug"):
+                self.debug = True
             else:
                 assert False, "unhandled option"
 

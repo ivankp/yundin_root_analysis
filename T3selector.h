@@ -184,7 +184,7 @@ class T3selector : public TSelector
 
     T3selector(TTree * /*tree*/ =0)
     : fChain(0),
-      use_sherpa_alphas(false), sherpa_alphas(0)
+      use_sherpa_alphas(false), sherpa_alphas(0), beta0fix(0)
     { }
 
     virtual ~T3selector() { }
@@ -229,8 +229,11 @@ class T3selector : public TSelector
                 const std::vector<double>& qmasses);
     SHERPA::One_Running_AlphaS* sherpa_alphas;
 
+    int beta0fix;
+
   protected:
     void reweight();
+    double beta0pole2();
 };
 
 #endif

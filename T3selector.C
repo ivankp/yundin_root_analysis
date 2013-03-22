@@ -444,6 +444,24 @@ static LHAPDF::Flavour pdg2lha(int pdgnum)
   }
 }
 
+double T3selector::beta0pole2()
+{
+  static const double CA = 3.;
+  static const double CF = 4./3.;
+  static const double Nf = 5.;
+
+  static const double b0 = 0.5*(11./3.*CA - 2./3.*Nf);
+
+  double sum = 0.;
+  for (int i=0; i<nparticle; i++) {
+    sum += kf[i] == 21 ? CA : CF;
+  }
+  sum += id1 == 21 ? CA : CF;
+  sum += id2 == 21 ? CA : CF;
+
+  return b0/(-2.*sum);
+}
+
 void T3selector::reweight()
 {
 //   fac_scale *= 2.;
@@ -471,11 +489,15 @@ void T3selector::reweight()
   } else {
     alphafactor = LHAPDF::alphasPDF(TOPDF, ren_scale*scalefactor)/alphas;
   }
-
   if (nuwgt == 0) {
     weight = me_wgt*(new_fx1*new_fx2);
   } else if (nuwgt == 2) {
     const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
+
+    if (beta0fix) {
+      usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2();
+    }
+
     weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2);
   } else if (nuwgt == 18) {
     const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
@@ -509,6 +531,10 @@ void T3selector::reweight()
 
     f1[3] = pdfx1p[6];
     f2[3] = pdfx2p[6];
+
+    if (beta0fix) {
+      usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2();
+    }
 
     weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2)
            + (w[0]*f1[0]/x1 + w[1]*f1[1]/x1 + w[2]*f1[2]/x1 + w[3]*f1[3]/x1)*new_fx2

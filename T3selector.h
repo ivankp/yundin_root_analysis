@@ -236,6 +236,10 @@ class T3selector : public TSelector
     double beta0pole2();
 };
 
+#if defined(__MAKECINT__)
+#pragma link C++ class fastjet::JetDefinition;
+#endif
+
 #endif
 
 #ifdef T3selector_cxx

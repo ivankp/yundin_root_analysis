@@ -360,7 +360,7 @@ void T3analysis::analysis_bin(const Int_t id, const Double_t weight,
 
 void T3analysis::analysis_finalize()
 {
-  std::cout << "Finalize\n";
+  std::cout << "Finalize " << event_count << " events\n";
   std::set<TString>::iterator it;
   for (it=outputfiles.begin(); it!=outputfiles.end(); ++it) {
     std::cout << "File: " << it->Data() << std::endl;

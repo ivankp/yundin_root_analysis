@@ -466,7 +466,7 @@ void T3selector::reweight()
 {
 //   fac_scale *= 2.;
 //   ren_scale *= 2.;
-  if (FROMPDF == TOPDF and scalefactor == 1.) {
+  if (FROMPDF == 0 and TOPDF == 0 and scalefactor == 1.) {
     return;
   }
   const int flav1 = pdg2lha(id1);

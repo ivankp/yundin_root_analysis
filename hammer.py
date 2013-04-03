@@ -37,8 +37,8 @@ def process(params):
     selector.analysis.init("%s! algo=antikt R=0.4 Pt=60 Pt1=80 Eta=2.8" % params.runname)
 
     # Initialize reweighting
-    selector.FROMPDF = 1
-    selector.TOPDF = 1
+    selector.FROMPDF = 0
+    selector.TOPDF = 0
     selector.scalefactor = 1
     selector.alphapower = 0
     if params.frompdf is not None:
@@ -55,11 +55,11 @@ def process(params):
                 pdf, m = params.frompdf.split(':')
             ROOT.LHAPDF.initPDFByName(selector.FROMPDF, pdf, int(m));
 
-        # TOPDF is initialized is it is different
+        # TOPDF is initialized if it is different
         if params.topdf == params.frompdf:
-            selector.TOPDF = 1
+            selector.TOPDF = selector.FROMPDF
         else:
-            selector.TOPDF = 2
+            selector.TOPDF = selector.FROMPDF + 1
             pdf, m = params.topdf, 0
             if params.topdf.find(':') >= 0:
                 pdf, m = params.topdf.split(':')

@@ -53,9 +53,11 @@ def process(params):
             pdf, m = params.frompdf, 0
             if params.frompdf.find(':') >= 0:
                 pdf, m = params.frompdf.split(':')
-            ROOT.LHAPDF.initPDFByName(selector.FROMPDF, pdf, int(m));
+            if m != 0:
+                print "Selected FROMPDF member = %s" % m
+            ROOT.LHAPDF.initPDFSet(selector.FROMPDF, pdf, ROOT.LHAPDF.LHGRID, int(m))
 
-        # TOPDF is initialized if it is different
+        # TOPDF is initialized is it is different
         if params.topdf == params.frompdf:
             selector.TOPDF = selector.FROMPDF
         else:
@@ -63,7 +65,9 @@ def process(params):
             pdf, m = params.topdf, 0
             if params.topdf.find(':') >= 0:
                 pdf, m = params.topdf.split(':')
-            ROOT.LHAPDF.initPDFByName(selector.TOPDF, pdf, int(m));
+            if m != 0:
+                print "Selected TOPDF member = %s" % m
+            ROOT.LHAPDF.initPDFSet(selector.TOPDF, pdf,  ROOT.LHAPDF.LHGRID, int(m))
 
         print "Scale: %f, AlphaPow %d" % (selector.scalefactor, selector.alphapower)
         print "------------- FROMPDF %d - %s (Nf=%d) ---------------" % (selector.FROMPDF, params.frompdf, ROOT.LHAPDF.getNf(selector.FROMPDF))
@@ -111,8 +115,8 @@ Reweight events
 
   -s, --scale               Multiplicative scale factor (1. does nothing)
   -p, --power               Alpha_s power (0 does nothing)
-  -f, --frompdf             From PDF set
-  -t, --topdf               To PDF set (equal to "frompdf" does nothing)
+  -f, --frompdf             From PDF set "name.LHgrid:member"
+  -t, --topdf               To PDF set "name.LHgrid:member"
 
   -b, --beta0fix            Fix comix beta0 weight
   -d, --debug               Use sherpa alphas
@@ -158,9 +162,9 @@ class Params:
             elif op in ("-r", "--runname"):
                 self.runname = re.sub(r'\s+', r'_', oparg)
             elif op in ("-f", "--frompdf"):
-                self.frompdf = oparg
+                self.frompdf = oparg.replace('.LHgrid', '')
             elif op in ("-t", "--topdf"):
-                self.topdf = oparg
+                self.topdf = oparg.replace('.LHgrid', '')
             elif op in ("-b", "--beta0fix"):
                 self.beta0fix = True
             elif op in ("-d", "--debug"):

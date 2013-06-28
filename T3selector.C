@@ -444,28 +444,34 @@ static LHAPDF::Flavour pdg2lha(int pdgnum)
   }
 }
 
-double T3selector::beta0pole2()
+double T3selector::pole2(int id1_, int id2_, int n_, const int* kf_)
 {
   static const double CA = 3.;
   static const double CF = 4./3.;
+
+  double sum = 0.;
+  for (int i=0; i<n_; i++) {
+    sum += kf_[i] == 21 ? CA : CF;
+  }
+  sum += id1_ == 21 ? CA : CF;
+  sum += id2_ == 21 ? CA : CF;
+
+  return -2.*sum;
+}
+
+double T3selector::beta0pole2(int id1_, int id2_, int n_, const int* kf_)
+{
+  static const double CA = 3.;
+//   static const double CF = 4./3.;
   static const double Nf = 5.;
 
   static const double b0 = 0.5*(11./3.*CA - 2./3.*Nf);
 
-  double sum = 0.;
-  for (int i=0; i<nparticle; i++) {
-    sum += kf[i] == 21 ? CA : CF;
-  }
-  sum += id1 == 21 ? CA : CF;
-  sum += id2 == 21 ? CA : CF;
-
-  return b0/(-2.*sum);
+  return b0/pole2(id1_, id2_, n_, kf_);
 }
 
 void T3selector::reweight()
 {
-//   fac_scale *= 2.;
-//   ren_scale *= 2.;
   if (FROMPDF == 0 and TOPDF == 0 and scalefactor == 1.) {
     return;
   }
@@ -495,7 +501,7 @@ void T3selector::reweight()
     const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
 
     if (beta0fix) {
-      usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2();
+      usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
     }
 
     weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2);
@@ -533,7 +539,7 @@ void T3selector::reweight()
     f2[3] = pdfx2p[6];
 
     if (beta0fix) {
-      usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2();
+      usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
     }
 
     weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2)
@@ -594,6 +600,14 @@ Bool_t T3selector::Process(Long64_t entry)
   if (jets.size() > 1 && jets[0].pt() >= analysis.jet1ptmin) {
     reweight(); // reweight event in-place
     analysis.analysis_bin(id, weight, jets);
+    if (stat_step) {
+      xsval_cur += weight;
+      xserr_cur += weight*weight;
+      if (int(analysis.event_count) % stat_step == 0) {
+        xsvals.push_back(xsval_cur/analysis.event_count);
+        xserrs.push_back(sqrt(xserr_cur)/analysis.event_count);
+      }
+    }
   }
 
   return kTRUE;

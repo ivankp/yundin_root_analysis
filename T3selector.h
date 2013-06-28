@@ -184,7 +184,8 @@ class T3selector : public TSelector
 
     T3selector(TTree * /*tree*/ =0)
     : fChain(0),
-      use_sherpa_alphas(false), sherpa_alphas(0), beta0fix(0)
+      use_sherpa_alphas(false), sherpa_alphas(0), beta0fix(0),
+      stat_step()
     { }
 
     virtual ~T3selector() { }
@@ -231,9 +232,16 @@ class T3selector : public TSelector
 
     int beta0fix;
 
+    int stat_step;
+    double xsval_cur, xserr_cur;
+    std::vector<double> xsvals;
+    std::vector<double> xserrs;
+
+    static double beta0pole2(int id1_, int id2_, int n_, const int* kf_);
+    static double pole2(int id1_, int id2_, int n_, const int* kf_);
+
   protected:
     void reweight();
-    double beta0pole2();
 };
 
 #if defined(__MAKECINT__)

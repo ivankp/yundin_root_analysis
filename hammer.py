@@ -102,8 +102,29 @@ def process(params):
     selector.analysis.addPtLinearHistograms(params.output % "l64_l20", 64, maxpt)
     selector.analysis.addEtaLinearHistograms(params.output % "l64_l20", 20)
 
+    selector.stat_step = params.stat
     chain.Process(selector)
 
+    if selector.stat_step:
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        yval = []
+        for x in selector.xsvals:
+            yval.append(x)
+        yerr = []
+        for x in selector.xserrs:
+            yerr.append(x)
+
+        xval = [1+i*selector.stat_step for i in range(len(yval))]
+
+        fig = plt.figure()
+        axs = plt.subplot(111)
+        axs.grid(True)
+        axs.plot(xval, yval, lw=2, c='k')
+        axs.plot(xval, np.array(yval)+np.array(yerr), c='r')
+        axs.plot(xval, np.array(yval)-np.array(yerr), c='b')
+        plt.show()
 
 def usage():
     print """\
@@ -131,7 +152,7 @@ class Params:
         try:
             opts, args = getopt.getopt(sys.argv[1:], "n:s:p:o:r:f:t:bdh",
                                  ["njet=", "scale=", "power=", "output=", "runname=",
-                                  "frompdf=", "topdf=", "beta0fix", "debug", "help"])
+                                  "frompdf=", "topdf=", "beta0fix", "debug", "help", "stat="])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -146,6 +167,7 @@ class Params:
         self.topdf = None
         self.beta0fix = False
         self.debug = False
+        self.stat = 0
 
         for op, oparg in opts:
             if op in ("-h", "--help"):
@@ -169,6 +191,8 @@ class Params:
                 self.beta0fix = True
             elif op in ("-d", "--debug"):
                 self.debug = True
+            elif op in ("--stat"):
+                self.stat = int(oparg)
             else:
                 assert False, "unhandled option"
 

@@ -470,11 +470,74 @@ double T3selector::beta0pole2(int id1_, int id2_, int n_, const int* kf_)
   return b0/pole2(id1_, id2_, n_, kf_);
 }
 
-void T3selector::reweight()
+double T3selector::rescaler_multiplicative(const double scale,
+                                           const PseudoJetVector& /*partons*/,
+                                           const PseudoJetVector& /*jets*/)
 {
-  if (FROMPDF == 0 and TOPDF == 0 and scalefactor == 1.) {
+  double newscale = scale*rescale_factor;
+  return newscale;
+}
+
+double T3selector::rescaler_ht(const double /*scale*/,
+                               const PseudoJetVector& /*partons*/,
+                               const PseudoJetVector& jets)
+{
+  double newscale = 0;
+  for (unsigned i=0; i<jets.size(); i++) {
+    newscale += jets[i].pt();
+  }
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
+double T3selector::rescaler_hthat(const double /*scale*/,
+                                  const PseudoJetVector& partons,
+                                  const PseudoJetVector& /*jets*/)
+{
+  double newscale = 0;
+  for (unsigned i=0; i<partons.size(); i++) {
+    newscale += partons[i].pt();
+  }
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
+double T3selector::rescaler_htn(const double /*scale*/,
+                                const PseudoJetVector& /*partons*/,
+                                const PseudoJetVector& jets)
+{
+  double newscale = 0;
+  for (unsigned i=0; i<rescale_n; i++) {
+    newscale += jets[i].pt();
+  }
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
+double T3selector::rescaler_htnhat(const double /*scale*/,
+                                   const PseudoJetVector& partons,
+                                   const PseudoJetVector& /*jets*/)
+{
+  double newscale = 0;
+  PseudoJetVector sortedpartons = fastjet::sorted_by_pt(partons);
+  for (unsigned i=0; i<rescale_n; i++) {
+    newscale += sortedpartons[i].pt();
+  }
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
+void T3selector::reweight(const PseudoJetVector& partons,
+                          const PseudoJetVector& jets)
+{
+  if (FROMPDF == 0 and TOPDF == 0 and rescaler == 0) {
     return;
   }
+  double scalefactor = 1.;
+  if (rescaler) {
+    scalefactor = (*this.*rescaler)(fac_scale, partons, jets)/fac_scale;
+  }
+
   const int flav1 = pdg2lha(id1);
   const int flav2 = pdg2lha(id2);
 
@@ -585,20 +648,20 @@ Bool_t T3selector::Process(Long64_t entry)
   GetEntry(entry);
   analysis.event_count += 1;
 
-  std::vector<fastjet::PseudoJet> input;
+  PseudoJetVector input;
   for (int i=0; i<nparticle; i++) {
     input.push_back(fastjet::PseudoJet(px[i], py[i], pz[i], E[i]));
   }
   fastjet::ClusterSequence cs(input, analysis.jetdef);
-  std::vector<fastjet::PseudoJet> fjets = fastjet::sorted_by_pt(cs.inclusive_jets(analysis.ptmin));
-  std::vector<fastjet::PseudoJet> jets;
+  PseudoJetVector fjets = fastjet::sorted_by_pt(cs.inclusive_jets(analysis.ptmin));
+  PseudoJetVector jets;
   for (unsigned i=0; i<fjets.size(); i++) {
     if (std::fabs(fjets[i].eta()) <= analysis.etacut) {
       jets.push_back(fjets[i]);
     }
   }
   if (jets.size() > 1 && jets[0].pt() >= analysis.jet1ptmin) {
-    reweight(); // reweight event in-place
+    reweight(input, jets);  // reweight event in-place
     analysis.analysis_bin(id, weight, jets);
     if (stat_step) {
       xsval_cur += weight;

@@ -184,6 +184,7 @@ class T3selector : public TSelector
 
     T3selector(TTree * /*tree*/ =0)
     : fChain(0),
+      rescale_factor(1.), rescale_n(1), rescaler(0),
       use_sherpa_alphas(false), sherpa_alphas(0), beta0fix(0),
       stat_step()
     { }
@@ -220,11 +221,44 @@ class T3selector : public TSelector
     // analysis stuff
     T3analysis analysis;
 
-    int alphapower;
-    double scalefactor;
+    typedef std::vector<fastjet::PseudoJet> PseudoJetVector;
 
+    // scale change
+    typedef double (T3selector::*RescalerType)(const double scale,
+                                   const PseudoJetVector& partons,
+                                   const PseudoJetVector& jets);
+    double rescaler_multiplicative(const double scale,
+                                   const PseudoJetVector& partons,
+                                   const PseudoJetVector& jets);
+    double rescaler_ht(const double scale,
+                       const PseudoJetVector& partons,
+                       const PseudoJetVector& jets);
+    double rescaler_hthat(const double scale,
+                          const PseudoJetVector& partons,
+                          const PseudoJetVector& jets);
+    double rescaler_htn(const double scale,
+                        const PseudoJetVector& partons,
+                        const PseudoJetVector& jets);
+    double rescaler_htnhat(const double scale,
+                           const PseudoJetVector& partons,
+                           const PseudoJetVector& jets);
+    void setrescaler_none() { rescaler = 0; }
+    void setrescaler_multiplicative() { rescaler = &T3selector::rescaler_multiplicative; }
+    void setrescaler_ht() { rescaler = &T3selector::rescaler_ht; }
+    void setrescaler_hthat() { rescaler = &T3selector::rescaler_hthat; }
+    void setrescaler_htn() { rescaler = &T3selector::rescaler_htn; }
+    void setrescaler_htnhat() { rescaler = &T3selector::rescaler_htnhat; }
+
+    double rescale_factor;
+    unsigned rescale_n;
+    RescalerType rescaler;
+
+    int alphapower;
+
+    // pdf sets
     int FROMPDF, TOPDF;
 
+    // alphas
     bool use_sherpa_alphas;
     void initAS(const int order, const double asMZ, const double mZ2,
                 const std::vector<double>& qmasses);
@@ -232,6 +266,7 @@ class T3selector : public TSelector
 
     int beta0fix;
 
+    // eventoscope
     int stat_step;
     double xsval_cur, xserr_cur;
     std::vector<double> xsvals;
@@ -241,7 +276,8 @@ class T3selector : public TSelector
     static double pole2(int id1_, int id2_, int n_, const int* kf_);
 
   protected:
-    void reweight();
+    void reweight(const PseudoJetVector& partons,
+                  const PseudoJetVector& jets);
 };
 
 #if defined(__MAKECINT__)

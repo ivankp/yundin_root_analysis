@@ -39,13 +39,27 @@ def process(params):
     # Initialize reweighting
     selector.FROMPDF = 0
     selector.TOPDF = 0
-    selector.scalefactor = 1
+    selector.rescale_factor = 1
     selector.alphapower = 0
     if params.frompdf is not None:
         ROOT.LHAPDF.setVerbosity(0)  # comment out for more output
 
-        selector.scalefactor = params.scale
         selector.alphapower = params.power
+        selector.rescale_factor = params.scale
+
+        # scale change
+        selector.rescale_n = params.rescale_n
+        if params.rescaler == 'simple':
+            if selector.rescale_factor != 1:
+                selector.setrescaler_multiplicative()
+        elif params.rescaler == 'ht':
+            selector.setrescaler_ht()
+        elif params.rescaler == 'hthat':
+            selector.setrescaler_hthat()
+        elif params.rescaler == 'htn':
+            selector.setrescaler_htn()
+        elif params.rescaler == 'htnhat':
+            selector.setrescaler_htnhat()
 
         # FROMPDF is always initialized
         if True:
@@ -69,7 +83,7 @@ def process(params):
                 print "Selected TOPDF member = %s" % m
             ROOT.LHAPDF.initPDFSet(selector.TOPDF, pdf,  ROOT.LHAPDF.LHGRID, int(m))
 
-        print "Scale: %f, AlphaPow %d" % (selector.scalefactor, selector.alphapower)
+        print "Scale: '%s' x %f, AlphaPow %d" % (params.rescaler, selector.rescale_factor, selector.alphapower)
         print "------------- FROMPDF %d - %s (Nf=%d) ---------------" % (selector.FROMPDF, params.frompdf, ROOT.LHAPDF.getNf(selector.FROMPDF))
         print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
         print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
@@ -142,6 +156,9 @@ Reweight events
   -b, --beta0fix            Fix comix beta0 weight
   -d, --debug               Use sherpa alphas
 
+  --stat=<N>                Eventoscope with step N
+  --rescaler=<name>         Use rescaler 'simple', 'ht', 'hthat', 'htn', 'htnhat'
+
 Other options:
   -h, --help                show this help message
 """
@@ -152,7 +169,8 @@ class Params:
         try:
             opts, args = getopt.getopt(sys.argv[1:], "n:s:p:o:r:f:t:bdh",
                                  ["njet=", "scale=", "power=", "output=", "runname=",
-                                  "frompdf=", "topdf=", "beta0fix", "debug", "help", "stat="])
+                                  "frompdf=", "topdf=", "beta0fix", "debug", "help",
+                                  "stat=", "rescaler="])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -168,6 +186,8 @@ class Params:
         self.beta0fix = False
         self.debug = False
         self.stat = 0
+        self.rescaler = 'simple'
+        self.rescale_n = None
 
         for op, oparg in opts:
             if op in ("-h", "--help"):
@@ -193,6 +213,11 @@ class Params:
                 self.debug = True
             elif op in ("--stat"):
                 self.stat = int(oparg)
+            elif op in ("--rescaler"):
+                self.rescaler = oparg.lower()
+                if self.rescaler.find(':') >= 0:
+                    self.rescaler, self.rescale_n = self.rescaler.split(':')
+                    self.rescale_n = int(self.rescale_n)
             else:
                 assert False, "unhandled option"
 
@@ -206,10 +231,23 @@ class Params:
             usage()
             sys.exit(2)
 
+        if self.rescaler not in ['simple', 'ht', 'hthat', 'htn', 'htnhat']:
+            print "Unknown value for rescaler: %s" % self.rescaler
+            usage()
+            sys.exit(2)
+
         rewparam = [self.scale, self.power, self.frompdf, self.topdf]
         print rewparam
         if any(v is not None for v in rewparam) and any(v is None for v in rewparam):
             print "Error: must set --scale, --power, --frompdf and --topdf"
+            usage()
+            sys.exit(2)
+
+        if self.rescale_n is None:
+            self.rescale_n = self.njet
+
+        if self.rescale_n > self.njet:
+            print "Error: 'rescale_n' %d cannont be larger than 'njet' %d" % (self.rescale_n, self.njet)
             usage()
             sys.exit(2)
 

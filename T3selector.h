@@ -59,6 +59,9 @@ class LinearHistogram : public Histogram
     LinearHistogram(const TString& filename_, const TString& name_,
                     int nbin_, double x1_, double x2_);
     void bin(int nextevt, double x, double w);
+
+  protected:
+    const double step;
 };
 
 
@@ -72,6 +75,28 @@ class QuadraticHistogram : public Histogram
   private:
     const double step;
     const double slope;
+};
+
+class SmearedLinearHistogram : public LinearHistogram
+{
+  public:
+    SmearedLinearHistogram(const TString& filename_, const TString& name_,
+                    int nbin_, double x1_, double x2_, double smear_=1.);
+    void bin(int nextevt, double x, double w);
+
+  protected:
+    const double smear;
+};
+
+class SmearedQuadraticHistogram : public QuadraticHistogram
+{
+  public:
+    SmearedQuadraticHistogram(const TString& filename_, const TString& name_,
+                       int nbin_, double x1_, double x2_, double f, double smear_=1.);
+    void bin(int nextevt, double x, double w);
+
+  private:
+    const double smear;
 };
 
 class T3analysis
@@ -105,9 +130,14 @@ class T3analysis
     void reset();
 
     void addPtLinearHistograms(TString filename, int nbins, std::vector<int> ptlimits);
+    void addPtSmearedLinearHistograms(TString filename, int nbins, double s, std::vector<int> ptlimits);
     void addPtQuadraticHistograms(TString filename, int nbins, double f, std::vector<int> ptlimits);
+    void addPtSmearedQuadraticHistograms(TString filename, int nbins, double f, double s, std::vector<int> ptlimits);
+
     void addEtaLinearHistograms(TString filename, int nbins);
+    void addEtaSmearedLinearHistograms(TString filename, int nbins, double s);
     void addEtaQuadraticHistograms(TString filename, int nbins, double f);
+    void addEtaSmearedQuadraticHistograms(TString filename, int nbins, double f, double s);
 
   private:
     double OptF(const TString subopt);

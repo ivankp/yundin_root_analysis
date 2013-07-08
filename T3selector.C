@@ -131,9 +131,8 @@ void Histogram::fill(int evt, int n, double w)
 
 LinearHistogram::LinearHistogram(const TString& filename_, const TString& name_,
                                  int nbin_, double x1_, double x2_)
-  : Histogram(filename_, name_, nbin_, x1_, x2_)
+  : Histogram(filename_, name_, nbin_, x1_, x2_), step(x12/nbin)
 {
-  const double step = x12/nbin;
   for (int i=0; i<nbin; i++) {
     bwidth[i] = step;
   }
@@ -147,6 +146,32 @@ void LinearHistogram::bin(int nextevt, double x, double w)
   int n = static_cast<int>(nbin*(x-x1)/x12);
   assert(0 <= n && n < nbin);
   fill(nextevt, n, w);
+}
+
+SmearedLinearHistogram::SmearedLinearHistogram(const TString& filename_, const TString& name_,
+                                               int nbin_, double x1_, double x2_, double smear_)
+  : LinearHistogram(filename_, name_, nbin_, x1_, x2_), smear(smear_)
+{
+}
+
+void SmearedLinearHistogram::bin(int nextevt, double x, double w)
+{
+//       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
+  if (x < x1 or x > x2) return;
+  const double dn = (x-x1)/step;
+  const int n = static_cast<int>(dn);
+  assert(0 <= n && n < nbin);
+
+  double dist = dn - n; // [0, 1)
+  if (dist < 0.5*smear && n > 0) {
+    fill(nextevt, n, 0.5*w);
+    fill(nextevt, n-1, 0.5*w);
+  } else if ((1. - dist) < 0.5*smear && n < nbin-1) {
+    fill(nextevt, n, 0.5*w);
+    fill(nextevt, n+1, 0.5*w);
+  } else {
+    fill(nextevt, n, w);
+  }
 }
 
 QuadraticHistogram::QuadraticHistogram(const TString& filename_, const TString& name_,
@@ -169,6 +194,32 @@ void QuadraticHistogram::bin(int nextevt, double x, double w)
   const int n = static_cast<int>(dn);
   assert(0 <= n && n < nbin);
   fill(nextevt, n, w);
+}
+
+SmearedQuadraticHistogram::SmearedQuadraticHistogram(const TString& filename_, const TString& name_,
+                                       int nbin_, double x1_, double x2_, double f, double smear_)
+  : QuadraticHistogram(filename_, name_, nbin_, x1_, x2_, f), smear(smear_)
+{
+}
+
+void SmearedQuadraticHistogram::bin(int nextevt, double x, double w)
+{
+//       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
+  if (x < x1 or x > x2) return;
+  const double dn = (slope-2 + sqrt((slope-2)*(slope-2) + (8*slope*(x - x1))/step))/(2*slope);
+  const int n = static_cast<int>(dn);
+  assert(0 <= n && n < nbin);
+
+  double dist = dn - n; // [0, 1)
+  if (dist < 0.5*smear && n > 0) {
+    fill(nextevt, n, 0.5*w);
+    fill(nextevt, n-1, 0.5*w);
+  } else if ((1. - dist) < 0.5*smear && n < nbin-1) {
+    fill(nextevt, n, 0.5*w);
+    fill(nextevt, n+1, 0.5*w);
+  } else {
+    fill(nextevt, n, w);
+  }
 }
 
 // --------------------------------------------------------------------------- //
@@ -237,6 +288,20 @@ void T3analysis::addPtLinearHistograms(TString filename, int nbins, std::vector<
   outputfiles.insert(filename);
 }
 
+void T3analysis::addPtSmearedLinearHistograms(TString filename, int nbins, double s, std::vector<int> ptlimits)
+{
+  double maxpt = 2000;
+  for (unsigned i=0; i<=njet; i++) {
+    if (i < ptlimits.size()) {
+      maxpt = ptlimits[i];
+    }
+    std::stringstream ptname;
+    ptname << "jet_pT_" << i+1;
+    jet_pt_n[i].push_back(new SmearedLinearHistogram(filename, ptname.str(), nbins, ptmin, maxpt, s));
+  }
+  outputfiles.insert(filename);
+}
+
 void T3analysis::addPtQuadraticHistograms(TString filename, int nbins, double f, std::vector<int> ptlimits)
 {
   double maxpt = 2000;
@@ -251,6 +316,20 @@ void T3analysis::addPtQuadraticHistograms(TString filename, int nbins, double f,
   outputfiles.insert(filename);
 }
 
+void T3analysis::addPtSmearedQuadraticHistograms(TString filename, int nbins, double f, double s, std::vector<int> ptlimits)
+{
+  double maxpt = 2000;
+  for (unsigned i=0; i<=njet; i++) {
+    if (i < ptlimits.size()) {
+      maxpt = ptlimits[i];
+    }
+    std::stringstream ptname;
+    ptname << "jet_pT_" << i+1;
+    jet_pt_n[i].push_back(new SmearedQuadraticHistogram(filename, ptname.str(), nbins, ptmin, maxpt, f, s));
+  }
+  outputfiles.insert(filename);
+}
+
 void T3analysis::addEtaLinearHistograms(TString filename, int nbins)
 {
   for (unsigned i=0; i<=njet; i++) {
@@ -261,12 +340,32 @@ void T3analysis::addEtaLinearHistograms(TString filename, int nbins)
   outputfiles.insert(filename);
 }
 
+void T3analysis::addEtaSmearedLinearHistograms(TString filename, int nbins, double s)
+{
+  for (unsigned i=0; i<=njet; i++) {
+    std::stringstream etaname;
+    etaname << "jet_eta_" << i+1;
+    jet_eta_n[i].push_back(new SmearedLinearHistogram(filename, etaname.str(), nbins, -etacut, etacut, s));
+  }
+  outputfiles.insert(filename);
+}
+
 void T3analysis::addEtaQuadraticHistograms(TString filename, int nbins, double f)
 {
   for (unsigned i=0; i<=njet; i++) {
     std::stringstream etaname;
     etaname << "jet_eta_" << i+1;
     jet_eta_n[i].push_back(new QuadraticHistogram(filename, etaname.str(), nbins, -etacut, etacut, f));
+  }
+  outputfiles.insert(filename);
+}
+
+void T3analysis::addEtaSmearedQuadraticHistograms(TString filename, int nbins, double f, double s)
+{
+  for (unsigned i=0; i<=njet; i++) {
+    std::stringstream etaname;
+    etaname << "jet_eta_" << i+1;
+    jet_eta_n[i].push_back(new SmearedQuadraticHistogram(filename, etaname.str(), nbins, -etacut, etacut, f, s));
   }
   outputfiles.insert(filename);
 }

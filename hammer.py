@@ -41,6 +41,9 @@ def process(params):
     selector.TOPDF = 0
     selector.rescale_factor = 1
     selector.alphapower = 0
+    if params.qfilter:
+        selector.filter_inq = params.qfilter[0]
+        selector.filter_nq = params.qfilter[1]
     if params.frompdf is not None:
         ROOT.LHAPDF.setVerbosity(0)  # comment out for more output
 
@@ -156,6 +159,8 @@ Reweight events
   -b, --beta0fix            Fix comix beta0 weight
   -d, --debug               Use sherpa alphas
 
+  --qfilter=inq:nq           Filter input by 'incoming quarks':'total quarks'
+
   --stat=<N>                Eventoscope with step N
   --rescaler=<name>         Use rescaler 'simple', 'ht', 'hthat', 'htn', 'htnhat'
 
@@ -170,7 +175,7 @@ class Params:
             opts, args = getopt.getopt(sys.argv[1:], "n:s:p:o:r:f:t:bdh",
                                  ["njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix", "debug", "help",
-                                  "stat=", "rescaler="])
+                                  "stat=", "rescaler=", "qfilter="])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -185,6 +190,7 @@ class Params:
         self.topdf = None
         self.beta0fix = False
         self.debug = False
+        self.qfilter = None
         self.stat = 0
         self.rescaler = 'simple'
         self.rescale_n = None
@@ -211,6 +217,8 @@ class Params:
                 self.beta0fix = True
             elif op in ("-d", "--debug"):
                 self.debug = True
+            elif op in ("--qfilter"):
+                self.qfilter = oparg
             elif op in ("--stat"):
                 self.stat = int(oparg)
             elif op in ("--rescaler"):
@@ -248,6 +256,19 @@ class Params:
 
         if self.rescale_n > self.njet:
             print "Error: 'rescale_n' %d cannont be larger than 'njet' %d" % (self.rescale_n, self.njet)
+            usage()
+            sys.exit(2)
+
+        try:
+            if self.qfilter is not None:
+                self.qfilter = [int(x) for x in self.qfilter.split(':')]
+                assert len(self.qfilter) == 2
+                assert self.qfilter[0] <= 2
+                assert 0 <= self.qfilter[0] <= self.qfilter[1]
+                assert self.qfilter[1] % 2 == 0
+                assert 0 <= self.qfilter[1] <= self.njet+2
+        except:
+            print "Error: wrong qfilter pattern"
             usage()
             sys.exit(2)
 

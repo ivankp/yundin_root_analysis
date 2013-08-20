@@ -215,6 +215,7 @@ class T3selector : public TSelector
     T3selector(TTree * /*tree*/ =0)
     : fChain(0),
       rescale_factor(1.), rescale_n(1), rescaler(0),
+      filter_inq(-1), filter_nq(-1),
       use_sherpa_alphas(false), sherpa_alphas(0), beta0fix(0),
       stat_step()
     { }
@@ -284,6 +285,10 @@ class T3selector : public TSelector
     RescalerType rescaler;
 
     int alphapower;
+
+    // qfilter
+    int filter_inq;
+    int filter_nq;
 
     // pdf sets
     int FROMPDF, TOPDF;

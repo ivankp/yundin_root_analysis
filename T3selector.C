@@ -747,6 +747,17 @@ Bool_t T3selector::Process(Long64_t entry)
   GetEntry(entry);
   analysis.event_count += 1;
 
+  if (filter_inq >= 0 and filter_nq >= 0) {
+    int inq = int(abs(id1) <= 6) + int(abs(id2) <= 6);
+    int nq = inq;
+    for (int i=0; i<nparticle; i++) {
+      nq += int(abs(kf[i]) <= 6);
+    }
+    if (inq != filter_inq or nq != filter_nq) {
+      return kTRUE;
+    }
+  }
+
   PseudoJetVector input;
   for (int i=0; i<nparticle; i++) {
     input.push_back(fastjet::PseudoJet(px[i], py[i], pz[i], E[i]));

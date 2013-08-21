@@ -19,22 +19,29 @@ def process(params):
     # load macros
     ROOT.gROOT.LoadMacro("LHAPDF.h+")
     ROOT.gROOT.LoadMacro("SherpaAlphaS.C+")
-    ROOT.gROOT.LoadMacro("T3selector.C+")
+    ROOT.gROOT.LoadMacro("SelectorCommon.C+")
 
     # create a chain
     chain = ROOT.TChain("t3")
     for name in params.inputs:
         chain.Add(name)
 
-    selector = ROOT.T3selector()
+    selector = ROOT.SelectorCommon()
 
-    maxpt = ROOT.std.vector(int)()
+    maxpt = ROOT.std.vector('double')()
     for pt in [1420, 1400, 800, 800, 800]:
         maxpt.push_back(pt)
 
     # Initialize analysis
-    selector.analysis.setN(params.njet)
-    selector.analysis.init("%s! algo=antikt R=0.4 Pt=60 Pt1=80 Eta=2.8" % params.runname)
+    selector.analysis = ROOT.JetAnalysis.create()
+
+    selector.analysis.setJetNumber(params.njet)
+    selector.analysis.runname = params.runname
+    selector.analysis.setAntiKt(0.4)
+    selector.analysis.jet_ptmin = 60
+    selector.analysis.jet_etamax = 2.8
+
+    selector.analysis.jet_pt1min = 80
 
     # Initialize reweighting
     selector.FROMPDF = 0
@@ -63,6 +70,10 @@ def process(params):
             selector.setrescaler_htn()
         elif params.rescaler == 'htnhat':
             selector.setrescaler_htnhat()
+        elif params.rescaler == 'sumpt2':
+            selector.setrescaler_sumpt2()
+        elif params.rescaler == 'sumpt2hat':
+            selector.setrescaler_sumpt2hat()
 
         # FROMPDF is always initialized
         if True:

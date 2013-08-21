@@ -1,11 +1,14 @@
 
-#include <cmath>
 #include <iostream>
+
+#include <cstdlib>
+#include <cmath>
+using std::abs;
+using std::pow;
+using std::sqrt;
 
 #include "SherpaAlphaS.h"
 
-
-using namespace std;
 using namespace SHERPA;
 
 namespace SHERPA

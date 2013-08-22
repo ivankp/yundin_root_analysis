@@ -85,6 +85,14 @@ def process(params):
             selector.setrescaler_sumpt2()
         elif params.rescaler == 'sumpt2hat':
             selector.setrescaler_sumpt2hat()
+        elif params.rescaler == 'maaht':
+            selector.setrescaler_maaht()
+        elif params.rescaler == 'maahthat':
+            selector.setrescaler_maahthat()
+        elif params.rescaler == 'maa2sumpt2':
+            selector.setrescaler_maa2sumpt2()
+        elif params.rescaler == 'maa2sumpt2hat':
+            selector.setrescaler_maa2sumpt2hat()
 
         # FROMPDF is always initialized
         if True:
@@ -185,7 +193,8 @@ Reweight events
   --qfilter=inq:nq           Filter input by 'incoming quarks':'total quarks'
 
   --stat=<N>                Eventoscope with step N
-  --rescaler=<name>         Use rescaler 'simple', 'ht', 'hthat', 'htn', 'htnhat'
+  --rescaler=<name>         Use rescaler 'simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat,
+                            'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat'
 
 Other options:
   -h, --help                show this help message
@@ -262,7 +271,8 @@ class Params:
             usage()
             sys.exit(2)
 
-        if self.rescaler not in ['simple', 'ht', 'hthat', 'htn', 'htnhat']:
+        if self.rescaler not in ['simple', 'ht', 'hthat', 'htn', 'htnhat',
+                                 'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat']:
             print "Unknown value for rescaler: %s" % self.rescaler
             usage()
             sys.exit(2)

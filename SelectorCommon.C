@@ -254,6 +254,56 @@ double SelectorCommon::rescaler_sumpt2hat(const double /*scale*/,
   return newscale;
 }
 
+double SelectorCommon::rescaler_maaht(const double /*scale*/,
+                                   const PseudoJetVector& input,
+                                   const PseudoJetVector& jets)
+{
+  double newscale = (input[0]+input[1]).m();
+  for (unsigned i=0; i<jets.size(); i++) {
+    newscale += jets[i].pt();
+  }
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
+double SelectorCommon::rescaler_maahthat(const double /*scale*/,
+                                      const PseudoJetVector& input,
+                                      const PseudoJetVector& /*jets*/)
+{
+  double newscale = (input[0]+input[1]).m();
+  for (unsigned i=2; i<input.size(); i++) {
+    newscale += input[i].pt();
+  }
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
+double SelectorCommon::rescaler_maa2sumpt2(const double /*scale*/,
+                                       const PseudoJetVector& input,
+                                       const PseudoJetVector& jets)
+{
+  double newscale = (input[0]+input[1]).m2();
+  for (unsigned i=0; i<jets.size(); i++) {
+    newscale += jets[i].pt2();
+  }
+  newscale = sqrt(newscale);
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
+double SelectorCommon::rescaler_maa2sumpt2hat(const double /*scale*/,
+                                          const PseudoJetVector& input,
+                                          const PseudoJetVector& /*jets*/)
+{
+  double newscale = (input[0]+input[1]).m2();
+  for (unsigned i=0; i<input.size(); i++) {
+    newscale += input[i].pt2();
+  }
+  newscale = sqrt(newscale);
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
 // ----------------------------------------------------------------------------
 // Reweighting: Scale, PDF and AlphaS change
 // ----------------------------------------------------------------------------

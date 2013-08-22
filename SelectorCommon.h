@@ -145,6 +145,8 @@ class SelectorCommon : public TSelector
     double rescaler_multiplicative(const double scale,
                                    const PseudoJetVector& partons,
                                    const PseudoJetVector& jets);
+
+    // pure jets scales
     double rescaler_ht(const double scale,
                        const PseudoJetVector& partons,
                        const PseudoJetVector& jets);
@@ -163,6 +165,21 @@ class SelectorCommon : public TSelector
     double rescaler_sumpt2hat(const double scale,
                               const PseudoJetVector& partons,
                               const PseudoJetVector& jets);
+    // two-nonqcd + jets scales
+    double rescaler_maaht(const double scale,
+                       const PseudoJetVector& input,
+                       const PseudoJetVector& jets);
+    double rescaler_maahthat(const double scale,
+                          const PseudoJetVector& input,
+                          const PseudoJetVector& jets);
+    double rescaler_maa2sumpt2(const double scale,
+                           const PseudoJetVector& input,
+                           const PseudoJetVector& jets);
+    double rescaler_maa2sumpt2hat(const double scale,
+                              const PseudoJetVector& input,
+                              const PseudoJetVector& jets);
+
+
     void setrescaler_none() { rescaler = 0; }
     void setrescaler_multiplicative() { rescaler = &SelectorCommon::rescaler_multiplicative; }
     void setrescaler_ht() { rescaler = &SelectorCommon::rescaler_ht; }
@@ -171,6 +188,10 @@ class SelectorCommon : public TSelector
     void setrescaler_htnhat() { rescaler = &SelectorCommon::rescaler_htnhat; }
     void setrescaler_sumpt2() { rescaler = &SelectorCommon::rescaler_sumpt2; }
     void setrescaler_sumpt2hat() { rescaler = &SelectorCommon::rescaler_sumpt2hat; }
+    void setrescaler_maaht() { rescaler = &SelectorCommon::rescaler_maaht; }
+    void setrescaler_maahthat() { rescaler = &SelectorCommon::rescaler_maahthat; }
+    void setrescaler_maa2sumpt2() { rescaler = &SelectorCommon::rescaler_maa2sumpt2; }
+    void setrescaler_maa2sumpt2hat() { rescaler = &SelectorCommon::rescaler_maa2sumpt2hat; }
 
     double rescale_factor;
     unsigned rescale_n;

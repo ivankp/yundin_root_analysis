@@ -58,16 +58,19 @@ class Analysis
   protected:
     std::set<TString> outputfiles;
 
+    template <typename T>
+    void clear_var(T*& var);
+
     virtual void output_histograms(const TString& filename, std::ofstream& stream);
     virtual void clear();
 
-    template <class T>
+    template <typename T>
     void addPtHistograms(TString filename, int nbins,
                           double param1, double param2, double param3,
                           double low, double high,
                           std::vector<double>* lowlimits=0,
                           std::vector<double>* highlimits=0);
-    template <class T>
+    template <typename T>
     void addEtaHistograms(TString filename, int nbins,
                           double param1, double param2, double param3,
                           double low, double high,
@@ -91,9 +94,46 @@ class JetAnalysis : public Analysis
     virtual void output_histograms(const TString& filename, std::ofstream& stream);
 };
 
+class DiPhotonAnalysis : public Analysis
+{
+  public:
+    static DiPhotonAnalysis* create() { return new DiPhotonAnalysis(); }
+
+    DiPhotonAnalysis();
+
+    virtual bool check_cuts(SelectorCommon* event);
+    virtual void analysis_bin(SelectorCommon* event);
+
+    double photon_pt1min;
+    double photon_pt2min;
+    double photon_etamax;
+
+    double photon_photon_Rsep;
+    double photon_jet_Rsep;
+
+    LinearHistogram* photon_mass;
+    LinearHistogram* photon_jet_R11;
+    LinearHistogram* jet_jet_phi12;
+
+    virtual void reset();
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream);
+
+    virtual void clear();
+
+    template <class T>
+    void addEtaHistograms(TString filename, int nbins,
+                          double param1, double param2, double param3,
+                          double low, double high,
+                          std::vector<double>* lowlimits=0,
+                          std::vector<double>* highlimits=0);
+};
+
 #if defined(__MAKECINT__)
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
+#pragma link C++ class DiPhotonAnalysis;
 #endif
 
 #endif // SELECTOR_ANALYSIS_H

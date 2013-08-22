@@ -33,15 +33,26 @@ def process(params):
         maxpt.push_back(pt)
 
     # Initialize analysis
-    selector.analysis = ROOT.JetAnalysis.create()
+    if False:
+        analysis = ROOT.JetAnalysis.create()
+        analysis.setAntiKt(0.4)
+        analysis.jet_ptmin = 60
+        analysis.jet_etamax = 2.8
+        analysis.jet_pt1min = 80
+    else:
+        analysis = ROOT.DiPhotonAnalysis.create()
+        analysis.setAntiKt(0.5)
+        analysis.jet_ptmin = 30
+        analysis.jet_etamax = 4.7
+        analysis.photon_pt1min = 40
+        analysis.photon_pt2min = 25
+        analysis.photon_etamax = 2.5
+        analysis.photon_jet_Rsep = 0.5
+        analysis.photon_photon_Rsep = 0.45
 
+    selector.analysis = analysis
     selector.analysis.setJetNumber(params.njet)
     selector.analysis.runname = params.runname
-    selector.analysis.setAntiKt(0.4)
-    selector.analysis.jet_ptmin = 60
-    selector.analysis.jet_etamax = 2.8
-
-    selector.analysis.jet_pt1min = 80
 
     # Initialize reweighting
     selector.FROMPDF = 0
@@ -113,7 +124,8 @@ def process(params):
             order = ROOT.LHAPDF.getOrderAlphaS(selector.FROMPDF)
             # MUST set mZ, asMZ and qmass exactly as in Sherpa
             mZ = 91.188
-            asMZ = 0.12018
+            asMZ = 0.12018  # MSTW2008
+            asMZ = 0.117982
             qmass = ROOT.std.vector('double')()
             for m in [0., 0.01, 0.005, 0.2, 1.42, 4.8, 1e10]:
                 qmass.push_back(m)

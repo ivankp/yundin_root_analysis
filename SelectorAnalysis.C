@@ -14,22 +14,23 @@ Analysis::~Analysis()
   clear();
 }
 
+template <typename T>
+void Analysis::clear_var(T*& var)
+{
+  if (var) {
+    delete var;
+    var = 0;
+  }
+}
+
 void Analysis::clear()
 {
-  if (jet_exclusive) {
-    delete jet_exclusive;
-    jet_exclusive = 0;
-  }
-  if (jet_inclusive) {
-    delete jet_inclusive;
-    jet_inclusive = 0;
-  }
+  clear_var(jet_exclusive);
+  clear_var(jet_inclusive);
 
   for (unsigned i=0; i<jet_pt_n.size(); i++) {
     for (unsigned j=0; j<jet_pt_n[i].size(); j++) {
-      if (jet_pt_n[i][j]) {
-        delete jet_pt_n[i][j];
-      }
+      clear_var(jet_pt_n[i][j]);
     }
     jet_pt_n[i].clear();
   }
@@ -37,9 +38,7 @@ void Analysis::clear()
 
   for (unsigned i=0; i<jet_eta_n.size(); i++) {
     for (unsigned j=0; j<jet_eta_n[i].size(); j++) {
-      if (jet_eta_n[i][j]) {
-        delete jet_eta_n[i][j];
-      }
+      clear_var(jet_eta_n[i][j]);
     }
     jet_eta_n[i].clear();
   }
@@ -60,7 +59,7 @@ void Analysis::reset()
   jet_eta_n.resize(jet_number+1);
 }
 
-template <class T>
+template <typename T>
 void Analysis::addPtHistograms(TString filename, int nbins,
                                double param1, double param2, double param3,
                                double low, double high,
@@ -101,7 +100,7 @@ void Analysis::addPtSmearedQuadraticHistograms(TString filename, int nbins, doub
   addPtHistograms<SmearedQuadraticHistogram>(filename, nbins, f, s, 0, jet_ptmin, 2000., 0, &ptlimits);
 }
 
-template <class T>
+template <typename T>
 void Analysis::addEtaHistograms(TString filename, int nbins,
                                 double param1, double param2, double param3,
                                 double low, double high,
@@ -238,7 +237,9 @@ void Analysis::output_histograms(const TString& filename, std::ofstream& stream)
 }
 
 // ---------------------------------------------------------------------------
-// JetAnalysis
+// ---------------------------------------------------------------------------
+//   JetAnalysis
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 
 JetAnalysis::JetAnalysis()
@@ -248,11 +249,11 @@ JetAnalysis::JetAnalysis()
 
 bool JetAnalysis::check_cuts(SelectorCommon* event)
 {
-  if (Analysis::check_cuts(event)) {
-    return jets[0].pt() >= jet_pt1min;
-  } else {
+  if (not Analysis::check_cuts(event)) {
     return false;
   }
+
+  return jets[0].pt() >= jet_pt1min;
 }
 
 void JetAnalysis::analysis_bin(SelectorCommon* event)
@@ -266,4 +267,100 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 {
   // all jet histograms are already in the base class
   Analysis::output_histograms(filename, stream);
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+//   DiPhotonAnalysis
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+DiPhotonAnalysis::DiPhotonAnalysis()
+  : photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
+    photon_photon_Rsep(0), photon_jet_Rsep(0)
+{
+}
+
+void DiPhotonAnalysis::clear()
+{
+  Analysis::clear();
+
+  clear_var(photon_mass);
+  clear_var(photon_jet_R11);
+  clear_var(jet_jet_phi12);
+}
+
+void DiPhotonAnalysis::reset()
+{
+  Analysis::reset();
+
+  jet_jet_phi12 = new LinearHistogram("!", "jet_jet_phi12", 31, 0, M_PI);
+  photon_mass = new LinearHistogram("!", "photon_mass", 15, 0, 500);
+  photon_jet_R11 = new LinearHistogram("!", "photon_jet_R11", 30, 0, 5);
+}
+
+bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
+{
+  if (not Analysis::check_cuts(event)) {
+    return false;
+  }
+
+  assert(event->kf[0] == 22 and event->kf[1] == 22);
+
+  double pt1 = input[0].pt();
+  double pt2 = input[1].pt();
+  if (pt1 < pt2) {
+    std::swap(pt1, pt2);
+    std::swap(input[0], input[1]);
+  }
+
+    if (pt1 < photon_pt1min) {
+      return false;
+    }
+  if (pt2 < photon_pt2min) {
+    return false;
+  }
+  if (abs(input[0].eta()) > photon_etamax or
+      abs(input[1].eta()) > photon_etamax) {
+    return false;
+  }
+  if (input[0].delta_R(input[1]) < photon_photon_Rsep) {
+    return false;
+  }
+  for (unsigned i=0; i<jets.size(); i++) {
+    if (input[0].delta_R(jets[i]) < photon_jet_Rsep or
+        input[1].delta_R(jets[i]) < photon_jet_Rsep) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
+{
+  Analysis::analysis_bin(event);
+
+  const Int_t id = event->id;
+  const Double_t weight = event->weight;
+
+  double mass = (input[0]+input[1]).m();
+  photon_mass->bin(id, mass, weight);
+
+  double R11 = input[0].delta_R(jets[0]);
+  photon_jet_R11->bin(id, R11, weight);
+
+  double jet1phi = jets[0].phi();
+  double jet2phi = jets[1].phi();
+  double jj_phi12 = jet1phi > jet2phi ? jet1phi - jet2phi : jet2phi - jet1phi;
+  jet_jet_phi12->bin(id, jj_phi12, weight);
+}
+
+void DiPhotonAnalysis::output_histograms(const TString& filename, std::ofstream& stream)
+{
+  // all jet histograms are already in the base class
+  Analysis::output_histograms(filename, stream);
+
+  photon_mass->print(stream, runname, event_count);
+  photon_jet_R11->print(stream, runname, event_count);
+  jet_jet_phi12->print(stream, runname, event_count);
 }

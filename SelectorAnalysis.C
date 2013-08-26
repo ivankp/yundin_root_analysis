@@ -352,6 +352,9 @@ void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
   double jet1phi = jets[0].phi();
   double jet2phi = jets[1].phi();
   double jj_phi12 = jet1phi > jet2phi ? jet1phi - jet2phi : jet2phi - jet1phi;
+  if (jj_phi12 > M_PI) {
+    jj_phi12 = 2.*M_PI - jj_phi12;
+  }
   jet_jet_phi12->bin(id, jj_phi12, weight);
 }
 

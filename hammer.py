@@ -2,7 +2,52 @@
 
 import getopt
 import sys
+import os
 import re
+import imp
+
+
+# all custom rescalers
+def set_rescaler(selector, params):
+    selector.rescale_n = params.rescale_n
+    if params.rescaler == 'simple':
+        if selector.rescale_factor != 1:
+            selector.setrescaler_multiplicative()
+    elif params.rescaler == 'ht':
+        selector.setrescaler_ht()
+    elif params.rescaler == 'hthat':
+        selector.setrescaler_hthat()
+    elif params.rescaler == 'htn':
+        selector.setrescaler_htn()
+    elif params.rescaler == 'htnhat':
+        selector.setrescaler_htnhat()
+    elif params.rescaler == 'sumpt2':
+        selector.setrescaler_sumpt2()
+    elif params.rescaler == 'sumpt2hat':
+        selector.setrescaler_sumpt2hat()
+    elif params.rescaler == 'maaht':
+        selector.setrescaler_maaht()
+    elif params.rescaler == 'maahthat':
+        selector.setrescaler_maahthat()
+    elif params.rescaler == 'maa2sumpt2':
+        selector.setrescaler_maa2sumpt2()
+    elif params.rescaler == 'maa2sumpt2hat':
+        selector.setrescaler_maa2sumpt2hat()
+    else:
+        name = 'setrescaler_%s' % params.rescaler
+        func = selector.__dict__.get(name, None)
+        if func is not None:
+            func(selector)
+
+
+def get_pdfname(pdfopt, name=''):
+    pdf, m = pdfopt, 0
+    if pdfopt.find(':') >= 0:
+        pdf, m = pdfopt.split(':')
+    if m != 0:
+        print "Selected %s: %s (%s)" % (name, pdf, m)
+    return (pdf, m)
+
 
 def process(params):
     import ROOT
@@ -28,32 +73,6 @@ def process(params):
 
     selector = ROOT.SelectorCommon()
 
-    maxpt = ROOT.std.vector('double')()
-    for pt in [1420, 1400, 800, 800, 800]:
-        maxpt.push_back(pt)
-
-    # Initialize analysis
-    if False:
-        analysis = ROOT.JetAnalysis.create()
-        analysis.setAntiKt(0.4)
-        analysis.jet_ptmin = 60
-        analysis.jet_etamax = 2.8
-        analysis.jet_pt1min = 80
-    else:
-        analysis = ROOT.DiPhotonAnalysis.create()
-        analysis.setAntiKt(0.5)
-        analysis.jet_ptmin = 30
-        analysis.jet_etamax = 4.7
-        analysis.photon_pt1min = 40
-        analysis.photon_pt2min = 25
-        analysis.photon_etamax = 2.5
-        analysis.photon_jet_Rsep = 0.5
-        analysis.photon_photon_Rsep = 0.45
-
-    selector.analysis = analysis
-    selector.analysis.setJetNumber(params.njet)
-    selector.analysis.runname = params.runname
-
     # Initialize reweighting
     selector.FROMPDF = 0
     selector.TOPDF = 0
@@ -69,39 +88,12 @@ def process(params):
         selector.rescale_factor = params.scale
 
         # scale change
-        selector.rescale_n = params.rescale_n
-        if params.rescaler == 'simple':
-            if selector.rescale_factor != 1:
-                selector.setrescaler_multiplicative()
-        elif params.rescaler == 'ht':
-            selector.setrescaler_ht()
-        elif params.rescaler == 'hthat':
-            selector.setrescaler_hthat()
-        elif params.rescaler == 'htn':
-            selector.setrescaler_htn()
-        elif params.rescaler == 'htnhat':
-            selector.setrescaler_htnhat()
-        elif params.rescaler == 'sumpt2':
-            selector.setrescaler_sumpt2()
-        elif params.rescaler == 'sumpt2hat':
-            selector.setrescaler_sumpt2hat()
-        elif params.rescaler == 'maaht':
-            selector.setrescaler_maaht()
-        elif params.rescaler == 'maahthat':
-            selector.setrescaler_maahthat()
-        elif params.rescaler == 'maa2sumpt2':
-            selector.setrescaler_maa2sumpt2()
-        elif params.rescaler == 'maa2sumpt2hat':
-            selector.setrescaler_maa2sumpt2hat()
+        set_rescaler(selector, params)
 
         # FROMPDF is always initialized
         if True:
             selector.FROMPDF = 1
-            pdf, m = params.frompdf, 0
-            if params.frompdf.find(':') >= 0:
-                pdf, m = params.frompdf.split(':')
-            if m != 0:
-                print "Selected FROMPDF member = %s" % m
+            pdf, m = get_pdfname(params.frompdf, 'FROMPDF')
             ROOT.LHAPDF.initPDFSet(selector.FROMPDF, pdf, ROOT.LHAPDF.LHGRID, int(m))
 
         # TOPDF is initialized is it is different
@@ -109,11 +101,7 @@ def process(params):
             selector.TOPDF = selector.FROMPDF
         else:
             selector.TOPDF = selector.FROMPDF + 1
-            pdf, m = params.topdf, 0
-            if params.topdf.find(':') >= 0:
-                pdf, m = params.topdf.split(':')
-            if m != 0:
-                print "Selected TOPDF member = %s" % m
+            pdf, m = get_pdfname(params.topdf, 'TOPDF')
             ROOT.LHAPDF.initPDFSet(selector.TOPDF, pdf,  ROOT.LHAPDF.LHGRID, int(m))
 
         print "Scale: '%s' x %f, AlphaPow %d" % (params.rescaler, selector.rescale_factor, selector.alphapower)
@@ -146,9 +134,8 @@ def process(params):
             selector.beta0fix = 99
             print "WARNING! nonsense beta0 fix enabled with for m_oqcd = %d" % selector.beta0fix
 
-    # add histograms
-    selector.analysis.addPtLinearHistograms(params.output % "l64_l20", 64, maxpt)
-    selector.analysis.addEtaLinearHistograms(params.output % "l64_l20", 20)
+    # call analysis module to initialize all settings
+    params.analysis_mod.initialize(params, selector)
 
     selector.stat_step = params.stat
     chain.Process(selector)
@@ -178,6 +165,7 @@ def usage():
     print """\
 Usage: hammer [OPTION...] [FILE]
 Reweight events
+  -a, --analysis            Analysis module
   -n, --njet                Number of jets
   -r, --runname='Test'      Run name
   -o, --output='%s.hist'    Output name pattern
@@ -204,8 +192,8 @@ Other options:
 class Params:
     def __init__(self):
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "n:s:p:o:r:f:t:bdh",
-                                 ["njet=", "scale=", "power=", "output=", "runname=",
+            opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:bdh",
+                                 ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix", "debug", "help",
                                   "stat=", "rescaler=", "qfilter="])
         except getopt.GetoptError, err:
@@ -213,6 +201,7 @@ class Params:
             usage()
             sys.exit(2)
 
+        self.analysis_mod = None
         self.njet = None
         self.runname = 'Test'
         self.output = '%s.hist'
@@ -231,6 +220,8 @@ class Params:
             if op in ("-h", "--help"):
                 usage()
                 sys.exit()
+            elif op in ("-a", "--analysis"):
+                self.analysis_mod = oparg
             elif op in ("-n", "--njet"):
                 self.njet = int(oparg)
             elif op in ("-s", "--scale"):
@@ -260,6 +251,24 @@ class Params:
                     self.rescale_n = int(self.rescale_n)
             else:
                 assert False, "unhandled option"
+
+        if not self.analysis_mod:
+            print "Error: --analysis option is mandatory"
+            usage()
+            sys.exit(2)
+        try:
+            dwbc = sys.dont_write_bytecode
+            sys.dont_write_bytecode = True
+            if not self.analysis_mod.startswith('/'):
+                self.analysis_mod = os.path.join(os.path.dirname(__file__), self.analysis_mod)
+            if not os.path.exists(self.analysis_mod) and not self.analysis_mod.endswith('.py'):
+                self.analysis_mod += '.py'
+            self.analysis_mod = imp.load_source('analysis_mod', self.analysis_mod)
+            sys.dont_write_bytecode = dwbc
+        except Exception, e:
+            print "Error: must give analysis module (%s)" % str(e)
+            usage()
+            sys.exit(2)
 
         if not self.njet:
             print "Error: njet is not set"

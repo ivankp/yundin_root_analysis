@@ -80,24 +80,32 @@ void Analysis::addPtHistograms(TString filename, int nbins,
   outputfiles.insert(filename);
 }
 
-void Analysis::addPtLinearHistograms(TString filename, int nbins, std::vector<double> ptlimits)
+void Analysis::addPtLinearHistograms(TString filename, int nbins,
+                                     std::vector<double>* ptlowlimits,
+                                     std::vector<double>* pthighlimits)
 {
-  addPtHistograms<LinearHistogram>(filename, nbins, 0, 0, 0, jet_ptmin, 2000., 0, &ptlimits);
+  addPtHistograms<LinearHistogram>(filename, nbins, 0, 0, 0, jet_ptmin, 2000., ptlowlimits, pthighlimits);
 }
 
-void Analysis::addPtSmearedLinearHistograms(TString filename, int nbins, double s, std::vector<double> ptlimits)
+void Analysis::addPtSmearedLinearHistograms(TString filename, int nbins, double s,
+                                            std::vector<double>* ptlowlimits,
+                                            std::vector<double>* pthighlimits)
 {
-  addPtHistograms<SmearedLinearHistogram>(filename, nbins, s, 0, 0, jet_ptmin, 2000., 0, &ptlimits);
+  addPtHistograms<SmearedLinearHistogram>(filename, nbins, s, 0, 0, jet_ptmin, 2000., ptlowlimits, pthighlimits);
 }
 
-void Analysis::addPtQuadraticHistograms(TString filename, int nbins, double f, std::vector<double> ptlimits)
+void Analysis::addPtQuadraticHistograms(TString filename, int nbins, double f,
+                                        std::vector<double>* ptlowlimits,
+                                        std::vector<double>* pthighlimits)
 {
-  addPtHistograms<QuadraticHistogram>(filename, nbins, f, 0, 0, jet_ptmin, 2000., 0, &ptlimits);
+  addPtHistograms<QuadraticHistogram>(filename, nbins, f, 0, 0, jet_ptmin, 2000., ptlowlimits, pthighlimits);
 }
 
-void Analysis::addPtSmearedQuadraticHistograms(TString filename, int nbins, double f, double s, std::vector<double> ptlimits)
+void Analysis::addPtSmearedQuadraticHistograms(TString filename, int nbins, double f, double s,
+                                               std::vector<double>* ptlowlimits,
+                                               std::vector<double>* pthighlimits)
 {
-  addPtHistograms<SmearedQuadraticHistogram>(filename, nbins, f, s, 0, jet_ptmin, 2000., 0, &ptlimits);
+  addPtHistograms<SmearedQuadraticHistogram>(filename, nbins, f, s, 0, jet_ptmin, 2000., ptlowlimits, pthighlimits);
 }
 
 template <typename T>
@@ -121,24 +129,32 @@ void Analysis::addEtaHistograms(TString filename, int nbins,
   outputfiles.insert(filename);
 }
 
-void Analysis::addEtaLinearHistograms(TString filename, int nbins)
+void Analysis::addEtaLinearHistograms(TString filename, int nbins,
+                                        std::vector<double>* etalowlimits,
+                                        std::vector<double>* etahighlimits)
 {
-  addEtaHistograms<LinearHistogram>(filename, nbins, 0, 0, 0, -jet_etamax, jet_etamax);
+  addEtaHistograms<LinearHistogram>(filename, nbins, 0, 0, 0, -jet_etamax, jet_etamax, etalowlimits, etahighlimits);
 }
 
-void Analysis::addEtaSmearedLinearHistograms(TString filename, int nbins, double s)
+void Analysis::addEtaSmearedLinearHistograms(TString filename, int nbins, double s,
+                                        std::vector<double>* etalowlimits,
+                                        std::vector<double>* etahighlimits)
 {
-  addEtaHistograms<SmearedLinearHistogram>(filename, nbins, s, 0, 0, -jet_etamax, jet_etamax);
+  addEtaHistograms<SmearedLinearHistogram>(filename, nbins, s, 0, 0, -jet_etamax, jet_etamax, etalowlimits, etahighlimits);
 }
 
-void Analysis::addEtaQuadraticHistograms(TString filename, int nbins, double f)
+void Analysis::addEtaQuadraticHistograms(TString filename, int nbins, double f,
+                                        std::vector<double>* etalowlimits,
+                                        std::vector<double>* etahighlimits)
 {
-  addEtaHistograms<QuadraticHistogram>(filename, nbins, f, 0, 0, -jet_etamax, jet_etamax);
+  addEtaHistograms<QuadraticHistogram>(filename, nbins, f, 0, 0, -jet_etamax, jet_etamax, etalowlimits, etahighlimits);
 }
 
-void Analysis::addEtaSmearedQuadraticHistograms(TString filename, int nbins, double f, double s)
+void Analysis::addEtaSmearedQuadraticHistograms(TString filename, int nbins, double f, double s,
+                                        std::vector<double>* etalowlimits,
+                                        std::vector<double>* etahighlimits)
 {
-  addEtaHistograms<SmearedQuadraticHistogram>(filename, nbins, f, s, 0, -jet_etamax, jet_etamax);
+  addEtaHistograms<SmearedQuadraticHistogram>(filename, nbins, f, s, 0, -jet_etamax, jet_etamax, etalowlimits, etahighlimits);
 }
 
 // Setting parameters

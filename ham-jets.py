@@ -12,12 +12,20 @@ def initialize(params, selector):
     analysis.jet_etamax = 2.8
     analysis.jet_pt1min = 80
 
+    # if more than 2 jets, extra jets use the last defined value (here jet_ptmin)
+    minpt = ROOT.std.vector('double')()
+    for pt in [analysis.jet_pt1min, analysis.jet_ptmin]:
+        minpt.push_back(pt)
+
+    # if more than 3 jets, extra jets use the last defined value (here 800)
     maxpt = ROOT.std.vector('double')()
-    for pt in [1420, 1400, 800, 800, 800]:
+    for pt in [1420, 1400, 800]:
         maxpt.push_back(pt)
 
     # add histograms
-    analysis.addPtLinearHistograms(params.output % "l64_l20", 64, maxpt)
+    # set ptlimits explicitly
+    analysis.addPtLinearHistograms(params.output % "l64_l20", 64, minpt, maxpt)
+    # eta limits are default to +-jet_etamax
     analysis.addEtaLinearHistograms(params.output % "l64_l20", 20)
 
     # assign to selector

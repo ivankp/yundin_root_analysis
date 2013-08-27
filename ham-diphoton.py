@@ -16,12 +16,15 @@ def initialize(params, selector):
     analysis.photon_jet_Rsep = 0.5
     analysis.photon_photon_Rsep = 0.45
 
+    # if more than 3 jets, extra jets use the last defined value (here 800)
     maxpt = ROOT.std.vector('double')()
-    for pt in [1420, 1400, 800, 800, 800]:
+    for pt in [1420, 1400, 800]:
         maxpt.push_back(pt)
 
     # add histograms
-    analysis.addPtLinearHistograms(params.output % "l64_l20", 64, maxpt)
+    # minpt is default to jet_ptmin
+    analysis.addPtLinearHistograms(params.output % "l64_l20", 64, None, maxpt)
+    # eta limits are default to +-jet_etamax
     analysis.addEtaLinearHistograms(params.output % "l64_l20", 20)
 
     # assign to selector

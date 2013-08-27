@@ -43,17 +43,25 @@ class Analysis
 
     virtual void reset();
 
-    void addPtLinearHistograms(TString filename, int nbins, std::vector<double> ptlimits);
-    void addPtQuadraticHistograms(TString filename, int nbins, double f, std::vector<double> ptlimits);
+    void addPtLinearHistograms(TString filename, int nbins,
+                               std::vector<double>* ptlowlimits=0, std::vector<double>* pthighlimits=0);
+    void addPtQuadraticHistograms(TString filename, int nbins, double f,
+                                  std::vector<double>* ptlowlimits=0, std::vector<double>* pthighlimits=0);
 
-    void addPtSmearedLinearHistograms(TString filename, int nbins, double s, std::vector<double> ptlimits);
-    void addPtSmearedQuadraticHistograms(TString filename, int nbins, double f, double s, std::vector<double> ptlimits);
+    void addPtSmearedLinearHistograms(TString filename, int nbins, double s,
+                                      std::vector<double>* ptlowlimits=0, std::vector<double>* pthighlimits=0);
+    void addPtSmearedQuadraticHistograms(TString filename, int nbins, double f, double s,
+                                         std::vector<double>* ptlowlimits=0, std::vector<double>* pthighlimits=0);
 
-    void addEtaLinearHistograms(TString filename, int nbins);
-    void addEtaQuadraticHistograms(TString filename, int nbins, double f);
+    void addEtaLinearHistograms(TString filename, int nbins,
+                                std::vector<double>* etalowlimits=0, std::vector<double>* etahighlimits=0);
+    void addEtaQuadraticHistograms(TString filename, int nbins, double f,
+                                   std::vector<double>* etalowlimits=0, std::vector<double>* etahighlimits=0);
 
-    void addEtaSmearedLinearHistograms(TString filename, int nbins, double s);
-    void addEtaSmearedQuadraticHistograms(TString filename, int nbins, double f, double s);
+    void addEtaSmearedLinearHistograms(TString filename, int nbins, double s,
+                                       std::vector<double>* etalowlimits=0, std::vector<double>* etahighlimits=0);
+    void addEtaSmearedQuadraticHistograms(TString filename, int nbins, double f, double s,
+                                          std::vector<double>* etalowlimits=0, std::vector<double>* etahighlimits=0);
 
   protected:
     std::set<TString> outputfiles;

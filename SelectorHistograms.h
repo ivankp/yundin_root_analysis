@@ -2,6 +2,8 @@
 #ifndef SELECTOR_HISTOGRAMS_H
 #define SELECTOR_HISTOGRAMS_H
 
+#include <utility>
+
 class Histogram
 {
   public:
@@ -10,12 +12,14 @@ class Histogram
     virtual ~Histogram() {};
 
     virtual void bin(int nextevt, double x, double w) = 0;
-    void print(std::ostream& stream, const TString& runname, double count, bool unweight=true);
+    virtual void print(std::ostream& stream, const TString& runname, double count, bool unweight=true);
 
     TString getFile() const;
 
   protected:
-    void flush();
+    typedef std::pair<int, double> TIdxWgt;
+
+    virtual void flush();
     void setedges();
     void fill(int evt, int n, double w);
 
@@ -25,13 +29,31 @@ class Histogram
     double x1, x2, x12;
     const int nbin;
     int prevevt, lastidx;
-    std::vector<int> curidx;
+    std::vector<TIdxWgt> curidxwgt;
     std::vector<int> events;
-    std::vector<double> curwgt;
     std::vector<double> wgt;
     std::vector<double> wgt2;
     std::vector<double> bwidth;
     std::vector<double> edge;
+};
+
+class SmearedHistogram : public Histogram
+{
+  public:
+    SmearedHistogram(const TString& filename_, const TString& name_,
+                     int nbin_, double x1_, double x2_,
+                     double smear_=1., double param2=0, double param3=0);
+
+    virtual void bin(int nextevt, double x, double w) = 0;
+
+  protected:
+    void flush();
+    void fill(int evt, int n, double w, double x);
+
+    const double smear;
+
+    std::vector<double> wgtvec;
+    std::vector<double> xwgtvec;
 };
 
 class LinearHistogram : public Histogram
@@ -60,19 +82,19 @@ class QuadraticHistogram : public Histogram
     const double slope;
 };
 
-class SmearedLinearHistogram : public LinearHistogram
+class SmearedLinearHistogram : public SmearedHistogram
 {
   public:
     SmearedLinearHistogram(const TString& filename_, const TString& name_,
-                    int nbin_, double x1_, double x2_,
-                    double smear_=1., double param2=0, double param3=0);
+                       int nbin_, double x1_, double x2_,
+                       double smear_=1., double param2=0, double param3=0);
     void bin(int nextevt, double x, double w);
 
   protected:
-    const double smear;
+    const double step;
 };
 
-class SmearedQuadraticHistogram : public QuadraticHistogram
+class SmearedQuadraticHistogram : public SmearedHistogram
 {
   public:
     SmearedQuadraticHistogram(const TString& filename_, const TString& name_,
@@ -81,7 +103,8 @@ class SmearedQuadraticHistogram : public QuadraticHistogram
     void bin(int nextevt, double x, double w);
 
   protected:
-    const double smear;
+    const double step;
+    const double slope;
 };
 
 #if defined(__MAKECINT__)

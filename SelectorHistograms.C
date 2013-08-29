@@ -10,7 +10,7 @@ Histogram::Histogram(const TString& filename_, const TString& name_,
   : filename(filename_), name(name_),
     x1(x1_), x2(x2_), x12(x2-x1),
     nbin(nbin_), prevevt(-1), lastidx(0),
-    curidx(nbin), events(nbin), curwgt(nbin),
+    curidxwgt(nbin), events(nbin),
     wgt(nbin), wgt2(nbin), bwidth(nbin), edge(nbin+1)
 { }
 
@@ -58,11 +58,12 @@ void Histogram::print(std::ostream& stream, const TString& runname, double count
 void Histogram::flush()
 {
   for (int i=0; i<lastidx; i++) {
-    int idx = curidx[i];
-    wgt[idx] += curwgt[i];
-    wgt2[idx] += curwgt[i]*curwgt[i];
+    int idx = curidxwgt[i].first;
+    double w = curidxwgt[i].second;
+    curidxwgt[i].second = 0.;
+    wgt[idx] += w;
+    wgt2[idx] += w*w;
     events[idx]++;
-    curwgt[i] = 0.;
   }
   lastidx = 0;
 }
@@ -86,16 +87,64 @@ void Histogram::fill(int evt, int n, double w)
 
   int i;
   for (i=0; i<lastidx; i++) {
-    if (curidx[i] == n) {
+    if (curidxwgt[i].first == n) {
       break;
     }
   }
-  curidx[i] = n;
-  curwgt[i] += w;
+  curidxwgt[i].first = n;
+  curidxwgt[i].second += w;
   if (i == lastidx) {
     lastidx++;
   }
 }
+
+SmearedHistogram::SmearedHistogram(const TString& filename_, const TString& name_,
+                                   int nbin_, double x1_, double x2_,
+                                   double smear_, double /*param2*/, double /*param3*/)
+  : Histogram(filename_, name_, nbin_, x1_, x2_),
+    smear(smear_), wgtvec(nbin), xwgtvec(nbin)
+{
+}
+
+void SmearedHistogram::flush()
+{
+  if (lastidx > 1) {
+    std::sort(curidxwgt.begin(), curidxwgt.begin()+lastidx);
+    for (int i=1; i<lastidx; i++) {
+      if (curidxwgt[i-1].first + 1 == curidxwgt[i].first) {
+        int idx0 = curidxwgt[i-1].first;
+        int idx1 = curidxwgt[i].first;
+        double s0 = (edge[idx1] - xwgtvec[idx0]/wgtvec[idx0])/bwidth[idx0];
+        double s1 = (xwgtvec[idx1]/wgtvec[idx1] - edge[idx1])/bwidth[idx1];
+        if (s1 < s0 and s1 < smear) { // swap to merge i to i-1
+          std::swap(curidxwgt[i-1].first, curidxwgt[i].first);
+          std::swap(curidxwgt[i-1].second, curidxwgt[i].second);
+          std::swap(idx0, idx1);
+          std::swap(s0, s1);
+        }
+        if (s0 < s1 and s0 < smear) {
+          curidxwgt[i].second += curidxwgt[i-1].second;
+          wgtvec[idx1] += wgtvec[idx0];
+          xwgtvec[idx1] += xwgtvec[idx0];
+          curidxwgt[i-1].second = 0;
+        }
+      }
+    }
+  }
+  wgtvec.assign(wgtvec.size(), 0.);
+  xwgtvec.assign(wgtvec.size(), 0.);
+  Histogram::flush();
+}
+
+inline
+void SmearedHistogram::fill(int evt, int n, double w, double x)
+{
+  Histogram::fill(evt, n, w);
+  wgtvec[n] += abs(w);
+  xwgtvec[n] += x*abs(w);
+}
+
+// specific histograms
 
 LinearHistogram::LinearHistogram(const TString& filename_, const TString& name_,
                                  int nbin_, double x1_, double x2_,
@@ -118,30 +167,24 @@ void LinearHistogram::bin(int nextevt, double x, double w)
 }
 
 SmearedLinearHistogram::SmearedLinearHistogram(const TString& filename_, const TString& name_,
-                                               int nbin_, double x1_, double x2_,
-                                               double smear_, double /*param2*/, double /*param3*/)
-  : LinearHistogram(filename_, name_, nbin_, x1_, x2_), smear(smear_)
+                                       int nbin_, double x1_, double x2_,
+                                       double smear_, double /*param2*/, double /*param3*/)
+  : SmearedHistogram(filename_, name_, nbin_, x1_, x2_, smear_),
+    step(x12/nbin)
 {
+  for (int i=0; i<nbin; i++) {
+    bwidth[i] = step;
+  }
+  setedges();
 }
 
 void SmearedLinearHistogram::bin(int nextevt, double x, double w)
 {
 //       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
   if (x < x1 or x > x2) return;
-  const double dn = (x-x1)/step;
-  const int n = static_cast<int>(dn);
+  int n = static_cast<int>(nbin*(x-x1)/x12);
   assert(0 <= n && n < nbin);
-
-  double dist = dn - n; // [0, 1)
-  if (dist < 0.5*smear && n > 0) {
-    fill(nextevt, n, 0.5*w);
-    fill(nextevt, n-1, 0.5*w);
-  } else if ((1. - dist) < 0.5*smear && n < nbin-1) {
-    fill(nextevt, n, 0.5*w);
-    fill(nextevt, n+1, 0.5*w);
-  } else {
-    fill(nextevt, n, w);
-  }
+  fill(nextevt, n, w, x);
 }
 
 QuadraticHistogram::QuadraticHistogram(const TString& filename_, const TString& name_,
@@ -170,8 +213,14 @@ void QuadraticHistogram::bin(int nextevt, double x, double w)
 SmearedQuadraticHistogram::SmearedQuadraticHistogram(const TString& filename_, const TString& name_,
                                        int nbin_, double x1_, double x2_,
                                        double f, double smear_, double /*param3*/)
-  : QuadraticHistogram(filename_, name_, nbin_, x1_, x2_, f), smear(smear_)
+  : SmearedHistogram(filename_, name_, nbin_, x1_, x2_, smear_),
+    step(2*x12/((1 + f)*nbin)),
+    slope((f - 1)/(nbin - 1))
 {
+  for (int i=0; i<nbin; i++) {
+    bwidth[i] = step*(1 + i*slope);
+  }
+  setedges();
 }
 
 void SmearedQuadraticHistogram::bin(int nextevt, double x, double w)
@@ -181,15 +230,5 @@ void SmearedQuadraticHistogram::bin(int nextevt, double x, double w)
   const double dn = (slope-2 + sqrt((slope-2)*(slope-2) + (8*slope*(x - x1))/step))/(2*slope);
   const int n = static_cast<int>(dn);
   assert(0 <= n && n < nbin);
-
-  double dist = dn - n; // [0, 1)
-  if (dist < 0.5*smear && n > 0) {
-    fill(nextevt, n, 0.5*w);
-    fill(nextevt, n-1, 0.5*w);
-  } else if ((1. - dist) < 0.5*smear && n < nbin-1) {
-    fill(nextevt, n, 0.5*w);
-    fill(nextevt, n+1, 0.5*w);
-  } else {
-    fill(nextevt, n, w);
-  }
+  fill(nextevt, n, w, x);
 }

@@ -126,7 +126,7 @@ class SelectorCommon : public TSelector
     SelectorCommon(TTree * /*tree*/ =0)
     : fChain(0), // ROOT
       analysis(0),
-      rescale_factor(1.), rescale_n(1), rescaler(0),
+      rescale_factor(1.), rescale_n(0), rescaler(0),
       filter_inq(-1), filter_nq(-1),
       use_sherpa_alphas(false), sherpa_alphas(0), beta0fix(0),
       stat_step()
@@ -153,12 +153,6 @@ class SelectorCommon : public TSelector
     double rescaler_hthat(const double scale,
                           const PseudoJetVector& partons,
                           const PseudoJetVector& jets);
-    double rescaler_htn(const double scale,
-                        const PseudoJetVector& partons,
-                        const PseudoJetVector& jets);
-    double rescaler_htnhat(const double scale,
-                           const PseudoJetVector& partons,
-                           const PseudoJetVector& jets);
     double rescaler_sumpt2(const double scale,
                            const PseudoJetVector& partons,
                            const PseudoJetVector& jets);
@@ -184,8 +178,6 @@ class SelectorCommon : public TSelector
     void setrescaler_multiplicative() { rescaler = &SelectorCommon::rescaler_multiplicative; }
     void setrescaler_ht() { rescaler = &SelectorCommon::rescaler_ht; }
     void setrescaler_hthat() { rescaler = &SelectorCommon::rescaler_hthat; }
-    void setrescaler_htn() { rescaler = &SelectorCommon::rescaler_htn; }
-    void setrescaler_htnhat() { rescaler = &SelectorCommon::rescaler_htnhat; }
     void setrescaler_sumpt2() { rescaler = &SelectorCommon::rescaler_sumpt2; }
     void setrescaler_sumpt2hat() { rescaler = &SelectorCommon::rescaler_sumpt2hat; }
     void setrescaler_maaht() { rescaler = &SelectorCommon::rescaler_maaht; }

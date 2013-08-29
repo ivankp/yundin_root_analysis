@@ -17,10 +17,6 @@ def set_rescaler(selector, params):
         selector.setrescaler_ht()
     elif params.rescaler == 'hthat':
         selector.setrescaler_hthat()
-    elif params.rescaler == 'htn':
-        selector.setrescaler_htn()
-    elif params.rescaler == 'htnhat':
-        selector.setrescaler_htnhat()
     elif params.rescaler == 'sumpt2':
         selector.setrescaler_sumpt2()
     elif params.rescaler == 'sumpt2hat':
@@ -104,7 +100,8 @@ def process(params):
             pdf, m = get_pdfname(params.topdf, 'TOPDF')
             ROOT.LHAPDF.initPDFSet(selector.TOPDF, pdf,  ROOT.LHAPDF.LHGRID, int(m))
 
-        print "Scale: '%s' x %f, AlphaPow %d" % (params.rescaler, selector.rescale_factor, selector.alphapower)
+        print "Scale: '%s (%d)' x %f, AlphaPow %d" % (params.rescaler, selector.rescale_n,
+                                                      selector.rescale_factor, selector.alphapower)
         print "------------- FROMPDF %d - %s (Nf=%d) ---------------" % (selector.FROMPDF, params.frompdf, ROOT.LHAPDF.getNf(selector.FROMPDF))
         print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
         print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
@@ -280,7 +277,7 @@ class Params:
             usage()
             sys.exit(2)
 
-        if self.rescaler not in ['simple', 'ht', 'hthat', 'htn', 'htnhat',
+        if self.rescaler not in ['simple', 'ht', 'hthat',
                                  'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat']:
             print "Unknown value for rescaler: %s" % self.rescaler
             usage()
@@ -293,8 +290,10 @@ class Params:
             usage()
             sys.exit(2)
 
-        if self.rescale_n is None:
-            self.rescale_n = self.njet
+        if self.rescale_n is not None and self.rescale_n <= 0:
+            self.rescale_n = self.njet + self.rescale_n
+        elif self.rescale_n is None:
+            self.rescale_n = 0
 
         if self.rescale_n > self.njet:
             print "Error: 'rescale_n' %d cannont be larger than 'njet' %d" % (self.rescale_n, self.njet)

@@ -184,7 +184,8 @@ double SelectorCommon::rescaler_ht(const double /*scale*/,
                                    const PseudoJetVector& jets)
 {
   double newscale = 0;
-  for (unsigned i=0; i<jets.size(); i++) {
+  const unsigned imax = rescale_n ? rescale_n : jets.size();
+  for (unsigned i=0; i<imax; i++) {
     newscale += jets[i].pt();
   }
   newscale *= 0.5*rescale_factor;
@@ -196,33 +197,9 @@ double SelectorCommon::rescaler_hthat(const double /*scale*/,
                                       const PseudoJetVector& /*jets*/)
 {
   double newscale = 0;
-  for (unsigned i=0; i<partons.size(); i++) {
+  const unsigned imax = rescale_n ? rescale_n : partons.size();
+  for (unsigned i=0; i<imax; i++) {
     newscale += partons[i].pt();
-  }
-  newscale *= 0.5*rescale_factor;
-  return newscale;
-}
-
-double SelectorCommon::rescaler_htn(const double /*scale*/,
-                                    const PseudoJetVector& /*partons*/,
-                                    const PseudoJetVector& jets)
-{
-  double newscale = 0;
-  for (unsigned i=0; i<rescale_n; i++) {
-    newscale += jets[i].pt();
-  }
-  newscale *= 0.5*rescale_factor;
-  return newscale;
-}
-
-double SelectorCommon::rescaler_htnhat(const double /*scale*/,
-                                       const PseudoJetVector& partons,
-                                       const PseudoJetVector& /*jets*/)
-{
-  double newscale = 0;
-  PseudoJetVector sortedpartons = fastjet::sorted_by_pt(partons);
-  for (unsigned i=0; i<rescale_n; i++) {
-    newscale += sortedpartons[i].pt();
   }
   newscale *= 0.5*rescale_factor;
   return newscale;
@@ -233,7 +210,8 @@ double SelectorCommon::rescaler_sumpt2(const double /*scale*/,
                                        const PseudoJetVector& jets)
 {
   double newscale = 0;
-  for (unsigned i=0; i<jets.size(); i++) {
+  const unsigned imax = rescale_n ? rescale_n : jets.size();
+  for (unsigned i=0; i<imax; i++) {
     newscale += jets[i].pt2();
   }
   newscale = sqrt(newscale);
@@ -246,7 +224,8 @@ double SelectorCommon::rescaler_sumpt2hat(const double /*scale*/,
                                           const PseudoJetVector& /*jets*/)
 {
   double newscale = 0;
-  for (unsigned i=0; i<partons.size(); i++) {
+  const unsigned imax = rescale_n ? rescale_n : partons.size();
+  for (unsigned i=0; i<imax; i++) {
     newscale += partons[i].pt2();
   }
   newscale = sqrt(newscale);
@@ -259,7 +238,8 @@ double SelectorCommon::rescaler_maaht(const double /*scale*/,
                                    const PseudoJetVector& jets)
 {
   double newscale = (input[0]+input[1]).m();
-  for (unsigned i=0; i<jets.size(); i++) {
+  const unsigned imax = rescale_n ? rescale_n : jets.size();
+  for (unsigned i=0; i<imax; i++) {
     newscale += jets[i].pt();
   }
   newscale *= 0.5*rescale_factor;
@@ -271,7 +251,8 @@ double SelectorCommon::rescaler_maahthat(const double /*scale*/,
                                       const PseudoJetVector& /*jets*/)
 {
   double newscale = (input[0]+input[1]).m();
-  for (unsigned i=2; i<input.size(); i++) {
+  const unsigned imax = rescale_n ? rescale_n : input.size();
+  for (unsigned i=0; i<imax; i++) {
     newscale += input[i].pt();
   }
   newscale *= 0.5*rescale_factor;
@@ -283,7 +264,8 @@ double SelectorCommon::rescaler_maa2sumpt2(const double /*scale*/,
                                        const PseudoJetVector& jets)
 {
   double newscale = (input[0]+input[1]).m2();
-  for (unsigned i=0; i<jets.size(); i++) {
+  const unsigned imax = rescale_n ? rescale_n : jets.size();
+  for (unsigned i=0; i<imax; i++) {
     newscale += jets[i].pt2();
   }
   newscale = sqrt(newscale);
@@ -296,7 +278,8 @@ double SelectorCommon::rescaler_maa2sumpt2hat(const double /*scale*/,
                                           const PseudoJetVector& /*jets*/)
 {
   double newscale = (input[0]+input[1]).m2();
-  for (unsigned i=0; i<input.size(); i++) {
+  const unsigned imax = rescale_n ? rescale_n : input.size();
+  for (unsigned i=0; i<imax; i++) {
     newscale += input[i].pt2();
   }
   newscale = sqrt(newscale);

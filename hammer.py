@@ -127,8 +127,10 @@ def process(params):
             selector.initAS(order, asMZ, mZ*mZ, qmass)
             selector.use_sherpa_alphas = True
 
+        if params.beta0fix is True:
+            params.beta0fix = 99
         if params.beta0fix:
-            selector.beta0fix = 99
+            selector.beta0fix = params.beta0fix
             print "WARNING! nonsense beta0 fix enabled with for m_oqcd = %d" % selector.beta0fix
 
     # call analysis module to initialize all settings
@@ -172,8 +174,8 @@ Reweight events
   -f, --frompdf             From PDF set "name.LHgrid:member"
   -t, --topdf               To PDF set "name.LHgrid:member"
 
-  -b, --beta0fix            Fix comix beta0 weight
-  -d, --debug               Use sherpa alphas
+  --beta0fix=true/[n]       Fix beta0 weight
+  --debug                   Use sherpa alphas
 
   --qfilter=inq:nq           Filter input by 'incoming quarks':'total quarks'
 
@@ -189,9 +191,9 @@ Other options:
 class Params:
     def __init__(self):
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:bdh",
+            opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:h",
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
-                                  "frompdf=", "topdf=", "beta0fix", "debug", "help",
+                                  "frompdf=", "topdf=", "beta0fix=", "debug", "help",
                                   "stat=", "rescaler=", "qfilter="])
         except getopt.GetoptError, err:
             print str(err)
@@ -233,9 +235,12 @@ class Params:
                 self.frompdf = oparg.replace('.LHgrid', '')
             elif op in ("-t", "--topdf"):
                 self.topdf = oparg.replace('.LHgrid', '')
-            elif op in ("-b", "--beta0fix"):
-                self.beta0fix = True
-            elif op in ("-d", "--debug"):
+            elif op in ("--beta0fix"):
+                try:
+                    self.beta0fix = int(oparg)
+                except:
+                    self.beta0fix = oparg.lower() in ['true', 'yes', 'on']
+            elif op in ("--debug"):
                 self.debug = True
             elif op in ("--qfilter"):
                 self.qfilter = oparg

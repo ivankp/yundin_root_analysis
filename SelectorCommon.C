@@ -327,11 +327,13 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   } else if (nuwgt == 2) {
     const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
 
-    if (beta0fix) {
+    if (beta0fix > 0) {
       usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
     }
 
-    weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2);
+    if (beta0fix >= 0) {
+      weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2);
+    }
   } else if (nuwgt == 18) {
     const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
     const double lf = log(scalefactor*scalefactor);  // log(mufnew^2/mufold^2)

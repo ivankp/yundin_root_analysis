@@ -167,6 +167,25 @@ double SelectorCommon::beta0pole2(int id1_, int id2_, int n_, const Int_t* kf_)
   return b0/pole2(id1_, id2_, n_, kf_);
 }
 
+double SelectorCommon::cdr2fdh(int id1_, int id2_, int n_, const Int_t* kf_)
+{
+  static const double CA = 3.;
+  static const double CF = 4./3.;
+
+  int nQ = 0;
+  int nG = 0;
+
+  for (int i=0; i<n_; i++) {
+    nG += int(kf_[i] == 21);
+    nQ += int(abs(kf_[i]) <= 6);
+  }
+  nG += int(id1_ == 21);
+  nQ += int(abs(id1_) <= 6);
+  nG += int(id2_ == 21);
+  nQ += int(abs(id2_) <= 6);
+
+  return nG*CA/3. + nQ*CF;
+}
 
 // ----------------------------------------------------------------------------
 // Various scale functions
@@ -334,6 +353,14 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     if (beta0fix >= 0) {
       weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2);
     }
+
+    if (pi2o12fix) {
+      weight += -M_PI*M_PI/12.*usr_wgts[1]*(new_fx1*new_fx2);
+    }
+
+    if (cdr2fdhfix >= 0) {
+      weight += -(cdr2fdhfix - cdr2fdh(id1, id2, nparticle, kf))*usr_wgts[1]/pole2(id1, id2, nparticle, kf)*(new_fx1*new_fx2);
+    }
   } else if (nuwgt == 18) {
     const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
     const double lf = log(scalefactor*scalefactor);  // log(mufnew^2/mufold^2)
@@ -374,6 +401,14 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2)
            + (w[0]*f1[0]/x1 + w[1]*f1[1]/x1 + w[2]*f1[2]/x1 + w[3]*f1[3]/x1)*new_fx2
            + (w[4]*f2[0]/x2 + w[5]*f2[1]/x2 + w[6]*f2[2]/x2 + w[7]*f2[3]/x2)*new_fx1;
+
+    if (pi2o12fix) {
+      weight += -M_PI*M_PI/12.*usr_wgts[1]*(new_fx1*new_fx2);
+    }
+
+    if (cdr2fdhfix >= 0) {
+      weight += -(cdr2fdhfix - cdr2fdh(id1, id2, nparticle, kf))*usr_wgts[1]/pole2(id1, id2, nparticle, kf)*(new_fx1*new_fx2);
+    }
   } else {
     std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
   }

@@ -128,7 +128,8 @@ class SelectorCommon : public TSelector
       analysis(0),
       rescale_factor(1.), rescale_n(0), rescaler(0),
       filter_inq(-1), filter_nq(-1),
-      use_sherpa_alphas(false), sherpa_alphas(0), beta0fix(0),
+      use_sherpa_alphas(false), sherpa_alphas(0),
+      beta0fix(0), cdr2fdhfix(-1), pi2o12fix(0),
       stat_step()
     { }
 
@@ -205,9 +206,10 @@ class SelectorCommon : public TSelector
     SHERPA::One_Running_AlphaS* sherpa_alphas;
 
     // beta0 workaround
-    int beta0fix;
+    int beta0fix, cdr2fdhfix, pi2o12fix;
     static double beta0pole2(int id1_, int id2_, int n_, const Int_t* kf_);
     static double pole2(int id1_, int id2_, int n_, const Int_t* kf_);
+    static double cdr2fdh(int id1_, int id2_, int n_, const Int_t* kf_);
 
     // eventoscope
     int stat_step;

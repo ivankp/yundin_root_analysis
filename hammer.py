@@ -133,6 +133,14 @@ def process(params):
             selector.beta0fix = params.beta0fix
             print "WARNING! nonsense beta0 fix enabled with for m_oqcd = %d" % selector.beta0fix
 
+        if params.pi2o12fix:
+            selector.pi2o12fix = params.pi2o12fix
+            print "WARNING! pi^2/12 factor included"
+
+        if params.cdr2fdhfix is not None:
+            selector.cdr2fdhfix = params.cdr2fdhfix
+            print "WARNING! CDR-DRED conversion factor included"
+
     # call analysis module to initialize all settings
     params.analysis_mod.initialize(params, selector)
 
@@ -193,7 +201,7 @@ class Params:
         try:
             opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:h",
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
-                                  "frompdf=", "topdf=", "beta0fix=", "debug", "help",
+                                  "frompdf=", "topdf=", "beta0fix=", "cdr2fdhfix=", "pi2o12fix", "debug", "help",
                                   "stat=", "rescaler=", "qfilter="])
         except getopt.GetoptError, err:
             print str(err)
@@ -209,6 +217,8 @@ class Params:
         self.frompdf = None
         self.topdf = None
         self.beta0fix = False
+        self.cdr2fdhfix = None
+        self.pi2o12fix = None
         self.debug = False
         self.qfilter = None
         self.stat = 0
@@ -240,6 +250,14 @@ class Params:
                     self.beta0fix = int(oparg)
                 except:
                     self.beta0fix = oparg.lower() in ['true', 'yes', 'on']
+            elif op in ("--cdr2fdhfix"):
+                try:
+                    self.cdr2fdhfix = int(oparg)
+                except:
+                    if oparg.lower() in ['true', 'yes', 'on']:
+                        self.cdr2fdhfix = 0
+            elif op in ("--pi2o12fix"):
+                self.pi2o12fix = True
             elif op in ("--debug"):
                 self.debug = True
             elif op in ("--qfilter"):

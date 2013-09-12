@@ -162,7 +162,11 @@ void LinearHistogram::bin(int nextevt, double x, double w)
 //       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
   if (x < x1 or x > x2) return;
   int n = static_cast<int>(nbin*(x-x1)/x12);
-  assert(0 <= n && n < nbin);
+//  assert(0 <= n && n < nbin);
+  if (n<0 or n>=nbin) {
+    std::cout << "WARN: " << name << " 0 <= " << n << " " << nbin << " x=" << x << " w=" << w << std::endl;
+    return;
+  }
   fill(nextevt, n, w);
 }
 

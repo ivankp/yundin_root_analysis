@@ -112,6 +112,7 @@ class DiPhotonAnalysis : public Analysis
     virtual bool check_cuts(SelectorCommon* event);
     virtual void analysis_bin(SelectorCommon* event);
 
+    double photon_R;
     double photon_pt1min;
     double photon_pt2min;
     double photon_etamax;

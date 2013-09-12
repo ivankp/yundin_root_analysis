@@ -344,12 +344,26 @@ bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
   if (input[0].delta_R(input[1]) < photon_photon_Rsep) {
     return false;
   }
+
+  PseudoJetVector obsjets;
+  for (unsigned i=0; i<jets.size(); i++) {
+    if (input[0].delta_R(jets[i]) > photon_R and
+        input[1].delta_R(jets[i]) > photon_R) {
+      obsjets.push_back(jets[i]);
+    }
+  }
+  jets.swap(obsjets);
+  if (jets.size() < jet_number) {
+    return false;
+  }
+
   for (unsigned i=0; i<jets.size(); i++) {
     if (input[0].delta_R(jets[i]) < photon_jet_Rsep or
         input[1].delta_R(jets[i]) < photon_jet_Rsep) {
       return false;
     }
   }
+
   return true;
 }
 

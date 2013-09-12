@@ -10,6 +10,7 @@ def initialize(params, selector):
     analysis.setAntiKt(0.5)
     analysis.jet_ptmin = 30
     analysis.jet_etamax = 4.7
+    analysis.photon_R = 0.4
     analysis.photon_pt1min = 40
     analysis.photon_pt2min = 25
     analysis.photon_etamax = 2.5

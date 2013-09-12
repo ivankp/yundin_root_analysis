@@ -251,8 +251,8 @@ double SelectorCommon::rescaler_maahthat(const double /*scale*/,
                                       const PseudoJetVector& /*jets*/)
 {
   double newscale = (input[0]+input[1]).m();
-  const unsigned imax = rescale_n ? rescale_n : input.size();
-  for (unsigned i=0; i<imax; i++) {
+  const unsigned imax = rescale_n ? 2+rescale_n : input.size();
+  for (unsigned i=2; i<imax; i++) {
     newscale += input[i].pt();
   }
   newscale *= 0.5*rescale_factor;
@@ -278,8 +278,8 @@ double SelectorCommon::rescaler_maa2sumpt2hat(const double /*scale*/,
                                           const PseudoJetVector& /*jets*/)
 {
   double newscale = (input[0]+input[1]).m2();
-  const unsigned imax = rescale_n ? rescale_n : input.size();
-  for (unsigned i=0; i<imax; i++) {
+  const unsigned imax = rescale_n ? 2+rescale_n : input.size();
+  for (unsigned i=2; i<imax; i++) {
     newscale += input[i].pt2();
   }
   newscale = sqrt(newscale);

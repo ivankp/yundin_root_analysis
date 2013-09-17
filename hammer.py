@@ -56,11 +56,14 @@ def process(params):
     # load libraries
     ROOT.gSystem.Load("libfastjet.so")
     ROOT.gSystem.Load("libLHAPDF.so")
+    ROOT.gSystem.Load("libAPPLgrid.so")
 
     # load macros
     ROOT.gROOT.LoadMacro("LHAPDF.h+")
     ROOT.gROOT.LoadMacro("SherpaAlphaS.C+")
     ROOT.gROOT.LoadMacro("SelectorCommon.C+")
+    ROOT.gROOT.LoadMacro("appl_grid.h+")
+    ROOT.gROOT.LoadMacro("ntuple_pdf.h+")
 
     # create a chain
     chain = ROOT.TChain("t3")

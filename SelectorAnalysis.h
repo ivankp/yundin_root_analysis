@@ -39,6 +39,8 @@ class Analysis
     std::vector<std::vector<Histogram*> > jet_pt_n;
     std::vector<std::vector<Histogram*> > jet_eta_n;
 
+    Grid* g_jet_inclusive;
+
     TString runname;
 
     virtual void reset();

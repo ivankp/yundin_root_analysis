@@ -24,9 +24,9 @@ def initialize(params, selector):
 
     # add histograms
     # set ptlimits explicitly
-    analysis.addPtLinearHistograms(params.output % "l64_l20", 64, minpt, maxpt)
+    analysis.addPtSmearedLinearHistograms(params.output % "l64_l20", 64, 0.5, minpt, maxpt)
     # eta limits are default to +-jet_etamax
-    analysis.addEtaLinearHistograms(params.output % "l64_l20", 20)
+    analysis.addEtaSmearedLinearHistograms(params.output % "l64_l20", 20, 0.5)
 
     # assign to selector
     selector.analysis = analysis

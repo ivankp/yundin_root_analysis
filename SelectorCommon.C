@@ -321,72 +321,82 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     scalefactor = (*this.*rescaler)(fac_scale, input, jets)/fac_scale;
   }
 
-  const int flav1 = pdg2lha(id1);
-  const int flav2 = pdg2lha(id2);
+  lhaid1 = pdg2lha(id1);
+  lhaid2 = pdg2lha(id2);
 
-  const double fx1 = LHAPDF::xfx(FROMPDF, x1, fac_scale, flav1)/x1;
-  const double fx2 = LHAPDF::xfx(FROMPDF, x2, fac_scale, flav2)/x2;
+  const double fx1 = LHAPDF::xfx(FROMPDF, x1, fac_scale, lhaid1)/x1;
+  const double fx2 = LHAPDF::xfx(FROMPDF, x2, fac_scale, lhaid2)/x2;
 
   const double calc_weight = me_wgt*(fx1*fx2);
   if (std::fabs((calc_weight - weight)/weight) > 1e-10 and nuwgt != 18) {  // this simple check does not work for I-part
     std::cout << "Check your FROMPDF! (" << id << ") " << calc_weight << " != " << weight << std::endl;
   }
+  if (alphasPower >= 0 && alphasPower != alphapower) {
+    std::cout << "Check your alpha power " << alphasPower << " != " << alphapower << std::endl;
+  }
 
-  const double new_fx1 = LHAPDF::xfx(TOPDF, x1, fac_scale*scalefactor, pdg2lha(id1))/x1;
-  const double new_fx2 = LHAPDF::xfx(TOPDF, x2, fac_scale*scalefactor, pdg2lha(id2))/x2;
+  // below new scales
+
+  fac_scale *= scalefactor;
+  ren_scale *= scalefactor;
+
+  const double log_r = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
+  const double log_f = log(scalefactor*scalefactor);  // log(mufnew^2/mufold^2)
+
+  LHAPDF::xfx(TOPDF, x1, fac_scale, pdfx1);
+  LHAPDF::xfx(TOPDF, x2, fac_scale, pdfx2);
+  const double new_fx1 = pdfx1[lhaid1+6]/x1;
+  const double new_fx2 = pdfx2[lhaid2+6]/x2;
 
   double alphafactor = 0;
   if (use_sherpa_alphas) {
-    alphafactor = sherpa_alphas->AlphaS(ren_scale*ren_scale*scalefactor*scalefactor)/alphas;
+    alphafactor = sherpa_alphas->AlphaS(ren_scale*ren_scale)/alphas;
   } else {
-    alphafactor = LHAPDF::alphasPDF(TOPDF, ren_scale*scalefactor)/alphas;
+    alphafactor = LHAPDF::alphasPDF(TOPDF, ren_scale)/alphas;
   }
   if (nuwgt == 0) {
     weight = me_wgt*(new_fx1*new_fx2);
   } else if (nuwgt == 2) {
-    const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
 
+    // pi^2 scheme conversion
+    if (pi2o12fix) {
+      me_wgt += -M_PI*M_PI/12.*usr_wgts[1];
+    }
+    // CDR to DRED conversion
+    if (cdr2fdhfix >= 0) {
+      me_wgt += -(cdr2fdhfix - cdr2fdh(id1, id2, nparticle, kf))*usr_wgts[1]/pole2(id1, id2, nparticle, kf);
+    }
+    // fix for wrong alpha power in old Sherpa ntuples
     if (beta0fix > 0) {
       usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
     }
 
     if (beta0fix >= 0) {
-      weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2);
+      me_wgt += usr_wgts[0]*log_r + 0.5*usr_wgts[1]*log_r*log_r;
     }
 
-    if (pi2o12fix) {
-      weight += -M_PI*M_PI/12.*usr_wgts[1]*(new_fx1*new_fx2);
-    }
-
-    if (cdr2fdhfix >= 0) {
-      weight += -(cdr2fdhfix - cdr2fdh(id1, id2, nparticle, kf))*usr_wgts[1]/pole2(id1, id2, nparticle, kf)*(new_fx1*new_fx2);
-    }
+    weight = me_wgt*(new_fx1*new_fx2);
   } else if (nuwgt == 18) {
-    const double lr = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
-    const double lf = log(scalefactor*scalefactor);  // log(mufnew^2/mufold^2)
     double w[8];
     for (int i=0; i<8; i++) {
-      w[i] = usr_wgts[2+i] + usr_wgts[10+i]*lf;
+      w[i] = usr_wgts[2+i] + usr_wgts[10+i]*log_f;
     }
-    double pdfx1[13]; LHAPDF::xfx(TOPDF, x1, fac_scale*scalefactor, pdfx1);
-    double pdfx2[13]; LHAPDF::xfx(TOPDF, x2, fac_scale*scalefactor, pdfx2);
-
-    double pdfx1p[13]; LHAPDF::xfx(TOPDF, x1/x1p, fac_scale*scalefactor, pdfx1p);
-    double pdfx2p[13]; LHAPDF::xfx(TOPDF, x2/x2p, fac_scale*scalefactor, pdfx2p);
+    double pdfx1p[13]; LHAPDF::xfx(TOPDF, x1/x1p, fac_scale, pdfx1p);
+    double pdfx2p[13]; LHAPDF::xfx(TOPDF, x2/x2p, fac_scale, pdfx2p);
 
     double f1[4];
     double f2[4];
 
     // no top pdf below
-    f1[0] = (flav1 != 0) ? pdfx1[6+flav1] : (  pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]
-                                             + pdfx1[1] + pdfx1[2] + pdfx1[3] + pdfx1[4] + pdfx1[5]);
-    f2[0] = (flav2 != 0) ? pdfx2[6+flav2] : (  pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]
-                                             + pdfx2[1] + pdfx2[2] + pdfx2[3] + pdfx2[4] + pdfx2[5]);
+    f1[0] = (lhaid1 != 0) ? pdfx1[6+lhaid1] : (  pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]
+                                               + pdfx1[1] + pdfx1[2] + pdfx1[3] + pdfx1[4] + pdfx1[5]);
+    f2[0] = (lhaid2 != 0) ? pdfx2[6+lhaid2] : (  pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]
+                                               + pdfx2[1] + pdfx2[2] + pdfx2[3] + pdfx2[4] + pdfx2[5]);
 
-    f1[1] = (flav1 != 0) ? pdfx1p[6+flav1] : (  pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]
-                                              + pdfx1p[1] + pdfx1p[2] + pdfx1p[3] + pdfx1p[4] + pdfx1p[5]);
-    f2[1] = (flav2 != 0) ? pdfx2p[6+flav2] : (  pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]
-                                              + pdfx2p[1] + pdfx2p[2] + pdfx2p[3] + pdfx2p[4] + pdfx2p[5]);
+    f1[1] = (lhaid1 != 0) ? pdfx1p[6+lhaid1] : (  pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]
+                                                + pdfx1p[1] + pdfx1p[2] + pdfx1p[3] + pdfx1p[4] + pdfx1p[5]);
+    f2[1] = (lhaid2 != 0) ? pdfx2p[6+lhaid2] : (  pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]
+                                                + pdfx2p[1] + pdfx2p[2] + pdfx2p[3] + pdfx2p[4] + pdfx2p[5]);
 
     f1[2] = pdfx1[6];
     f2[2] = pdfx2[6];
@@ -394,24 +404,30 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     f1[3] = pdfx1p[6];
     f2[3] = pdfx2p[6];
 
+    // pi^2 scheme conversion
+    if (pi2o12fix) {
+      me_wgt += -M_PI*M_PI/12.*usr_wgts[1];
+    }
+    // CDR to DRED conversion
+    if (cdr2fdhfix >= 0) {
+      me_wgt += -(cdr2fdhfix - cdr2fdh(id1, id2, nparticle, kf))*usr_wgts[1]/pole2(id1, id2, nparticle, kf);
+    }
+    // fix for wrong alpha power in old Sherpa ntuples
     if (beta0fix) {
       usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
     }
 
-    weight = (me_wgt  + usr_wgts[0]*lr + 0.5*usr_wgts[1]*lr*lr)*(new_fx1*new_fx2)
+    if (beta0fix >= 0) {
+      me_wgt += usr_wgts[0]*log_r + 0.5*usr_wgts[1]*log_r*log_r;
+    }
+    weight = me_wgt*(new_fx1*new_fx2)
            + (w[0]*f1[0]/x1 + w[1]*f1[1]/x1 + w[2]*f1[2]/x1 + w[3]*f1[3]/x1)*new_fx2
            + (w[4]*f2[0]/x2 + w[5]*f2[1]/x2 + w[6]*f2[2]/x2 + w[7]*f2[3]/x2)*new_fx1;
-
-    if (pi2o12fix) {
-      weight += -M_PI*M_PI/12.*usr_wgts[1]*(new_fx1*new_fx2);
-    }
-
-    if (cdr2fdhfix >= 0) {
-      weight += -(cdr2fdhfix - cdr2fdh(id1, id2, nparticle, kf))*usr_wgts[1]/pole2(id1, id2, nparticle, kf)*(new_fx1*new_fx2);
-    }
+    me_wgt = weight/(new_fx1*new_fx2);
   } else {
     std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
   }
+  naked_weight = me_wgt/pow(alphas/(2.*M_PI), alphapower);
   weight *= pow(alphafactor, alphapower);
 }
 

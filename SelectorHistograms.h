@@ -107,12 +107,73 @@ class SmearedQuadraticHistogram : public SmearedHistogram
     const double slope;
 };
 
+#include <appl_grid/appl_grid.h>
+#include "ntuple_pdf.h"
+
+struct GridOpts
+{
+  GridOpts(int qbin, double qlo, double qhi, int qord,
+           int xbin, double xlo, double xhi, int xord)
+    : Q2bins(qbin), Q2low(qlo), Q2high(qhi), Q2order(qord),
+      Xbins(xbin), Xlow(xlo), Xhigh(xhi), Xorder(xord)
+  { }
+
+  int Q2bins;
+  double Q2low, Q2high;
+  int Q2order;
+
+  int Xbins;
+  double  Xlow, Xhigh;
+  int Xorder;
+};
+
+class Grid
+{
+  public:
+    static double aparam;
+    static std::string pdf_function;
+    static ntuple_pdf* pdf_object;
+    static bool pdfWeight;
+
+    static int alphapower;
+    static int nloops;
+
+    static GridOpts def_opts;
+
+    static bool valid;
+    static void static_init();
+
+    static Grid* capture(Grid* p) { return p; }
+
+    Grid(const std::string& name);
+    Grid(const std::string& name,
+         const std::vector<double>& edges, const GridOpts& opts = Grid::def_opts);
+    void init();
+    ~Grid();
+
+    void fill(int id, int id1, int id2,
+              double x1, double x2, double Q2,
+              const double* fA, const double* fB,
+              double obs, double g_w, double h_w);
+
+    bool isWarmup() { return warmup; }
+    void setFilename(const std::string& filename_) { filename = filename_; }
+    void write(double count);
+
+    bool warmup;
+    appl::grid* m_grid;
+    std::string filename;
+    std::vector<double> weights;
+};
+
 #if defined(__MAKECINT__)
 #pragma link C++ class Histogram;
 #pragma link C++ class LinearHistogram;
 #pragma link C++ class QuadraticHistogram;
 #pragma link C++ class SmearedLinearHistogram;
 #pragma link C++ class SmearedQuadraticHistogram;
+#pragma link C++ class GridOpts;
+#pragma link C++ class Grid;
 #endif
 
 #endif // SELECTOR_HISTOGRAMS_H

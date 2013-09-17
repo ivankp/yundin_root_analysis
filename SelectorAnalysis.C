@@ -5,13 +5,14 @@
 
 Analysis::Analysis()
   : jet_number(0), jet_ptmin(0), jet_etamax(100),
-    jet_exclusive(0), jet_inclusive(0)
+    jet_exclusive(0), jet_inclusive(0), g_jet_inclusive(0)
 {
 }
 
 Analysis::~Analysis()
 {
   clear();
+  clear_var(g_jet_inclusive);
 }
 
 template <typename T>
@@ -205,6 +206,13 @@ void Analysis::analysis_bin(SelectorCommon* event)
   jet_exclusive->bin(id, jets.size(), weight);
   for (unsigned i=1; i<=jets.size(); i++) {
     jet_inclusive->bin(id, i, weight);
+    if (g_jet_inclusive) {
+      g_jet_inclusive->fill(id,
+                          event->lhaid1, event->lhaid2,
+                          event->x1, event->x2, event->fac_scale,
+                          event->pdfx1, event->pdfx2,
+                          i, event->naked_weight, weight);
+    }
   }
   for (unsigned i=0; i<jets.size(); i++) {
     assert(i<jet_pt_n.size());
@@ -224,7 +232,7 @@ void Analysis::analysis_finalize()
   for (it=outputfiles.begin(); it!=outputfiles.end(); ++it) {
     std::cout << "File: " << it->Data() << std::endl;
     std::ofstream outfile = std::ofstream(it->Data());
-    outfile.precision(7);
+    outfile.precision(10);
     outfile.setf(std::ios::scientific);
 
     output_histograms(*it, outfile);
@@ -237,6 +245,10 @@ void Analysis::output_histograms(const TString& filename, std::ofstream& stream)
 {
   jet_exclusive->print(stream, runname, event_count);
   jet_inclusive->print(stream, runname, event_count);
+
+  if (g_jet_inclusive) {
+    g_jet_inclusive->write(event_count);
+  }
 
   for (unsigned i=0; i<=jet_number; i++) {
     for (unsigned k=0; k<jet_pt_n[i].size(); k++) {

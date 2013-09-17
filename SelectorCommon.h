@@ -124,7 +124,7 @@ class SelectorCommon : public TSelector
     // -----------------------------------------------------------------------
 
     SelectorCommon(TTree * /*tree*/ =0)
-    : fChain(0), // ROOT
+    : fChain(0), alphasPower(-1), // ROOT
       analysis(0),
       rescale_factor(1.), rescale_n(0), rescaler(0),
       filter_inq(-1), filter_nq(-1),
@@ -191,6 +191,7 @@ class SelectorCommon : public TSelector
     RescalerType rescaler;
 
     int alphapower;
+    double naked_weight;
 
     // qfilter
     int filter_inq;
@@ -198,6 +199,9 @@ class SelectorCommon : public TSelector
 
     // pdf sets
     int FROMPDF, TOPDF;
+    int lhaid1, lhaid2;
+    double pdfx1[13];
+    double pdfx2[13];
 
     // alphas
     bool use_sherpa_alphas;

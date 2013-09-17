@@ -1,4 +1,18 @@
+#/usr/bin/env python
+
 import ROOT
+import numpy as np
+import os
+
+# helper
+def create_grid(name, edges):
+    if not os.path.exists(name):
+        obs = ROOT.std.vector('double')()
+        for ed in edges:
+            obs.push_back(ed)
+        return ROOT.Grid.capture(ROOT.Grid(name, obs))
+    else:
+        return ROOT.Grid.capture(ROOT.Grid(name))
 
 # main function which is called from hammer.py
 def initialize(params, selector):
@@ -16,6 +30,19 @@ def initialize(params, selector):
     analysis.photon_etamax = 2.5
     analysis.photon_jet_Rsep = 0.5
     analysis.photon_photon_Rsep = 0.45
+
+    # grids
+    ROOT.Grid.def_opts = ROOT.GridOpts(50, 20**2, 4000**2, 5,
+                                       50, 1e-8, 1., 5)
+    ROOT.Grid.alphapower = selector.alphapower
+    ROOT.Grid.nloops = 0
+    ROOT.Grid.pdf_function = "ntupleall" #"ntuplephjets" # basic
+
+    obs = (lambda n: np.linspace(-0.5, n+0.5, n+2))(params.njet+1)
+    filename = (params.output % 'incl') + '.root'
+    analysis.g_jet_inclusive = create_grid(filename, obs)
+    if not analysis.g_jet_inclusive.isWarmup():
+        analysis.g_jet_inclusive.setFilename(filename.replace('.root', '-o.root'))
 
     # if more than 3 jets, extra jets use the last defined value (here 800)
     maxpt = ROOT.std.vector('double')()

@@ -331,8 +331,14 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   if (std::fabs((calc_weight - weight)/weight) > 1e-10 and nuwgt != 18) {  // this simple check does not work for I-part
     std::cout << "Check your FROMPDF! (" << id << ") " << calc_weight << " != " << weight << std::endl;
   }
-  if (alphasPower >= 0 && alphasPower != alphapower) {
-    std::cout << "Check your alpha power " << alphasPower << " != " << alphapower << std::endl;
+
+  if (alphasPower >= 0) {
+    event_alphapower = int(alphasPower);
+  } else {
+    event_alphapower = born_alphapower;
+  }
+  if (event_order() < 0 or event_order() > 1) {
+    std::cout << "Check your alpha power " << int(alphasPower) << " != " << born_alphapower << std::endl;
   }
 
   // below new scales
@@ -368,7 +374,7 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     }
     // fix for wrong alpha power in old Sherpa ntuples
     if (beta0fix > 0) {
-      usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
+      usr_wgts[0] -= (beta0fix - (event_alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
     }
 
     if (beta0fix >= 0) {
@@ -414,7 +420,7 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     }
     // fix for wrong alpha power in old Sherpa ntuples
     if (beta0fix) {
-      usr_wgts[0] -= (beta0fix - (alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
+      usr_wgts[0] -= (beta0fix - (event_alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
     }
 
     if (beta0fix >= 0) {
@@ -427,8 +433,8 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   } else {
     std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
   }
-  naked_weight = me_wgt/pow(alphas/(2.*M_PI), alphapower);
-  weight *= pow(alphafactor, alphapower);
+  naked_weight = me_wgt/pow(alphas/(2.*M_PI), event_alphapower);
+  weight *= pow(alphafactor, event_alphapower);
 }
 
 void SelectorCommon::initAS(const int order, const double asMZ, const double mZ2,

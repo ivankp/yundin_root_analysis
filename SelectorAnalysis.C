@@ -211,7 +211,7 @@ void Analysis::analysis_bin(SelectorCommon* event)
                           event->lhaid1, event->lhaid2,
                           event->x1, event->x2, event->fac_scale,
                           event->pdfx1, event->pdfx2,
-                          i, event->naked_weight, weight);
+                          i, event->naked_weight, weight, event->event_order());
     }
   }
   for (unsigned i=0; i<jets.size(); i++) {

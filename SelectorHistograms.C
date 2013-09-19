@@ -243,7 +243,7 @@ double Grid::aparam = 5.;
 std::string Grid::pdf_function = "ntuplejets";
 ntuple_pdf* Grid::pdf_object = 0;
 bool Grid::pdfWeight = false;
-int Grid::alphapower = 0;
+int Grid::born_alphapower = 0;
 int Grid::nloops = 0;
 
 GridOpts Grid::def_opts = GridOpts(50, 0., 16e6, 5,
@@ -302,7 +302,7 @@ Grid::Grid(const std::string& name,
   m_grid = new appl::grid(edges,
                           opts.Q2bins, opts.Q2low, opts.Q2high, opts.Q2order,
                           opts.Xbins, opts.Xlow, opts.Xhigh, opts.Xorder,
-                          pdf_function, alphapower, nloops);
+                          pdf_function, born_alphapower, nloops);
   m_grid->reweight(pdfWeight);
 }
 
@@ -323,15 +323,14 @@ void Grid::init()
 void Grid::fill(int id, int id1, int id2,
                 double x1, double x2, double Q,
                 const double* fA, const double* fB,
-                double obs, double g_w, double h_w)
+                double obs, double g_w, double h_w, int order)
 {
   if (not warmup) {
     const int ch = pdf_object->channel(id1, id2);
     weights.assign(weights.size(), 0.);
     weights[ch] = pdf_object->reweight(g_w, ch, id1, id2, fA, fB);
   }
-
-  m_grid->fill_grid(x1, x2, Q*Q, obs, weights.data(), nloops);
+  m_grid->fill_grid(x1, x2, Q*Q, obs, weights.data(), order);
 
   double binwidth = m_grid->deltaobs(m_grid->obsbin(obs));
   m_grid->getReference()->Fill(obs, h_w/binwidth);

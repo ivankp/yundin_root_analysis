@@ -190,8 +190,10 @@ class SelectorCommon : public TSelector
     unsigned rescale_n;
     RescalerType rescaler;
 
-    int alphapower;
+    int born_alphapower;
+    int event_alphapower;
     double naked_weight;
+    int event_order() { return event_alphapower - born_alphapower; }
 
     // qfilter
     int filter_inq;

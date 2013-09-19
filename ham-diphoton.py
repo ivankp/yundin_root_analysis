@@ -32,11 +32,12 @@ def initialize(params, selector):
     analysis.photon_photon_Rsep = 0.45
 
     # grids
+    ROOT.Grid.aparam = 5.
     ROOT.Grid.def_opts = ROOT.GridOpts(50, 20**2, 4000**2, 5,
                                        50, 1e-8, 1., 5)
-    ROOT.Grid.alphapower = selector.alphapower
+    ROOT.Grid.born_alphapower = selector.born_alphapower
     ROOT.Grid.nloops = 0
-    ROOT.Grid.pdf_function = "ntupleall" #"ntuplephjets" # basic
+    ROOT.Grid.pdf_function = "ntuplephjets" # basic
 
     obs = (lambda n: np.linspace(-0.5, n+0.5, n+2))(params.njet+1)
     filename = (params.output % 'incl') + '.root'

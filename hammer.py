@@ -76,14 +76,14 @@ def process(params):
     selector.FROMPDF = 0
     selector.TOPDF = 0
     selector.rescale_factor = 1
-    selector.alphapower = 0
+    selector.born_alphapower = 0
     if params.qfilter:
         selector.filter_inq = params.qfilter[0]
         selector.filter_nq = params.qfilter[1]
     if params.frompdf is not None:
         ROOT.LHAPDF.setVerbosity(0)  # comment out for more output
 
-        selector.alphapower = params.power
+        selector.born_alphapower = params.power
         selector.rescale_factor = params.scale
 
         # scale change
@@ -104,7 +104,7 @@ def process(params):
             ROOT.LHAPDF.initPDFSet(selector.TOPDF, pdf,  ROOT.LHAPDF.LHGRID, int(m))
 
         print "Scale: '%s (%d)' x %f, AlphaPow %d" % (params.rescaler, selector.rescale_n,
-                                                      selector.rescale_factor, selector.alphapower)
+                                                      selector.rescale_factor, selector.born_alphapower)
         print "------------- FROMPDF %d - %s (Nf=%d) ---------------" % (selector.FROMPDF, params.frompdf, ROOT.LHAPDF.getNf(selector.FROMPDF))
         print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
         print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])

@@ -158,12 +158,8 @@ class ntuplephjets_pdf : public ntuple_pdf
 
       double pdfDdd = 0;
       double pdfDuu = 0;
-      double pdfDdu = 0;
-      double pdfDud = 0;
       double pdfDddx = 0;
       double pdfDuux = 0;
-      double pdfDdux = 0;
-      double pdfDudx = 0;
 
       for (int i=1; i<=6; i+=2) {
         const int id = i;
@@ -178,12 +174,8 @@ class ntuplephjets_pdf : public ntuple_pdf
         pdfQ2ux += fB[-iu];
         pdfDdd += fA[id]*fB[id] + fA[-id]*fB[-id];
         pdfDuu += fA[iu]*fB[iu] + fA[-iu]*fB[-iu];
-        pdfDdu += fA[id]*fB[iu] + fA[-id]*fB[-iu];
-        pdfDud += fA[iu]*fB[id] + fA[-iu]*fB[-id];
         pdfDddx += fA[id]*fB[-id] + fA[-id]*fB[id];
         pdfDuux += fA[iu]*fB[-iu] + fA[-iu]*fB[iu];
-        pdfDdux += fA[id]*fB[-iu] + fA[-id]*fB[iu];
-        pdfDudx += fA[iu]*fB[-id] + fA[-iu]*fB[id];
       }
 
       H[chGG] = pdfG1*pdfG2;
@@ -193,16 +185,16 @@ class ntuplephjets_pdf : public ntuple_pdf
       H[chGQu] = pdfG1*(pdfQ2u + pdfQ2ux);
       H[chQdRd] = pdfQ1d*pdfQ2d + pdfQ1dx*pdfQ2dx - pdfDdd;
       H[chQuRu] = pdfQ1u*pdfQ2u + pdfQ1ux*pdfQ2ux - pdfDuu;
-      H[chQdRu] = pdfQ1d*pdfQ2u + pdfQ1dx*pdfQ2ux - pdfDdu;
-      H[chQuRd] = pdfQ1u*pdfQ2d + pdfQ1ux*pdfQ2dx - pdfDud;
+      H[chQdRu] = pdfQ1d*pdfQ2u + pdfQ1dx*pdfQ2ux;
+      H[chQuRd] = pdfQ1u*pdfQ2d + pdfQ1ux*pdfQ2dx;
       H[chQdQd] = pdfDdd;
       H[chQuQu] = pdfDuu;
       H[chQdQdx] = pdfDddx;
       H[chQuQux] = pdfDuux;
       H[chQdRdx] = pdfQ1d*pdfQ2dx + pdfQ1dx*pdfQ2d - pdfDddx;
       H[chQuRux] = pdfQ1u*pdfQ2ux + pdfQ1ux*pdfQ2u - pdfDuux;
-      H[chQdRux] = pdfQ1d*pdfQ2ux + pdfQ1dx*pdfQ2u - pdfDdux;
-      H[chQuRdx] = pdfQ1u*pdfQ2dx + pdfQ1ux*pdfQ2d - pdfDudx;
+      H[chQdRux] = pdfQ1d*pdfQ2ux + pdfQ1dx*pdfQ2u;
+      H[chQuRdx] = pdfQ1u*pdfQ2dx + pdfQ1ux*pdfQ2d;
     }
 
     int channel(int id1, int id2)

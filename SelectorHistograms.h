@@ -135,7 +135,7 @@ class Grid
     static ntuple_pdf* pdf_object;
     static bool pdfWeight;
 
-    static int alphapower;
+    static int born_alphapower;
     static int nloops;
 
     static GridOpts def_opts;
@@ -154,7 +154,7 @@ class Grid
     void fill(int id, int id1, int id2,
               double x1, double x2, double Q2,
               const double* fA, const double* fB,
-              double obs, double g_w, double h_w);
+              double obs, double g_w, double h_w, int order);
 
     bool isWarmup() { return warmup; }
     void setFilename(const std::string& filename_) { filename = filename_; }

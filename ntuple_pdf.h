@@ -38,6 +38,8 @@ class ntuplejets_pdf : public ntuple_pdf
       TOT_CHANNELS
     };
 
+    static const int FLAV = 5;
+
     void evaluate(const double* fA, const double* fB, double* H)
     {
       fA += 6;
@@ -54,7 +56,7 @@ class ntuplejets_pdf : public ntuple_pdf
       double pdfD = 0;
       double pdfDx = 0;
 
-      for (int i=1; i<=5; i++) {
+      for (int i=1; i<=FLAV; i++) {
         pdfQ1 += fA[i];
         pdfQ1x += fA[-i];
         pdfQ2 += fB[i];
@@ -105,7 +107,69 @@ class ntuplejets_pdf : public ntuple_pdf
     double reweight(double w, int ch, int id1, int id2,
                     const double* fA, const double* fB)
     {
-      return w;
+      fA += 6;
+      fB += 6;
+      double factor = fA[id1]*fB[id2];
+
+      double pdfQ1 = 0;
+      double pdfQ1x = 0;
+      double pdfQ2 = 0;
+      double pdfQ2x = 0;
+      double pdfD = 0;
+      double pdfDx = 0;
+
+      switch (ch) {
+        case chGG:
+          factor = 1.;
+          break;
+        case chQG:
+          for (int i=1; i<=FLAV; i++) {
+            pdfQ1 += fA[i];
+            pdfQ1x += fA[-i];
+          }
+          factor /= (pdfQ1 + pdfQ1x)*fB[0];
+          break;
+        case chGQ:
+          for (int i=1; i<=FLAV; i++) {
+            pdfQ2 += fB[i];
+            pdfQ2x += fB[-i];
+          }
+          factor /= fA[0]*(pdfQ2 + pdfQ2x);
+          break;
+        case chQR:
+          for (int i=1; i<=FLAV; i++) {
+            pdfQ1 += fA[i];
+            pdfQ1x += fA[-i];
+            pdfQ2 += fB[i];
+            pdfQ2x += fB[-i];
+            pdfD += fA[i]*fB[i] + fA[-i]*fB[-i];
+          }
+          factor /= (pdfQ1*pdfQ2 + pdfQ1x*pdfQ2x - pdfD);
+          break;
+        case chQQ:
+          for (int i=1; i<=FLAV; i++) {
+            pdfD += fA[i]*fB[i] + fA[-i]*fB[-i];
+          }
+          factor /= pdfD;
+          break;
+        case chQQx:
+          for (int i=1; i<=FLAV; i++) {
+            pdfDx += fA[-i]*fB[i] + fA[i]*fB[-i];
+          }
+          factor /= pdfDx;
+          break;
+        case chQRx:
+          for (int i=1; i<=FLAV; i++) {
+            pdfQ1 += fA[i];
+            pdfQ1x += fA[-i];
+            pdfQ2 += fB[i];
+            pdfQ2x += fB[-i];
+            pdfDx += fA[-i]*fB[i] + fA[i]*fB[-i];
+          }
+          factor /= (pdfQ1*pdfQ2x + pdfQ1x*pdfQ2 - pdfDx);
+          break;
+      }
+      return w*factor;
     }
 };
 
@@ -139,6 +203,8 @@ class ntuplephjets_pdf : public ntuple_pdf
       TOT_CHANNELS
     };
 
+    static const int FLAV = 5;
+
     void evaluate(const double* fA, const double* fB, double* H)
     {
       fA += 6;
@@ -161,7 +227,7 @@ class ntuplephjets_pdf : public ntuple_pdf
       double pdfDddx = 0;
       double pdfDuux = 0;
 
-      for (int i=1; i<=6; i+=2) {
+      for (int i=1; i<=FLAV; i+=2) {
         const int id = i;
         const int iu = i+1;
         pdfQ1d += fA[id];
@@ -344,8 +410,11 @@ class ntupleall_pdf : public ntuple_pdf
     ntupleall_pdf()
       : ntuple_pdf("ntupleall")
     {
-      m_Nproc = 121;
+      m_Nproc = TOT_CHANNELS;
     }
+
+    static const int FLAV = 5;
+    static const int TOT_CHANNELS = (1+2*FLAV)*(1+2*FLAV);
 
     void evaluate(const double* fA, const double* fB, double* H)
     {
@@ -353,8 +422,8 @@ class ntupleall_pdf : public ntuple_pdf
       fB += 6;
 
       int h = 0;
-      for (int ia=-5; ia<=5; ia++) {
-        for (int ib=-5; ib<=5; ib++) {
+      for (int ia=-FLAV; ia<=FLAV; ia++) {
+        for (int ib=-FLAV; ib<=FLAV; ib++) {
           H[h++] = fA[ia]*fB[ib];
         }
       }
@@ -365,7 +434,7 @@ class ntupleall_pdf : public ntuple_pdf
       id1 = id1 == 21 ? 0. : id1;
       id2 = id2 == 21 ? 0. : id2;
 
-      return 11*(id1 + 5) + (id2 + 5);
+      return (1+2*FLAV)*(id1 + FLAV) + (id2 + FLAV);
     }
 
     double reweight(double w, int ch, int id1, int id2,

@@ -435,6 +435,36 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   }
   naked_weight = me_wgt/pow(alphas/(2.*M_PI), event_alphapower);
   weight *= pow(alphafactor, event_alphapower);
+
+  statUpdate();
+}
+
+void SelectorCommon::statUpdate()
+{
+  if (ren_scale < stat_Q2_min) {
+    stat_Q2_min = ren_scale;
+  } else if (ren_scale > stat_Q2_max) {
+    stat_Q2_max = ren_scale;
+  }
+
+  if (x1 < stat_x1_min) {
+    stat_x1_min = x1;
+  } else if (x1 > stat_x1_max) {
+    stat_x1_max = x1;
+  }
+
+  if (x2 < stat_x2_min) {
+    stat_x2_min = x2;
+  } else if (x2 > stat_x2_max) {
+    stat_x2_max = x2;
+  }
+}
+
+void SelectorCommon::statReport()
+{
+  std::cout << "STAT Q2 in [" << stat_Q2_min << ", " << stat_Q2_max << "]\n";
+  std::cout << "STAT x1 in [" << stat_x1_min << ", " << stat_x1_max << "]\n";
+  std::cout << "STAT x2 in [" << stat_x2_min << ", " << stat_x2_max << "]\n";
 }
 
 void SelectorCommon::initAS(const int order, const double asMZ, const double mZ2,

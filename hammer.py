@@ -149,6 +149,7 @@ def process(params):
 
     selector.stat_step = params.stat
     chain.Process(selector)
+    selector.statReport()
 
     if selector.stat_step:
         import matplotlib.pyplot as plt
@@ -170,6 +171,7 @@ def process(params):
         axs.plot(xval, np.array(yval)+np.array(yerr), c='r')
         axs.plot(xval, np.array(yval)-np.array(yerr), c='b')
         plt.show()
+
 
 def usage():
     print """\

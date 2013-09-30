@@ -130,6 +130,9 @@ class SelectorCommon : public TSelector
       filter_inq(-1), filter_nq(-1),
       use_sherpa_alphas(false), sherpa_alphas(0),
       beta0fix(0), cdr2fdhfix(-1), pi2o12fix(0),
+      stat_Q2_min(1e100), stat_Q2_max(0.),
+      stat_x1_min(1e100), stat_x1_max(0.),
+      stat_x2_min(1e100), stat_x2_max(0.),
       stat_step()
     { }
 
@@ -217,6 +220,12 @@ class SelectorCommon : public TSelector
     static double pole2(int id1_, int id2_, int n_, const Int_t* kf_);
     static double cdr2fdh(int id1_, int id2_, int n_, const Int_t* kf_);
 
+    // Q2, x1, x2 stats
+    void statReport();
+    double stat_Q2_min, stat_Q2_max;
+    double stat_x1_min, stat_x1_max;
+    double stat_x2_min, stat_x2_max;
+
     // eventoscope
     int stat_step;
     double xsval_cur, xserr_cur;
@@ -226,6 +235,7 @@ class SelectorCommon : public TSelector
   protected:
     void reweight(const PseudoJetVector& input,
                   const PseudoJetVector& jets);
+    void statUpdate();
 };
 
 #if defined(__MAKECINT__)

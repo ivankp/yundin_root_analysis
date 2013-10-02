@@ -196,6 +196,88 @@ bool Analysis::check_cuts(SelectorCommon* event)
   return jets.size() >= jet_number;
 }
 
+void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event)
+{
+  static const int lhaids[] = {5,-5,4,-4,3,-3,2,-2,1,-1};
+
+  if (grid) {
+    grid->fill(nextevt,
+               event->lhaid1, event->lhaid2,
+               event->x1, event->x2, event->fac_scale,
+               event->pdfx1, event->pdfx2,
+               x, event->naked_weight, w, event->event_order());
+    if (event->coll_weights_count == 8) { // I-part, bin collinear CTs separately
+      const int id1 = event->lhaid1;
+      const int id2 = event->lhaid2;
+      const double x1 = event->x1;
+      const double x2 = event->x2;
+      const double x1r = event->x1r;
+      const double x2r = event->x2r;
+      const double fac_scale = event->fac_scale;
+      const double* pdfx1 = event->pdfx1;
+      const double* pdfx2 = event->pdfx2;
+      const double* pdfx1p = event->pdfx1p;
+      const double* pdfx2p = event->pdfx2p;
+      const int order = event->event_order();
+      // f1q
+      // f1qx
+      if (id1 != 0) {
+        grid->fill(nextevt, id1, id2, x1, x2, fac_scale, pdfx1, pdfx2,
+                   x, event->coll_weights[0], 0, order);
+        grid->fill(nextevt, id1, id2, x1r, x2, fac_scale, pdfx1p, pdfx2,
+                   x, event->coll_weights[1], 0, order);
+      } else {
+        if (event->coll_weights[0] != 0.) {
+          for (int i=0; i<10; i++) {
+            grid->fill(nextevt, lhaids[i], id2, x1, x2, fac_scale, pdfx1, pdfx2,
+                       x, event->coll_weights[0], 0, order);
+          }
+        }
+        if (event->coll_weights[1] != 0.) {
+          for (int i=0; i<10; i++) {
+            grid->fill(nextevt, lhaids[i], id2, x1r, x2, fac_scale, pdfx1p, pdfx2,
+                       x, event->coll_weights[1], 0, order);
+          }
+        }
+      }
+      // f1g
+      grid->fill(nextevt, 0, id2, x1, x2, fac_scale, pdfx1, pdfx2,
+                 x, event->coll_weights[2], 0, order);
+      // f1gx
+      grid->fill(nextevt, 0, id2, x1r, x2, fac_scale, pdfx1p, pdfx2,
+                 x, event->coll_weights[3], 0, order);
+      // f2q
+      // f2qx
+      if (id2 != 0) {
+        grid->fill(nextevt, id1, id2, x1, x2, fac_scale, pdfx1, pdfx2,
+                   x, event->coll_weights[4+0], 0, order);
+        grid->fill(nextevt, id1, id2, x1, x2r, fac_scale, pdfx1, pdfx2p,
+                   x, event->coll_weights[4+1], 0, order);
+      } else {
+        if (event->coll_weights[4+0] != 0.) {
+          for (int i=0; i<10; i++) {
+            grid->fill(nextevt, id1, lhaids[i], x1, x2, fac_scale, pdfx1, pdfx2,
+                       x, event->coll_weights[4+0], 0, order);
+          }
+        }
+        if (event->coll_weights[4+1] != 0.) {
+          for (int i=0; i<10; i++) {
+            grid->fill(nextevt, id1, lhaids[i], x1, x2r, fac_scale, pdfx1, pdfx2p,
+                       x, event->coll_weights[4+1], 0, order);
+          }
+        }
+      }
+      // f2g
+      grid->fill(nextevt, id1, 0, x1, x2, fac_scale, pdfx1, pdfx2,
+                 x, event->coll_weights[4+2], 0, order);
+      // f2gx
+      grid->fill(nextevt, id1, 0, x1, x2r, fac_scale, pdfx1, pdfx2p,
+                 x, event->coll_weights[4+3], 0, order);
+    }
+  }
+}
+
+
 void Analysis::analysis_bin(SelectorCommon* event)
 {
   const Int_t id = event->id;
@@ -206,13 +288,7 @@ void Analysis::analysis_bin(SelectorCommon* event)
   jet_exclusive->bin(id, jets.size(), weight);
   for (unsigned i=1; i<=jets.size(); i++) {
     jet_inclusive->bin(id, i, weight);
-    if (g_jet_inclusive) {
-      g_jet_inclusive->fill(id,
-                          event->lhaid1, event->lhaid2,
-                          event->x1, event->x2, event->fac_scale,
-                          event->pdfx1, event->pdfx2,
-                          i, event->naked_weight, weight, event->event_order());
-    }
+    fill_grid(g_jet_inclusive, id, i, weight, event);
   }
   for (unsigned i=0; i<jets.size(); i++) {
     assert(i<jet_pt_n.size());

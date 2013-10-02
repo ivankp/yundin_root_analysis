@@ -74,6 +74,8 @@ class Analysis
     virtual void output_histograms(const TString& filename, std::ofstream& stream);
     virtual void clear();
 
+    void fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event);
+
     template <typename T>
     void addPtHistograms(TString filename, int nbins,
                           double param1, double param2, double param3,

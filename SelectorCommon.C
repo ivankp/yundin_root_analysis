@@ -360,6 +360,7 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   } else {
     alphafactor = LHAPDF::alphasPDF(TOPDF, ren_scale)/alphas;
   }
+  coll_weights_count = 0;
   if (nuwgt == 0) {
     weight = me_wgt*(new_fx1*new_fx2);
   } else if (nuwgt == 2) {
@@ -383,32 +384,42 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
 
     weight = me_wgt*(new_fx1*new_fx2);
   } else if (nuwgt == 18) {
-    double w[8];
+    coll_weights_count = 8;
     for (int i=0; i<8; i++) {
-      w[i] = usr_wgts[2+i] + usr_wgts[10+i]*log_f;
+      coll_weights[i] = usr_wgts[2+i] + usr_wgts[10+i]*log_f;
     }
-    double pdfx1p[13]; LHAPDF::xfx(TOPDF, x1/x1p, fac_scale, pdfx1p);
-    double pdfx2p[13]; LHAPDF::xfx(TOPDF, x2/x2p, fac_scale, pdfx2p);
 
-    double f1[4];
-    double f2[4];
+    coll_weights[1] /= x1p;
+    coll_weights[3] /= x1p;
+    coll_weights[5] /= x2p;
+    coll_weights[7] /= x2p;
+
+    x1r = x1/x1p;
+    x2r = x2/x2p;
+
+    LHAPDF::xfx(TOPDF, x1r, fac_scale, pdfx1p);
+    LHAPDF::xfx(TOPDF, x2r, fac_scale, pdfx2p);
 
     // no top pdf below
-    f1[0] = (lhaid1 != 0) ? pdfx1[6+lhaid1] : (  pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]
-                                               + pdfx1[1] + pdfx1[2] + pdfx1[3] + pdfx1[4] + pdfx1[5]);
-    f2[0] = (lhaid2 != 0) ? pdfx2[6+lhaid2] : (  pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]
-                                               + pdfx2[1] + pdfx2[2] + pdfx2[3] + pdfx2[4] + pdfx2[5]);
+    pdf_f1[0] = (lhaid1 != 0) ? pdfx1[6+lhaid1]/x1 :
+                              ( pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]
+                              + pdfx1[1] + pdfx1[2] + pdfx1[3] + pdfx1[4]  + pdfx1[5])/x1;
+    pdf_f2[0] = (lhaid2 != 0) ? pdfx2[6+lhaid2]/x2 :
+                              ( pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]
+                              + pdfx2[1] + pdfx2[2] + pdfx2[3] + pdfx2[4]  + pdfx2[5])/x2;
 
-    f1[1] = (lhaid1 != 0) ? pdfx1p[6+lhaid1] : (  pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]
-                                                + pdfx1p[1] + pdfx1p[2] + pdfx1p[3] + pdfx1p[4] + pdfx1p[5]);
-    f2[1] = (lhaid2 != 0) ? pdfx2p[6+lhaid2] : (  pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]
-                                                + pdfx2p[1] + pdfx2p[2] + pdfx2p[3] + pdfx2p[4] + pdfx2p[5]);
+    pdf_f1[1] = (lhaid1 != 0) ? pdfx1p[6+lhaid1]/x1r :
+                              ( pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]
+                              + pdfx1p[1] + pdfx1p[2] + pdfx1p[3] + pdfx1p[4]  + pdfx1p[5])/x1r;
+    pdf_f2[1] = (lhaid2 != 0) ? pdfx2p[6+lhaid2]/x2r :
+                              ( pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]
+                              + pdfx2p[1] + pdfx2p[2] + pdfx2p[3] + pdfx2p[4]  + pdfx2p[5])/x2r;
 
-    f1[2] = pdfx1[6];
-    f2[2] = pdfx2[6];
+    pdf_f1[2] = pdfx1[6]/x1;
+    pdf_f2[2] = pdfx2[6]/x2;
 
-    f1[3] = pdfx1p[6];
-    f2[3] = pdfx2p[6];
+    pdf_f1[3] = pdfx1p[6]/x1r;
+    pdf_f2[3] = pdfx2p[6]/x2r;
 
     // pi^2 scheme conversion
     if (pi2o12fix) {
@@ -427,13 +438,18 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
       me_wgt += usr_wgts[0]*log_r + 0.5*usr_wgts[1]*log_r*log_r;
     }
     weight = me_wgt*(new_fx1*new_fx2)
-           + (w[0]*f1[0]/x1 + w[1]*f1[1]/x1 + w[2]*f1[2]/x1 + w[3]*f1[3]/x1)*new_fx2
-           + (w[4]*f2[0]/x2 + w[5]*f2[1]/x2 + w[6]*f2[2]/x2 + w[7]*f2[3]/x2)*new_fx1;
-    me_wgt = weight/(new_fx1*new_fx2);
+           + (coll_weights[0]*pdf_f1[0] + coll_weights[1]*pdf_f1[1] +
+              coll_weights[2]*pdf_f1[2] + coll_weights[3]*pdf_f1[3])*new_fx2
+           + (coll_weights[4]*pdf_f2[0] + coll_weights[5]*pdf_f2[1] +
+              coll_weights[6]*pdf_f2[2] + coll_weights[7]*pdf_f2[3])*new_fx1;
   } else {
     std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
   }
-  naked_weight = me_wgt/pow(alphas/(2.*M_PI), event_alphapower);
+  const double appl_alphas = pow(alphas/(2.*M_PI), event_alphapower);
+  for (int i=0; i<coll_weights_count; i++) {
+    coll_weights[i] /= appl_alphas;
+  }
+  naked_weight = me_wgt/appl_alphas;
   weight *= pow(alphafactor, event_alphapower);
 
   statUpdate();

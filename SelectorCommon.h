@@ -195,6 +195,10 @@ class SelectorCommon : public TSelector
 
     int born_alphapower;
     int event_alphapower;
+    int coll_weights_count;
+    double coll_weights[8];
+    double pdf_f1[4];
+    double pdf_f2[4];
     double naked_weight;
     int event_order() { return event_alphapower - born_alphapower; }
 
@@ -205,8 +209,11 @@ class SelectorCommon : public TSelector
     // pdf sets
     int FROMPDF, TOPDF;
     int lhaid1, lhaid2;
+    double x1r, x2r;
     double pdfx1[13];
     double pdfx2[13];
+    double pdfx1p[13];
+    double pdfx2p[13];
 
     // alphas
     bool use_sherpa_alphas;

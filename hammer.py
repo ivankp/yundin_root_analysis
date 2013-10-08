@@ -305,7 +305,7 @@ class Params:
             usage()
             sys.exit(2)
 
-        if self.rescaler not in ['simple', 'ht', 'hthat',
+        if self.rescaler not in ['simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat',
                                  'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat']:
             print "Unknown value for rescaler: %s" % self.rescaler
             usage()

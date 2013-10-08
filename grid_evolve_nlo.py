@@ -18,6 +18,25 @@ def get_pdfname(pdfopt, name=''):
         print "Selected %s: %s (%s)" % (name, pdf, m)
     return (pdf, m)
 
+def evolve(name, g, order, xval_lo, xval_nlo):
+    yval_lo = []
+    for f in xval_lo:
+        xsec_lo = ROOT.vconvolute(g, 0, f, f)
+        yval_lo.append(list(xsec_lo))
+        print 'LO', f, yval_lo[-1]
+    yval_lo = np.array(yval_lo)
+    np.savetxt(name % 'lo', np.column_stack((xval_lo,yval_lo)))
+    if order > 0:
+        yval_nlo = []
+        for f in xval_nlo:
+            xsec_nlo = ROOT.vconvolute(g, 1, f, f)
+            yval_nlo.append(list(xsec_nlo))
+            print 'NLO', f, yval_nlo[-1]
+        yval_nlo = np.array(yval_nlo)
+        np.savetxt(name % 'nlo', np.column_stack((xval_nlo,yval_nlo)))
+    return yval_lo, yval_nlo
+
+
 def process(params):
     # we want to handle Ctrl+C
     #sh = ROOT.TSignalHandler(ROOT.kSigInterrupt, False)
@@ -43,10 +62,15 @@ def process(params):
     pdf_functions = ["ntupleall", "ntuplephjets", "ntuplejets"]
     pdf_objects = [getattr(ROOT, "%s_pdf" % p)() for p in pdf_functions]
 
-    pdfabbr, pdfname = ('ct10', 'CT10')
-    #pdfabbr, pdfname = ('nnpdf', 'NNPDF23_nlo_FFN_NF5_as_0118')
-    #pdfabbr, pdfname = ('mstw08', 'MSTW2008nlo68cl')
-    pdf, m = get_pdfname(pdfname) # 'CT10') # params.frompdf)
+    if params.pdf == 'CT10':
+        pdfabbr, pdfname = ('ct10', 'CT10')
+    elif params.pdf == 'NNPDF23':
+        pdfabbr, pdfname = ('nnpdf', 'NNPDF23_nlo_FFN_NF5_as_0118')
+    elif params.pdf == 'MSTW08':
+        pdfabbr, pdfname = ('mstw08', 'MSTW2008nlo68cl')
+    else:
+        pdfabbr, pdfname = ('mstw08_as9', 'MSTW2008nlo_asmzrange:9')
+    pdf, m = get_pdfname(pdfname)
     ROOT.LHAPDF.initPDFSet(pdf, ROOT.LHAPDF.LHGRID, int(m))
 
     grids = [ROOT.appl.grid(name) for name in params.inputs]
@@ -58,7 +82,7 @@ def process(params):
     firstname += pdfabbr
     print "Order ", order, " Name ", firstname
 
-    if False:
+    if True:
         for g,n in zip(grids, params.inputs):
             print n
             print ROOT.vconvolute(g, 0, 1, 1)[2]
@@ -66,12 +90,12 @@ def process(params):
                 print ROOT.vconvolute(g, 1, 1, 1)[2]
 
     # sum grids
-    for g in grids[1:]:
-      print g
-      grids[0] += g
     g = grids[0]
+    for i in range(1, len(grids)):
+      g += grids[i]
+      grids[i] = None
 
-    if True:
+    if False:
         xsec = ROOT.vconvolute(g, order, 1, 1)
         print 1, [x for x in xsec]
         xsec = ROOT.vconvolute(g, order, 2, 2)
@@ -80,26 +104,42 @@ def process(params):
         print 0.5, [x for x in xsec]
 
     try:
-        xval_lo, yval_lo = np.loadtxt(firstname + '-lo.txt')
+        tmp = np.loadtxt(firstname + '-lo.txt')
+        xval_lo = tmp[...,0]
+        yval_lo = tmp[...,1:]
         if order > 0:
-            xval_nlo, yval_nlo = np.loadtxt(firstname + '-nlo.txt')
+            tmp = np.loadtxt(firstname + '-nlo.txt')
+            xval_nlo = tmp[...,0]
+            yval_nlo = tmp[...,1:]
     except IOError:
-        xval_lo = np.logspace(-1.5, 1, 100)
-        yval_lo = []
-        for f in xval_lo:
-            xsec_lo = ROOT.vconvolute(g, 0, f, f)
-            yval_lo.append(xsec_lo[2])
-        yval_lo = np.array(yval_lo)
-        np.savetxt(firstname + '-lo.txt', np.array([xval_lo, yval_lo]))
+        xval_lo = xval_nlo = np.sort(np.append(np.logspace(-1.5, 1, 50), [0.5, 1, 2]))
+        yval_lo, yval_nlo = evolve(firstname + '-%s.txt', g, order, xval_lo, xval_nlo)
+    # pick total XS
+    yval_lo = yval_lo[...,2]
+    yval_nlo = yval_nlo[...,2]
+
+    try:
+        if False:
+            raise IOError("blah")
+        tmp = np.loadtxt(firstname + '-lo2.txt')
+        xval_lo2 = tmp[...,0]
+        yval_lo2 = tmp[...,1:]
         if order > 0:
-            xval_nlo = xval_lo
-            yval_nlo = []
-            for f in xval_nlo:
-                print f
-                xsec_nlo = ROOT.vconvolute(g, 1, f, f)
-                yval_nlo.append(xsec_nlo[2])
-            yval_nlo = np.array(yval_nlo)
-            np.savetxt(firstname + '-nlo.txt', np.array([xval_nlo, yval_nlo]))
+            tmp = np.loadtxt(firstname + '-nlo2.txt')
+            xval_nlo2 = tmp[...,0]
+            yval_nlo2 = tmp[...,1:]
+    except IOError:
+        xval_lo2 = np.sort(np.append(np.logspace(-1.5, 1, 50), [0.5, 1, 2]))
+        #xval_lo2=[0.05, 0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.66, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0]
+        if firstname.find('0.025') > 0:
+            xval_lo2 = xval_lo2/0.05
+        #xval_lo2=[0.25, 0.5, 0.75, 0.875, 1.0, 1.125, 1.25, 2.0, 4.0, 6.0, 8.0, 16.0, 20.0, 40.0]
+        xval_nlo2 = xval_lo2
+        yval_lo2, yval_nlo2 = evolve(firstname + '-%s2.txt', g, order, xval_lo2, xval_nlo2)
+    # pick total XS
+    yval_lo2 = yval_lo2[...,2]
+    yval_nlo2 = yval_nlo2[...,2]
+
 
     if True:
         import matplotlib.pyplot as plt
@@ -117,6 +157,10 @@ def process(params):
         axs.plot(xval_lo, yval_lo, lw=2, c='b') #, marker='x')
         if order > 0:
             axs.plot(xval_nlo, yval_nlo, lw=2, c='r') #, marker='x')
+
+        axs.plot(xval_lo2, yval_lo2, lw=1, c='c') #, marker='x')
+        if order > 0:
+            axs.plot(xval_nlo2, yval_nlo2, lw=1, c='k') #, marker='x')
         #axs.plot(xval, np.array(yval)+np.array(yerr), c='r')
         #axs.plot(xval, np.array(yval)-np.array(yerr), c='b')
         #plt.xticks([0.2,1.,4.], ['0.2', '1', '4'])
@@ -138,8 +182,8 @@ Other options:
 class Params:
     def __init__(self):
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "o:dh",
-                                 ["output=", "debug", "help"])
+            opts, args = getopt.getopt(sys.argv[1:], "o:dhp:",
+                                 ["output=", "debug", "help", "pdf="])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -147,6 +191,7 @@ class Params:
 
         self.output = 'test.root'
         self.debug = False
+        self.pdf = None
 
         for op, oparg in opts:
             if op in ("-h", "--help"):
@@ -156,6 +201,8 @@ class Params:
                 self.output = oparg
             elif op in ("-d", "--debug"):
                 self.debug = True
+            elif op in ("-p", "--pdf"):
+                self.pdf = oparg
             else:
                 assert False, "unhandled option"
 

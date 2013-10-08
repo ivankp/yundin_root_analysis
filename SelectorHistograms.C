@@ -325,6 +325,9 @@ void Grid::fill(int id, int id1, int id2,
                 const double* fA, const double* fB,
                 double obs, double g_w, double h_w, int order)
 {
+  if (x1 == 1. or x2 == 1.) {
+    return;
+  }
   if (not warmup) {
     const int ch = pdf_object->channel(id1, id2);
     weights.assign(weights.size(), 0.);

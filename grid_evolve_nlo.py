@@ -18,10 +18,10 @@ def get_pdfname(pdfopt, name=''):
         print "Selected %s: %s (%s)" % (name, pdf, m)
     return (pdf, m)
 
-def evolve(name, g, order, xval_lo, xval_nlo):
+def evolve(name, g, order, xval_lo, xval_nlo, fac=1):
     yval_lo = []
     for f in xval_lo:
-        xsec_lo = ROOT.vconvolute(g, 0, f, f)
+        xsec_lo = ROOT.vconvolute(g, 0, f*fac, f*fac)
         yval_lo.append(list(xsec_lo))
         print 'LO', f, yval_lo[-1]
     yval_lo = np.array(yval_lo)
@@ -29,7 +29,7 @@ def evolve(name, g, order, xval_lo, xval_nlo):
     if order > 0:
         yval_nlo = []
         for f in xval_nlo:
-            xsec_nlo = ROOT.vconvolute(g, 1, f, f)
+            xsec_nlo = ROOT.vconvolute(g, 1, f*fac, f*fac)
             yval_nlo.append(list(xsec_nlo))
             print 'NLO', f, yval_nlo[-1]
         yval_nlo = np.array(yval_nlo)
@@ -112,34 +112,19 @@ def process(params):
             xval_nlo = tmp[...,0]
             yval_nlo = tmp[...,1:]
     except IOError:
-        xval_lo = xval_nlo = np.sort(np.append(np.logspace(-1.5, 1, 50), [0.5, 1, 2]))
-        yval_lo, yval_nlo = evolve(firstname + '-%s.txt', g, order, xval_lo, xval_nlo)
+        xval_lo = np.sort(np.append(np.logspace(-1.5, 1, 50), [0.5, 1, 2]))
+        fac = 1
+        if firstname.find('0.025') > 0:
+            print "0.025 detected"
+            fac = 1./0.025
+        if firstname.find('0.1') > 0:
+            print "0.1 detected"
+            fac = 1./0.1
+        xval_nlo = xval_lo
+        yval_lo, yval_nlo = evolve(firstname + '-%s.txt', g, order, xval_lo, xval_nlo, fac)
     # pick total XS
     yval_lo = yval_lo[...,2]
     yval_nlo = yval_nlo[...,2]
-
-    try:
-        if False:
-            raise IOError("blah")
-        tmp = np.loadtxt(firstname + '-lo2.txt')
-        xval_lo2 = tmp[...,0]
-        yval_lo2 = tmp[...,1:]
-        if order > 0:
-            tmp = np.loadtxt(firstname + '-nlo2.txt')
-            xval_nlo2 = tmp[...,0]
-            yval_nlo2 = tmp[...,1:]
-    except IOError:
-        xval_lo2 = np.sort(np.append(np.logspace(-1.5, 1, 50), [0.5, 1, 2]))
-        #xval_lo2=[0.05, 0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.66, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0]
-        if firstname.find('0.025') > 0:
-            xval_lo2 = xval_lo2/0.05
-        #xval_lo2=[0.25, 0.5, 0.75, 0.875, 1.0, 1.125, 1.25, 2.0, 4.0, 6.0, 8.0, 16.0, 20.0, 40.0]
-        xval_nlo2 = xval_lo2
-        yval_lo2, yval_nlo2 = evolve(firstname + '-%s2.txt', g, order, xval_lo2, xval_nlo2)
-    # pick total XS
-    yval_lo2 = yval_lo2[...,2]
-    yval_nlo2 = yval_nlo2[...,2]
-
 
     if True:
         import matplotlib.pyplot as plt
@@ -158,9 +143,9 @@ def process(params):
         if order > 0:
             axs.plot(xval_nlo, yval_nlo, lw=2, c='r') #, marker='x')
 
-        axs.plot(xval_lo2, yval_lo2, lw=1, c='c') #, marker='x')
-        if order > 0:
-            axs.plot(xval_nlo2, yval_nlo2, lw=1, c='k') #, marker='x')
+        #axs.plot(xval_lo2, yval_lo2, lw=1, c='c') #, marker='x')
+        #if order > 0:
+        #    axs.plot(xval_nlo2, yval_nlo2, lw=1, c='k') #, marker='x')
         #axs.plot(xval, np.array(yval)+np.array(yerr), c='r')
         #axs.plot(xval, np.array(yval)-np.array(yerr), c='b')
         #plt.xticks([0.2,1.,4.], ['0.2', '1', '4'])

@@ -315,16 +315,13 @@ void Analysis::analysis_finalize()
 
     outfile.close();
   }
+  output_grids();
 }
 
 void Analysis::output_histograms(const TString& filename, std::ofstream& stream)
 {
   jet_exclusive->print(stream, runname, event_count);
   jet_inclusive->print(stream, runname, event_count);
-
-  if (g_jet_inclusive) {
-    g_jet_inclusive->write(event_count);
-  }
 
   for (unsigned i=0; i<=jet_number; i++) {
     for (unsigned k=0; k<jet_pt_n[i].size(); k++) {
@@ -337,6 +334,13 @@ void Analysis::output_histograms(const TString& filename, std::ofstream& stream)
         jet_eta_n[i][k]->print(stream, runname, event_count);
       }
     }
+  }
+}
+
+void Analysis::output_grids()
+{
+  if (g_jet_inclusive) {
+    g_jet_inclusive->write(event_count);
   }
 }
 

@@ -72,6 +72,7 @@ class Analysis
     void clear_var(T*& var);
 
     virtual void output_histograms(const TString& filename, std::ofstream& stream);
+    virtual void output_grids();
     virtual void clear();
 
     void fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event);

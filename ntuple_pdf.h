@@ -9,8 +9,8 @@
 class ntuple_pdf : public appl::appl_pdf
 {
   public:
-    ntuple_pdf(const std::string& name)
-      : appl::appl_pdf(name)
+    ntuple_pdf(const std::string& name_)
+      : appl::appl_pdf(name_)
     { }
 
     virtual int channel(int id1, int id2) = 0;
@@ -437,8 +437,8 @@ class ntupleall_pdf : public ntuple_pdf
       return (1+2*FLAV)*(id1 + FLAV) + (id2 + FLAV);
     }
 
-    double reweight(double w, int ch, int id1, int id2,
-                    const double* fA, const double* fB)
+    double reweight(double w, int /*ch*/, int /*id1*/, int /*id2*/,
+                    const double* /*fA*/, const double* /*fB*/)
     {
       return w;
     }

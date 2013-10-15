@@ -42,6 +42,11 @@ def process(params):
     #sh = ROOT.TSignalHandler(ROOT.kSigInterrupt, False)
     #sh.Add()
     #sh.Connect("Notified()", "TROOT", ROOT.gROOT, "SetInterrupt()")
+
+    # add hammer.py directory to macro path
+    hammer_path = os.path.dirname(__file__)
+    ROOT.gROOT.SetMacroPath(ROOT.gROOT.GetMacroPath().rstrip(':') + ':' + hammer_path)
+
     # load libraries
     ROOT.gSystem.Load("libfastjet.so")
     ROOT.gSystem.Load("libLHAPDF.so")
@@ -69,7 +74,7 @@ def process(params):
     elif params.pdf == 'MSTW08':
         pdfabbr, pdfname = ('mstw08', 'MSTW2008nlo68cl')
     else:
-        pdfabbr, pdfname = ('mstw08_as9', 'MSTW2008nlo_asmzrange:9')
+        pdfabbr, pdfname = params.pdf, params.pdf
     pdf, m = get_pdfname(pdfname)
     ROOT.LHAPDF.initPDFSet(pdf, ROOT.LHAPDF.LHGRID, int(m))
 

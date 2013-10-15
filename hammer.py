@@ -53,6 +53,10 @@ def process(params):
     sh.Add()
     sh.Connect("Notified()", "TROOT", ROOT.gROOT, "SetInterrupt()")
 
+    # add hammer.py directory to macro path
+    hammer_path = os.path.dirname(__file__)
+    ROOT.gROOT.SetMacroPath(ROOT.gROOT.GetMacroPath().rstrip(':') + ':' + hammer_path)
+
     # load libraries
     ROOT.gSystem.Load("libfastjet.so")
     ROOT.gSystem.Load("libLHAPDF.so")

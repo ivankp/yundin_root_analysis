@@ -322,10 +322,8 @@ class Params:
             usage()
             sys.exit(2)
 
-        if self.rescale_n is not None and self.rescale_n <= 0:
-            self.rescale_n = self.njet + self.rescale_n
-        elif self.rescale_n is None:
-            self.rescale_n = 0
+        if self.rescale_n is None:
+            self.rescale_n = -1
 
         if self.rescale_n > self.njet:
             print "Error: 'rescale_n' %d cannont be larger than 'njet' %d" % (self.rescale_n, self.njet)

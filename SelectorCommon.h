@@ -126,7 +126,7 @@ class SelectorCommon : public TSelector
     SelectorCommon(TTree * /*tree*/ =0)
     : fChain(0), alphasPower(-1), // ROOT
       analysis(0),
-      rescale_factor(1.), rescale_n(0), rescaler(0),
+      rescale_factor(1.), rescale_n(-1), rescaler(0),
       filter_inq(-1), filter_nq(-1),
       use_sherpa_alphas(false), sherpa_alphas(0),
       beta0fix(0), cdr2fdhfix(-1), pi2o12fix(0),
@@ -190,7 +190,7 @@ class SelectorCommon : public TSelector
     void setrescaler_maa2sumpt2hat() { rescaler = &SelectorCommon::rescaler_maa2sumpt2hat; }
 
     double rescale_factor;
-    unsigned rescale_n;
+    int rescale_n;
     RescalerType rescaler;
 
     int born_alphapower;

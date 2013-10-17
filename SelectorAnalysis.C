@@ -185,11 +185,13 @@ bool Analysis::check_cuts(SelectorCommon* event)
       jetinput.push_back(vec);
     }
   }
-  fastjet::ClusterSequence cs(jetinput, jet_definition);
-  PseudoJetVector alljets = fastjet::sorted_by_pt(cs.inclusive_jets(jet_ptmin));
-  for (unsigned i=0; i<alljets.size(); i++) {
-    if (abs(alljets[i].eta()) <= jet_etamax) {
-      jets.push_back(alljets[i]);
+  if (jet_number > 0) {
+    fastjet::ClusterSequence cs(jetinput, jet_definition);
+    PseudoJetVector alljets = fastjet::sorted_by_pt(cs.inclusive_jets(jet_ptmin));
+    for (unsigned i=0; i<alljets.size(); i++) {
+      if (abs(alljets[i].eta()) <= jet_etamax) {
+        jets.push_back(alljets[i]);
+      }
     }
   }
 
@@ -469,16 +471,20 @@ void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
   double mass = (input[0]+input[1]).m();
   photon_mass->bin(id, mass, weight);
 
-  double R11 = input[0].delta_R(jets[0]);
-  photon_jet_R11->bin(id, R11, weight);
-
-  double jet1phi = jets[0].phi();
-  double jet2phi = jets[1].phi();
-  double jj_phi12 = jet1phi > jet2phi ? jet1phi - jet2phi : jet2phi - jet1phi;
-  if (jj_phi12 > M_PI) {
-    jj_phi12 = 2.*M_PI - jj_phi12;
+  if (jets.size() >= 1) {
+    double R11 = input[0].delta_R(jets[0]);
+    photon_jet_R11->bin(id, R11, weight);
   }
-  jet_jet_phi12->bin(id, jj_phi12, weight);
+
+  if (jets.size() >= 2) {
+    double jet1phi = jets[0].phi();
+    double jet2phi = jets[1].phi();
+    double jj_phi12 = jet1phi > jet2phi ? jet1phi - jet2phi : jet2phi - jet1phi;
+    if (jj_phi12 > M_PI) {
+      jj_phi12 = 2.*M_PI - jj_phi12;
+    }
+    jet_jet_phi12->bin(id, jj_phi12, weight);
+  }
 }
 
 void DiPhotonAnalysis::output_histograms(const TString& filename, std::ofstream& stream)

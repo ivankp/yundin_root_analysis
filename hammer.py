@@ -299,7 +299,7 @@ class Params:
             usage()
             sys.exit(2)
 
-        if not self.njet:
+        if self.njet is None:
             print "Error: njet is not set"
             usage()
             sys.exit(2)

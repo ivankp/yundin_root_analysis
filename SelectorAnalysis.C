@@ -185,7 +185,7 @@ bool Analysis::check_cuts(SelectorCommon* event)
       jetinput.push_back(vec);
     }
   }
-  if (jet_number > 0) {
+  if (jetinput.size() > 0) {
     fastjet::ClusterSequence cs(jetinput, jet_definition);
     PseudoJetVector alljets = fastjet::sorted_by_pt(cs.inclusive_jets(jet_ptmin));
     for (unsigned i=0; i<alljets.size(); i++) {
@@ -288,7 +288,7 @@ void Analysis::analysis_bin(SelectorCommon* event)
   event_binned += 1;
 
   jet_exclusive->bin(id, jets.size(), weight);
-  for (unsigned i=1; i<=jets.size(); i++) {
+  for (unsigned i=0; i<=jets.size(); i++) {
     jet_inclusive->bin(id, i, weight);
     fill_grid(g_jet_inclusive, id, i, weight, event);
   }

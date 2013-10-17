@@ -320,7 +320,7 @@ void Grid::init()
   }
 }
 
-void Grid::fill(int id, int id1, int id2,
+void Grid::fill(int /*id*/, int id1, int id2,
                 double x1, double x2, double Q,
                 const double* fA, const double* fB,
                 double obs, double g_w, double h_w, int order)

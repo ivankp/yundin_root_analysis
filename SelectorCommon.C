@@ -204,7 +204,7 @@ double SelectorCommon::rescaler_ht(const double /*scale*/,
 {
   double newscale = 0;
   const int imax = rescale_n >= 0 ? rescale_n : jets.size();
-  for (unsigned i=0; i<imax; i++) {
+  for (int i=0; i<imax; i++) {
     newscale += jets[i].pt();
   }
   newscale *= 0.5*rescale_factor;
@@ -217,7 +217,7 @@ double SelectorCommon::rescaler_hthat(const double /*scale*/,
 {
   double newscale = 0;
   const int imax = rescale_n >= 0 ? rescale_n : partons.size();
-  for (unsigned i=0; i<imax; i++) {
+  for (int i=0; i<imax; i++) {
     newscale += partons[i].pt();
   }
   newscale *= 0.5*rescale_factor;
@@ -230,7 +230,7 @@ double SelectorCommon::rescaler_sumpt2(const double /*scale*/,
 {
   double newscale = 0;
   const int imax = rescale_n >= 0 ? rescale_n : jets.size();
-  for (unsigned i=0; i<imax; i++) {
+  for (int i=0; i<imax; i++) {
     newscale += jets[i].pt2();
   }
   newscale = sqrt(newscale);
@@ -244,7 +244,7 @@ double SelectorCommon::rescaler_sumpt2hat(const double /*scale*/,
 {
   double newscale = 0;
   const int imax = rescale_n >= 0 ? rescale_n : partons.size();
-  for (unsigned i=0; i<imax; i++) {
+  for (int i=0; i<imax; i++) {
     newscale += partons[i].pt2();
   }
   newscale = sqrt(newscale);
@@ -258,7 +258,7 @@ double SelectorCommon::rescaler_maaht(const double /*scale*/,
 {
   double newscale = (input[0]+input[1]).m();
   const int imax = rescale_n >= 0 ? rescale_n : jets.size();
-  for (unsigned i=0; i<imax; i++) {
+  for (int i=0; i<imax; i++) {
     newscale += jets[i].pt();
   }
   newscale *= 0.5*rescale_factor;
@@ -271,7 +271,7 @@ double SelectorCommon::rescaler_maahthat(const double /*scale*/,
 {
   double newscale = (input[0]+input[1]).m();
   const int imax = rescale_n >= 0 ? 2+rescale_n : input.size();
-  for (unsigned i=2; i<imax; i++) {
+  for (int i=2; i<imax; i++) {
     newscale += input[i].pt();
   }
   newscale *= 0.5*rescale_factor;
@@ -284,7 +284,7 @@ double SelectorCommon::rescaler_maa2sumpt2(const double /*scale*/,
 {
   double newscale = (input[0]+input[1]).m2();
   const int imax = rescale_n >= 0 ? rescale_n : jets.size();
-  for (unsigned i=0; i<imax; i++) {
+  for (int i=0; i<imax; i++) {
     newscale += jets[i].pt2();
   }
   newscale = sqrt(newscale);
@@ -298,7 +298,7 @@ double SelectorCommon::rescaler_maa2sumpt2hat(const double /*scale*/,
 {
   double newscale = (input[0]+input[1]).m2();
   const int imax = rescale_n >= 0 ? 2+rescale_n : input.size();
-  for (unsigned i=2; i<imax; i++) {
+  for (int i=2; i<imax; i++) {
     newscale += input[i].pt2();
   }
   newscale = sqrt(newscale);

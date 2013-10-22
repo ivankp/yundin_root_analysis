@@ -40,6 +40,8 @@ class Analysis
     std::vector<std::vector<Histogram*> > jet_eta_n;
 
     Grid* g_jet_inclusive;
+    std::vector<Grid*> g_jet_pt_n;
+    std::vector<Grid*> g_jet_eta_n;
 
     TString runname;
 
@@ -109,12 +111,18 @@ class DiPhotonAnalysis : public Analysis
     std::vector<Histogram*> photon_jet_R11;
     std::vector<Histogram*> jet_jet_phi12;
 
+    Grid* g_photon_mass;
+    Grid* g_photon_pt;
+    Grid* g_photon_eta;
+    Grid* g_photon_jet_R11;
+    Grid* g_jet_jet_phi12;
+
     virtual void reset();
 
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
                                    bool dryrun);
-
+    virtual void output_grids();
     virtual void clear();
 
     template <class T>

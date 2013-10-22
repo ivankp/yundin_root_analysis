@@ -98,6 +98,11 @@ def add_grids_all(analysis, params):
         filename = (params.output % 'incl') + '.root'  # has to end with '.root'
         analysis.g_jet_inclusive = create_grid(filename, obs, params)
 
+    if True:
+        obs = np.linspace(0, 500, 15+1)
+        filename = (params.output % 'phmass') + '.root'  # has to end with '.root'
+        analysis.g_photon_mass = create_grid(filename, obs, params)
+
     return
 
 # -------------------------------------------------------------------------------

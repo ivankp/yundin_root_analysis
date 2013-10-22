@@ -54,6 +54,9 @@ void Analysis::reset()
 
   jet_pt_n.resize(jet_number+1);
   jet_eta_n.resize(jet_number+1);
+
+  g_jet_pt_n.resize(jet_number+1);
+  g_jet_eta_n.resize(jet_number+1);
 }
 
 void Analysis::clear_histvec(std::vector<Histogram*>& histvec)
@@ -228,8 +231,12 @@ void Analysis::analysis_bin(SelectorCommon* event)
   }
   for (unsigned i=0; i<jets.size(); i++) {
     assert(i<jet_pt_n.size());
-    bin_histvec(jet_pt_n[i], id, jets[i].pt(), weight);
-    bin_histvec(jet_eta_n[i], id, jets[i].eta(), weight);
+    const double jetpt = jets[i].pt();
+    const double jeteta = jets[i].eta();
+    bin_histvec(jet_pt_n[i], id, jetpt, weight);
+    bin_histvec(jet_eta_n[i], id, jeteta, weight);
+    fill_grid(g_jet_pt_n[i], id, jetpt, weight, event);
+    fill_grid(g_jet_eta_n[i], id, jeteta, weight, event);
   }
 }
 
@@ -267,6 +274,14 @@ void Analysis::output_grids()
 {
   if (g_jet_inclusive) {
     g_jet_inclusive->write(event_count);
+  }
+  for (unsigned i=0; i<=jet_number; i++) {
+    if (g_jet_pt_n[i]) {
+      g_jet_pt_n[i]->write(event_count);
+    }
+    if (g_jet_eta_n[i]) {
+      g_jet_eta_n[i]->write(event_count);
+    }
   }
 }
 
@@ -313,6 +328,11 @@ DiPhotonAnalysis::DiPhotonAnalysis()
   : photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
     photon_photon_Rsep(0), photon_jet_Rsep(0)
 {
+  g_photon_mass = 0;
+  g_photon_pt = 0;
+  g_photon_eta = 0;
+  g_photon_jet_R11 = 0;
+  g_jet_jet_phi12 = 0;
 }
 
 void DiPhotonAnalysis::clear()
@@ -390,13 +410,22 @@ void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
   const Double_t weight = event->weight;
 
   const fastjet::PseudoJet AAmom = input[0]+input[1];
-  bin_histvec(photon_mass, id, AAmom.m(), weight);
-  bin_histvec(photon_pt, id, AAmom.pt(), weight);
-  bin_histvec(photon_eta, id, AAmom.eta(), weight);
+  const double AAmass = AAmom.m();
+  const double AApt = AAmom.pt();
+  const double AAeta = AAmom.eta();
+
+  bin_histvec(photon_mass, id, AAmass, weight);
+  bin_histvec(photon_pt, id, AApt, weight);
+  bin_histvec(photon_eta, id, AAeta, weight);
+
+  fill_grid(g_photon_mass, id, AAmass, weight, event);
+  fill_grid(g_photon_pt, id, AApt, weight, event);
+  fill_grid(g_photon_eta, id, AAeta, weight, event);
 
   if (jets.size() >= 1) {
     const double R11 = input[0].delta_R(jets[0]);
     bin_histvec(photon_jet_R11, id, R11, weight);
+    fill_grid(g_photon_jet_R11, id, R11, weight, event);
   }
 
   if (jets.size() >= 2) {
@@ -407,6 +436,7 @@ void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
       jj_phi12 = 2.*M_PI - jj_phi12;
     }
     bin_histvec(jet_jet_phi12, id, jj_phi12, weight);
+    fill_grid(g_jet_jet_phi12, id, jj_phi12, weight, event);
   }
 }
 
@@ -420,4 +450,25 @@ void DiPhotonAnalysis::output_histograms(const TString& filename, std::ofstream&
   output_histvec(photon_eta, filename, stream, dryrun);
   output_histvec(photon_jet_R11, filename, stream, dryrun);
   output_histvec(jet_jet_phi12, filename, stream, dryrun);
+}
+
+void DiPhotonAnalysis::output_grids()
+{
+  Analysis::output_grids();
+
+  if (g_photon_mass) {
+    g_photon_mass->write(event_count);
+  }
+  if (g_photon_pt) {
+    g_photon_pt->write(event_count);
+  }
+  if (g_photon_eta) {
+    g_photon_eta->write(event_count);
+  }
+  if (g_photon_jet_R11) {
+    g_photon_jet_R11->write(event_count);
+  }
+  if (g_photon_jet_R11) {
+    g_photon_jet_R11->write(event_count);
+  }
 }

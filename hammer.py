@@ -67,7 +67,6 @@ def process(params):
     ROOT.gROOT.LoadMacro("SherpaAlphaS.C+")
     ROOT.gROOT.LoadMacro("SelectorCommon.C+")
     ROOT.gROOT.LoadMacro("appl_grid.h+")
-    ROOT.gROOT.LoadMacro("ntuple_pdf.h+")
 
     # create a chain
     chain = ROOT.TChain("t3")
@@ -211,7 +210,7 @@ class Params:
             opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:h",
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix=", "cdr2fdhfix=", "pi2o12fix", "debug", "help",
-                                  "stat=", "rescaler=", "qfilter="])
+                                  "stat=", "rescaler=", "qfilter=", "warmup"])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -229,6 +228,7 @@ class Params:
         self.cdr2fdhfix = None
         self.pi2o12fix = None
         self.debug = False
+        self.warmup = False
         self.qfilter = None
         self.stat = 0
         self.rescaler = 'simple'
@@ -269,6 +269,8 @@ class Params:
                 self.pi2o12fix = True
             elif op in ("--debug"):
                 self.debug = True
+            elif op in ("--warmup"):
+                self.warmup = True
             elif op in ("--qfilter"):
                 self.qfilter = oparg
             elif op in ("--stat"):
@@ -280,6 +282,9 @@ class Params:
                     self.rescale_n = int(self.rescale_n)
             else:
                 assert False, "unhandled option"
+
+        if self.output.endswith('.hist'):
+            self.output = self.output[:-5]
 
         if not self.analysis_mod:
             print "Error: --analysis option is mandatory"

@@ -444,4 +444,12 @@ class ntupleall_pdf : public ntuple_pdf
     }
 };
 
+#if defined(__MAKECINT__)
+#pragma link C++ class ntuple_pdf;
+#pragma link C++ class ntupleall_pdf;
+#pragma link C++ class ntuplejets_pdf;
+#pragma link C++ class ntuplephjets_pdf;
+#pragma link C++ class appl::appl_pdf;
+#endif
+
 #endif // NTUPLEJETS_PDF_H

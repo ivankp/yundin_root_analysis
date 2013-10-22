@@ -45,50 +45,27 @@ class Analysis
 
     virtual void reset();
 
-    void addPtLinearHistograms(TString filename, int nbins,
-                               std::vector<double>* ptlowlimits=0, std::vector<double>* pthighlimits=0);
-    void addPtQuadraticHistograms(TString filename, int nbins, double f,
-                                  std::vector<double>* ptlowlimits=0, std::vector<double>* pthighlimits=0);
-
-    void addPtSmearedLinearHistograms(TString filename, int nbins, double s,
-                                      std::vector<double>* ptlowlimits=0, std::vector<double>* pthighlimits=0);
-    void addPtSmearedQuadraticHistograms(TString filename, int nbins, double f, double s,
-                                         std::vector<double>* ptlowlimits=0, std::vector<double>* pthighlimits=0);
-
-    void addEtaLinearHistograms(TString filename, int nbins,
-                                std::vector<double>* etalowlimits=0, std::vector<double>* etahighlimits=0);
-    void addEtaQuadraticHistograms(TString filename, int nbins, double f,
-                                   std::vector<double>* etalowlimits=0, std::vector<double>* etahighlimits=0);
-
-    void addEtaSmearedLinearHistograms(TString filename, int nbins, double s,
-                                       std::vector<double>* etalowlimits=0, std::vector<double>* etahighlimits=0);
-    void addEtaSmearedQuadraticHistograms(TString filename, int nbins, double f, double s,
-                                          std::vector<double>* etalowlimits=0, std::vector<double>* etahighlimits=0);
-
   protected:
     std::set<TString> outputfiles;
 
     template <typename T>
     void clear_var(T*& var);
 
-    virtual void output_histograms(const TString& filename, std::ofstream& stream);
+    void append_output_filename(const TString& name);
+
+    void clear_histvec(std::vector<Histogram*>& histvec);
+    void bin_histvec(const std::vector<Histogram*>& histvec,
+                     int nextevt, double x, double w);
+    void output_histvec(const std::vector<Histogram*>& histvec,
+                        const TString& filename, std::ofstream& stream,
+                        bool dryrun);
+
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
     virtual void output_grids();
     virtual void clear();
 
     void fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event);
-
-    template <typename T>
-    void addPtHistograms(TString filename, int nbins,
-                          double param1, double param2, double param3,
-                          double low, double high,
-                          std::vector<double>* lowlimits=0,
-                          std::vector<double>* highlimits=0);
-    template <typename T>
-    void addEtaHistograms(TString filename, int nbins,
-                          double param1, double param2, double param3,
-                          double low, double high,
-                          std::vector<double>* lowlimits=0,
-                          std::vector<double>* highlimits=0);
 };
 
 class JetAnalysis : public Analysis
@@ -104,7 +81,8 @@ class JetAnalysis : public Analysis
     double jet_pt1min;
 
   protected:
-    virtual void output_histograms(const TString& filename, std::ofstream& stream);
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
 };
 
 class DiPhotonAnalysis : public Analysis
@@ -125,14 +103,17 @@ class DiPhotonAnalysis : public Analysis
     double photon_photon_Rsep;
     double photon_jet_Rsep;
 
-    LinearHistogram* photon_mass;
-    LinearHistogram* photon_jet_R11;
-    LinearHistogram* jet_jet_phi12;
+    std::vector<Histogram*> photon_mass;
+    std::vector<Histogram*> photon_pt;
+    std::vector<Histogram*> photon_eta;
+    std::vector<Histogram*> photon_jet_R11;
+    std::vector<Histogram*> jet_jet_phi12;
 
     virtual void reset();
 
   protected:
-    virtual void output_histograms(const TString& filename, std::ofstream& stream);
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
 
     virtual void clear();
 
@@ -148,6 +129,8 @@ class DiPhotonAnalysis : public Analysis
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
+#pragma link C++ class std::vector<Histogram*>;
+#pragma link C++ class std::vector<std::vector<Histogram*> >;
 #endif
 
 #endif // SELECTOR_ANALYSIS_H

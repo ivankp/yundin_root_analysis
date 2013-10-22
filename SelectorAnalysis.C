@@ -26,22 +26,18 @@ void Analysis::clear_var(T*& var)
 
 void Analysis::clear()
 {
+  outputfiles.clear();
+
   clear_var(jet_exclusive);
   clear_var(jet_inclusive);
 
   for (unsigned i=0; i<jet_pt_n.size(); i++) {
-    for (unsigned j=0; j<jet_pt_n[i].size(); j++) {
-      clear_var(jet_pt_n[i][j]);
-    }
-    jet_pt_n[i].clear();
+    clear_histvec(jet_pt_n[i]);
   }
   jet_pt_n.clear();
 
   for (unsigned i=0; i<jet_eta_n.size(); i++) {
-    for (unsigned j=0; j<jet_eta_n[i].size(); j++) {
-      clear_var(jet_eta_n[i][j]);
-    }
-    jet_eta_n[i].clear();
+    clear_histvec(jet_eta_n[i]);
   }
   jet_eta_n.clear();
 }
@@ -60,102 +56,40 @@ void Analysis::reset()
   jet_eta_n.resize(jet_number+1);
 }
 
-template <typename T>
-void Analysis::addPtHistograms(TString filename, int nbins,
-                               double param1, double param2, double param3,
-                               double low, double high,
-                               std::vector<double>* lowlimits,
-                               std::vector<double>* highlimits)
+void Analysis::clear_histvec(std::vector<Histogram*>& histvec)
 {
-  for (unsigned i=0; i<=jet_number; i++) {
-    if (lowlimits and i < lowlimits->size()) {
-      low = (*lowlimits)[i];
-    }
-    if (highlimits and i < highlimits->size()) {
-      high = (*highlimits)[i];
-    }
-    std::stringstream name;
-    name << "jet_pT_" << i+1;
-    jet_pt_n[i].push_back(new T(filename, name.str(), nbins, low, high, param1, param2, param3));
+  for (unsigned j=0; j<histvec.size(); j++) {
+    clear_var(histvec[j]);
   }
-  outputfiles.insert(filename);
+  histvec.clear();
 }
 
-void Analysis::addPtLinearHistograms(TString filename, int nbins,
-                                     std::vector<double>* ptlowlimits,
-                                     std::vector<double>* pthighlimits)
+void Analysis::append_output_filename(const TString& name)
 {
-  addPtHistograms<LinearHistogram>(filename, nbins, 0, 0, 0, jet_ptmin, 2000., ptlowlimits, pthighlimits);
+  outputfiles.insert(name);
 }
 
-void Analysis::addPtSmearedLinearHistograms(TString filename, int nbins, double s,
-                                            std::vector<double>* ptlowlimits,
-                                            std::vector<double>* pthighlimits)
+void Analysis::output_histvec(const std::vector<Histogram*>& histvec,
+                              const TString& filename, std::ofstream& stream,
+                              bool dryrun)
 {
-  addPtHistograms<SmearedLinearHistogram>(filename, nbins, s, 0, 0, jet_ptmin, 2000., ptlowlimits, pthighlimits);
-}
-
-void Analysis::addPtQuadraticHistograms(TString filename, int nbins, double f,
-                                        std::vector<double>* ptlowlimits,
-                                        std::vector<double>* pthighlimits)
-{
-  addPtHistograms<QuadraticHistogram>(filename, nbins, f, 0, 0, jet_ptmin, 2000., ptlowlimits, pthighlimits);
-}
-
-void Analysis::addPtSmearedQuadraticHistograms(TString filename, int nbins, double f, double s,
-                                               std::vector<double>* ptlowlimits,
-                                               std::vector<double>* pthighlimits)
-{
-  addPtHistograms<SmearedQuadraticHistogram>(filename, nbins, f, s, 0, jet_ptmin, 2000., ptlowlimits, pthighlimits);
-}
-
-template <typename T>
-void Analysis::addEtaHistograms(TString filename, int nbins,
-                                double param1, double param2, double param3,
-                                double low, double high,
-                                std::vector<double>* lowlimits,
-                                std::vector<double>* highlimits)
-{
-  for (unsigned i=0; i<=jet_number; i++) {
-    if (lowlimits and i < lowlimits->size()) {
-      low = (*lowlimits)[i];
+  for (unsigned i=0; i<histvec.size(); i++) {
+    if (dryrun) {
+      append_output_filename(histvec[i]->getFile());
+    } else {
+      if (filename == histvec[i]->getFile()) {
+        histvec[i]->print(stream, runname, event_count);
+      }
     }
-    if (highlimits and i < highlimits->size()) {
-      high = (*highlimits)[i];
-    }
-    std::stringstream name;
-    name << "jet_eta_" << i+1;
-    jet_eta_n[i].push_back(new T(filename, name.str(), nbins, low, high, param1, param2, param3));
   }
-  outputfiles.insert(filename);
 }
 
-void Analysis::addEtaLinearHistograms(TString filename, int nbins,
-                                        std::vector<double>* etalowlimits,
-                                        std::vector<double>* etahighlimits)
+void Analysis::bin_histvec(const std::vector<Histogram*>& histvec,
+                          int nextevt, double x, double w)
 {
-  addEtaHistograms<LinearHistogram>(filename, nbins, 0, 0, 0, -jet_etamax, jet_etamax, etalowlimits, etahighlimits);
-}
-
-void Analysis::addEtaSmearedLinearHistograms(TString filename, int nbins, double s,
-                                        std::vector<double>* etalowlimits,
-                                        std::vector<double>* etahighlimits)
-{
-  addEtaHistograms<SmearedLinearHistogram>(filename, nbins, s, 0, 0, -jet_etamax, jet_etamax, etalowlimits, etahighlimits);
-}
-
-void Analysis::addEtaQuadraticHistograms(TString filename, int nbins, double f,
-                                        std::vector<double>* etalowlimits,
-                                        std::vector<double>* etahighlimits)
-{
-  addEtaHistograms<QuadraticHistogram>(filename, nbins, f, 0, 0, -jet_etamax, jet_etamax, etalowlimits, etahighlimits);
-}
-
-void Analysis::addEtaSmearedQuadraticHistograms(TString filename, int nbins, double f, double s,
-                                        std::vector<double>* etalowlimits,
-                                        std::vector<double>* etahighlimits)
-{
-  addEtaHistograms<SmearedQuadraticHistogram>(filename, nbins, f, s, 0, -jet_etamax, jet_etamax, etalowlimits, etahighlimits);
+  for (unsigned i=0; i<histvec.size(); i++) {
+    histvec[i]->bin(nextevt, x, w);
+  }
 }
 
 // Setting parameters
@@ -294,12 +228,8 @@ void Analysis::analysis_bin(SelectorCommon* event)
   }
   for (unsigned i=0; i<jets.size(); i++) {
     assert(i<jet_pt_n.size());
-    for (unsigned k=0; k<jet_pt_n[i].size(); k++) {
-      jet_pt_n[i][k]->bin(id, jets[i].pt(), weight);
-    }
-    for (unsigned k=0; k<jet_eta_n[i].size(); k++) {
-      jet_eta_n[i][k]->bin(id, jets[i].eta(), weight);
-    }
+    bin_histvec(jet_pt_n[i], id, jets[i].pt(), weight);
+    bin_histvec(jet_eta_n[i], id, jets[i].eta(), weight);
   }
 }
 
@@ -307,35 +237,29 @@ void Analysis::analysis_finalize()
 {
   std::cout << "Finalize " << long(event_count) << " events (binned " << long(event_binned) << ")\n";
   std::set<TString>::iterator it;
+  std::ofstream null;
+  output_histograms(*it, null, true); // dryrun to get outputfiles
   for (it=outputfiles.begin(); it!=outputfiles.end(); ++it) {
     std::cout << "File: " << it->Data() << std::endl;
     std::ofstream outfile = std::ofstream(it->Data());
-    outfile.precision(10);
+    outfile.precision(15);
     outfile.setf(std::ios::scientific);
 
-    output_histograms(*it, outfile);
+    output_histograms(*it, outfile, false);
 
     outfile.close();
   }
   output_grids();
 }
 
-void Analysis::output_histograms(const TString& filename, std::ofstream& stream)
+void Analysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
 {
   jet_exclusive->print(stream, runname, event_count);
   jet_inclusive->print(stream, runname, event_count);
 
   for (unsigned i=0; i<=jet_number; i++) {
-    for (unsigned k=0; k<jet_pt_n[i].size(); k++) {
-      if (filename == jet_pt_n[i][k]->getFile()) {
-        jet_pt_n[i][k]->print(stream, runname, event_count);
-      }
-    }
-    for (unsigned k=0; k<jet_eta_n[i].size(); k++) {
-      if (filename == jet_eta_n[i][k]->getFile()) {
-        jet_eta_n[i][k]->print(stream, runname, event_count);
-      }
-    }
+    output_histvec(jet_pt_n[i], filename, stream, dryrun);
+    output_histvec(jet_eta_n[i], filename, stream, dryrun);
   }
 }
 
@@ -373,10 +297,10 @@ void JetAnalysis::analysis_bin(SelectorCommon* event)
   Analysis::analysis_bin(event);
 }
 
-void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stream)
+void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
 {
   // all jet histograms are already in the base class
-  Analysis::output_histograms(filename, stream);
+  Analysis::output_histograms(filename, stream, dryrun);
 }
 
 // ---------------------------------------------------------------------------
@@ -387,8 +311,7 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 
 DiPhotonAnalysis::DiPhotonAnalysis()
   : photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
-    photon_photon_Rsep(0), photon_jet_Rsep(0),
-    photon_mass(0), photon_jet_R11(0), jet_jet_phi12(0)
+    photon_photon_Rsep(0), photon_jet_Rsep(0)
 {
 }
 
@@ -396,18 +319,16 @@ void DiPhotonAnalysis::clear()
 {
   Analysis::clear();
 
-  clear_var(photon_mass);
-  clear_var(photon_jet_R11);
-  clear_var(jet_jet_phi12);
+  clear_histvec(photon_mass);
+  clear_histvec(photon_pt);
+  clear_histvec(photon_eta);
+  clear_histvec(photon_jet_R11);
+  clear_histvec(jet_jet_phi12);
 }
 
 void DiPhotonAnalysis::reset()
 {
   Analysis::reset();
-
-  jet_jet_phi12 = new LinearHistogram("!", "jet_jet_phi12", 31, 0, M_PI);
-  photon_mass = new LinearHistogram("!", "photon_mass", 15, 0, 500);
-  photon_jet_R11 = new LinearHistogram("!", "photon_jet_R11", 30, 0, 5);
 }
 
 bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
@@ -468,31 +389,35 @@ void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
   const Int_t id = event->id;
   const Double_t weight = event->weight;
 
-  double mass = (input[0]+input[1]).m();
-  photon_mass->bin(id, mass, weight);
+  const fastjet::PseudoJet AAmom = input[0]+input[1];
+  bin_histvec(photon_mass, id, AAmom.m(), weight);
+  bin_histvec(photon_pt, id, AAmom.pt(), weight);
+  bin_histvec(photon_eta, id, AAmom.eta(), weight);
 
   if (jets.size() >= 1) {
-    double R11 = input[0].delta_R(jets[0]);
-    photon_jet_R11->bin(id, R11, weight);
+    const double R11 = input[0].delta_R(jets[0]);
+    bin_histvec(photon_jet_R11, id, R11, weight);
   }
 
   if (jets.size() >= 2) {
-    double jet1phi = jets[0].phi();
-    double jet2phi = jets[1].phi();
+    const double jet1phi = jets[0].phi();
+    const double jet2phi = jets[1].phi();
     double jj_phi12 = jet1phi > jet2phi ? jet1phi - jet2phi : jet2phi - jet1phi;
     if (jj_phi12 > M_PI) {
       jj_phi12 = 2.*M_PI - jj_phi12;
     }
-    jet_jet_phi12->bin(id, jj_phi12, weight);
+    bin_histvec(jet_jet_phi12, id, jj_phi12, weight);
   }
 }
 
-void DiPhotonAnalysis::output_histograms(const TString& filename, std::ofstream& stream)
+void DiPhotonAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
 {
   // all jet histograms are already in the base class
-  Analysis::output_histograms(filename, stream);
+  Analysis::output_histograms(filename, stream, dryrun);
 
-  photon_mass->print(stream, runname, event_count);
-  photon_jet_R11->print(stream, runname, event_count);
-  jet_jet_phi12->print(stream, runname, event_count);
+  output_histvec(photon_mass, filename, stream, dryrun);
+  output_histvec(photon_pt, filename, stream, dryrun);
+  output_histvec(photon_eta, filename, stream, dryrun);
+  output_histvec(photon_jet_R11, filename, stream, dryrun);
+  output_histvec(jet_jet_phi12, filename, stream, dryrun);
 }

@@ -170,6 +170,7 @@ class Grid
 #pragma link C++ class Histogram;
 #pragma link C++ class LinearHistogram;
 #pragma link C++ class QuadraticHistogram;
+#pragma link C++ class SmearedHistogram;
 #pragma link C++ class SmearedLinearHistogram;
 #pragma link C++ class SmearedQuadraticHistogram;
 #pragma link C++ class GridOpts;

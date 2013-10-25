@@ -210,7 +210,7 @@ class Params:
             opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:h",
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix=", "cdr2fdhfix=", "pi2o12fix", "debug", "help",
-                                  "stat=", "rescaler=", "qfilter=", "warmup"])
+                                  "stat=", "rescaler=", "qfilter=", "grids", "warmup"])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -228,6 +228,7 @@ class Params:
         self.cdr2fdhfix = None
         self.pi2o12fix = None
         self.debug = False
+        self.grids = False
         self.warmup = False
         self.qfilter = None
         self.stat = 0
@@ -269,6 +270,8 @@ class Params:
                 self.pi2o12fix = True
             elif op in ("--debug"):
                 self.debug = True
+            elif op in ("--grids"):
+                self.grids = True
             elif op in ("--warmup"):
                 self.warmup = True
             elif op in ("--qfilter"):

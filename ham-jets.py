@@ -14,6 +14,8 @@ def get(i, arr):
 
 # helper
 def create_grid(name, edges, params):
+    if not params.grids:
+        return None
     if params.warmup and os.path.exists(name):
         bakname = name + '.bak'
         print "WARNING: warmup file exists, moving '%s' to '%s'" % (name, bakname)
@@ -111,7 +113,8 @@ def initialize(params, selector):
     ROOT.Grid.def_opts = ROOT.GridOpts(75, (79.5*fac)**2, (3500*fac)**2, 5,
                                        75, 0.0013, 1., 5)
     # Add grids
-    add_grids_all(analysis, params)
+    if params.grids:
+        add_grids_all(analysis, params)
 
     # assign to selector
     selector.analysis = analysis

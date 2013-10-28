@@ -366,9 +366,9 @@ bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
     std::swap(input[0], input[1]);
   }
 
-    if (pt1 < photon_pt1min) {
-      return false;
-    }
+  if (pt1 < photon_pt1min) {
+    return false;
+  }
   if (pt2 < photon_pt2min) {
     return false;
   }

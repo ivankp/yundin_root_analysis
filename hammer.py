@@ -7,6 +7,12 @@ import re
 import imp
 
 
+# python 2.4 does not have any and all
+try: any, all
+except NameError:
+    any = lambda x: reduce(lambda a,b: a or b, x)
+    all = lambda x: reduce(lambda a,b: a and b, x)
+
 # all custom rescalers
 def set_rescaler(selector, params):
     selector.rescale_n = params.rescale_n
@@ -294,6 +300,9 @@ class Params:
             usage()
             sys.exit(2)
         try:
+            # python 2.4 doesn't have sys.dont_write_bytecode
+            if 'dont_write_bytecode' not in sys.__dict__:
+                sys.dont_write_bytecode = False
             dwbc = sys.dont_write_bytecode
             sys.dont_write_bytecode = True
             if not self.analysis_mod.startswith('/'):

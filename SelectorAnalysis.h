@@ -124,13 +124,6 @@ class DiPhotonAnalysis : public Analysis
                                    bool dryrun);
     virtual void output_grids();
     virtual void clear();
-
-    template <class T>
-    void addEtaHistograms(TString filename, int nbins,
-                          double param1, double param2, double param3,
-                          double low, double high,
-                          std::vector<double>* lowlimits=0,
-                          std::vector<double>* highlimits=0);
 };
 
 #if defined(__MAKECINT__)

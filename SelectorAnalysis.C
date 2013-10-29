@@ -320,6 +320,142 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
+//   PhotonJetAnalysis
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+PhotonJetAnalysis::PhotonJetAnalysis()
+  : jet_pt1min(0), photon_R(0), photon_ptmin(0), photon_etamax(0),
+    photon_jet_Rsep(0)
+{
+  g_photon_pt = 0;
+  g_photon_eta = 0;
+  g_photon_jet_R11 = 0;
+  g_jet_jet_phi12 = 0;
+}
+
+void PhotonJetAnalysis::clear()
+{
+  Analysis::clear();
+
+  clear_histvec(photon_pt);
+  clear_histvec(photon_eta);
+  clear_histvec(photon_jet_R11);
+  clear_histvec(jet_jet_phi12);
+}
+
+void PhotonJetAnalysis::reset()
+{
+  Analysis::reset();
+}
+
+bool PhotonJetAnalysis::check_cuts(SelectorCommon* event)
+{
+  if (not Analysis::check_cuts(event)) {
+    return false;
+  }
+
+  assert(event->kf[0] == 22 and event->kf[1] != 22);  // safe-guard against di-photon
+
+  const fastjet::PseudoJet& photon = input[0];
+
+  // photon cuts
+  if (photon.pt() < photon_ptmin) {
+    return false;
+  }
+  if (abs(photon.eta()) > photon_etamax) {
+    return false;
+  }
+
+  // keep only observed jets (some maybe hidden by the photon)
+  PseudoJetVector obsjets;
+  for (unsigned i=0; i<jets.size(); i++) {
+    if (photon.delta_R(jets[i]) > photon_R) {
+      obsjets.push_back(jets[i]);
+    }
+  }
+  jets.swap(obsjets);
+  if (jets.size() < jet_number) {
+    return false;
+  }
+
+  // photon-jets R-separation
+  for (unsigned i=0; i<jets.size(); i++) {
+    if (photon.delta_R(jets[i]) < photon_jet_Rsep) {
+      return false;
+    }
+  }
+
+  // leading jet pt-cut
+  return jets[0].pt() >= jet_pt1min;
+}
+
+void PhotonJetAnalysis::analysis_bin(SelectorCommon* event)
+{
+  Analysis::analysis_bin(event);
+
+  const Int_t id = event->id;
+  const Double_t weight = event->weight;
+
+  const fastjet::PseudoJet& photon = input[0];
+  const double AApt = photon.pt();
+  const double AAeta = photon.eta();
+
+  bin_histvec(photon_pt, id, AApt, weight);
+  bin_histvec(photon_eta, id, AAeta, weight);
+
+  fill_grid(g_photon_pt, id, AApt, weight, event);
+  fill_grid(g_photon_eta, id, AAeta, weight, event);
+
+  if (jets.size() >= 1) {
+    const double R11 = photon.delta_R(jets[0]);
+    bin_histvec(photon_jet_R11, id, R11, weight);
+    fill_grid(g_photon_jet_R11, id, R11, weight, event);
+  }
+
+  if (jets.size() >= 2) {
+    const double jet1phi = jets[0].phi();
+    const double jet2phi = jets[1].phi();
+    double jj_phi12 = jet1phi > jet2phi ? jet1phi - jet2phi : jet2phi - jet1phi;
+    if (jj_phi12 > M_PI) {
+      jj_phi12 = 2.*M_PI - jj_phi12;
+    }
+    bin_histvec(jet_jet_phi12, id, jj_phi12, weight);
+    fill_grid(g_jet_jet_phi12, id, jj_phi12, weight, event);
+  }
+}
+
+void PhotonJetAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  // all jet histograms are already in the base class
+  Analysis::output_histograms(filename, stream, dryrun);
+
+  output_histvec(photon_pt, filename, stream, dryrun);
+  output_histvec(photon_eta, filename, stream, dryrun);
+  output_histvec(photon_jet_R11, filename, stream, dryrun);
+  output_histvec(jet_jet_phi12, filename, stream, dryrun);
+}
+
+void PhotonJetAnalysis::output_grids()
+{
+  Analysis::output_grids();
+
+  if (g_photon_pt) {
+    g_photon_pt->write(event_count);
+  }
+  if (g_photon_eta) {
+    g_photon_eta->write(event_count);
+  }
+  if (g_photon_jet_R11) {
+    g_photon_jet_R11->write(event_count);
+  }
+  if (g_photon_jet_R11) {
+    g_photon_jet_R11->write(event_count);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 //   DiPhotonAnalysis
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

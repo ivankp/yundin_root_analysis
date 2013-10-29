@@ -325,7 +325,7 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 // ---------------------------------------------------------------------------
 
 DiPhotonAnalysis::DiPhotonAnalysis()
-  : photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
+  : photon_R(0), photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
     photon_photon_Rsep(0), photon_jet_Rsep(0)
 {
   g_photon_mass = 0;

@@ -37,6 +37,7 @@ class Histogram
     std::vector<double> edge;
 };
 
+
 class SmearedHistogram : public Histogram
 {
   public:
@@ -55,6 +56,19 @@ class SmearedHistogram : public Histogram
     std::vector<double> wgtvec;
     std::vector<double> xwgtvec;
 };
+
+
+class ListHistogram : public Histogram
+{
+  public:
+    ListHistogram(const TString& filename_, const TString& name_,
+                  const std::vector<double>& edge_);
+    void bin(int nextevt, double x, double w);
+
+  protected:
+    int getbinid(double x);
+};
+
 
 class LinearHistogram : public Histogram
 {
@@ -168,6 +182,7 @@ class Grid
 
 #if defined(__MAKECINT__)
 #pragma link C++ class Histogram;
+#pragma link C++ class ListHistogram;
 #pragma link C++ class LinearHistogram;
 #pragma link C++ class QuadraticHistogram;
 #pragma link C++ class SmearedHistogram;

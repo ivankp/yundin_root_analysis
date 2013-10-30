@@ -46,6 +46,11 @@ def add_histograms_all(analysis, params):
     # ROOT.SmearedLinearHistogram(file_name, hist_name, n_bins, obs_min, obs_max, smear_fac in [0, 1])
     # ROOT.SmearedQuadraticHistogram(file_name, hist_name, n_bins, obs_min, obs_max, slope, smear_fac in [0, 1])
 
+    # List histogram takes a vector of bin edges
+    # bin_edges = ROOT.std.vector('double')()
+    # map(bin_edges.push_back, [1, 2, 3, 4, 5, 6])  # 5 bins in [1, 6)
+    # ROOT.ListHistogram(file_name, hist_name, bin_edges)
+
     filename = (params.output % "l64_l20") + '.hist'
 
     # if there is not enough limits, last one is taken for excess elements

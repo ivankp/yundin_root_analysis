@@ -150,6 +150,52 @@ void SmearedHistogram::fill(int evt, int n, double w, double x)
 // Specific histograms
 // --------------------------------------------------------------------------- //
 
+// ----------------------- ListHistogram -------------------------
+
+ListHistogram::ListHistogram(const TString& filename_, const TString& name_,
+                             const std::vector<double>& edge_)
+  : Histogram(filename_, name_, edge_.size()-1, edge_.front(), edge_.back())
+{
+  for (int i=0; i<nbin; i++) {
+    bwidth[i] = edge_[i+1] - edge_[i];
+    assert(bwidth[i] > 0.);
+  }
+  edge.assign(edge_.begin(), edge_.end());
+}
+
+int ListHistogram::getbinid(double x)
+{
+  int lo = 0;
+  int hi = nbin - 1;
+  int n = (hi - lo)/2;
+  // do a binary search of the bin index
+  while (true) {
+    if (edge[n] > x) {
+      hi = n;
+      n -= (n - lo + 1)/2;
+      continue;
+    } else {
+      lo = n;
+    }
+    if (edge[n+1] <= x) {
+      lo = n;
+      n += (hi - n + 1)/2;
+      continue;
+    } else {
+      hi = n;
+    }
+    return n;
+  }
+}
+
+void ListHistogram::bin(int nextevt, double x, double w)
+{
+//       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
+  if (x < x1 or x >= x2) return;
+  int n = getbinid(x);
+  assert(0 <= n && n < nbin);
+  fill(nextevt, n, w);}
+
 // ---------------------- LinearHistogram ------------------------
 
 LinearHistogram::LinearHistogram(const TString& filename_, const TString& name_,

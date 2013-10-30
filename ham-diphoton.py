@@ -51,45 +51,62 @@ def add_histograms_all(analysis, params):
     # map(bin_edges.push_back, [1, 2, 3, 4, 5, 6])  # 5 bins in [1, 6)
     # ROOT.ListHistogram(file_name, hist_name, bin_edges)
 
-    filename = (params.output % "l64_l20") + '.hist'
+    filename = (params.output % "l50_l30_s02") + '.hist'
+
+    def Histogram(*args):
+        #return ROOT.LinearHistogram(*args)
+        newargs = args + (0.2,)  # add smearing parameter
+        return ROOT.SmearedLinearHistogram(*newargs)
 
     # if there is not enough limits, last one is taken for excess elements
     minpt = [analysis.jet_ptmin]
-    maxpt = [1420, 1400, 800]
+    maxpt = [1200, 1100, 1000]
 
     # jet-pT histograms
     for i in range(params.njet+1):
         pmin = get(i, minpt)
         pmax = get(i, maxpt)
         analysis.jet_pt_n[i].push_back(
-            ROOT.LinearHistogram(filename, "jet_pT_%d" % (i+1),
-                                 64, get(i, minpt), get(i, maxpt))
+            Histogram(filename, "jet_pT_%d" % (i+1), 50, get(i, minpt), get(i, maxpt))
         )
 
     # jet-eta histograms
     for i in range(params.njet+1):
         maxeta = analysis.jet_etamax
         analysis.jet_eta_n[i].push_back(
-            ROOT.LinearHistogram(filename, "jet_eta_%d" % (i+1),
-                                 20, -maxeta, maxeta)
+            Histogram(filename, "jet_eta_%d" % (i+1), 30, -maxeta, maxeta)
         )
 
     # photon histograms
     analysis.photon_mass.push_back(
-        ROOT.LinearHistogram(filename, "photon_mass", 15, 0, 500)
+        Histogram(filename, "photon_mass", 50, 0, 1000)
     )
     analysis.photon_pt.push_back(
-        ROOT.LinearHistogram(filename, "photon_pt", 15, 0, 500)
+        Histogram(filename, "photon_pt", 50, 0, 1000)
     )
     maxeta = analysis.photon_etamax
     analysis.photon_eta.push_back(
-        ROOT.LinearHistogram(filename, "photon_eta", 15, -maxeta, maxeta)
+        Histogram(filename, "photon_eta", 30, -maxeta, maxeta)
     )
     analysis.jet_jet_phi12.push_back(
-        ROOT.LinearHistogram(filename, "jet_jet_phi12", 31, 0, math.pi)
+        Histogram(filename, "jet_jet_phi12", 31, 0, math.pi+1e-10)
     )
     analysis.photon_jet_R11.push_back(
-        ROOT.LinearHistogram(filename, "photon_jet_R11", 30, 0, 5)
+        Histogram(filename, "photon_jet_R11", 50, 0, 6)
+    )
+
+    # vbf observables
+    analysis.jet_jet_mass.push_back(
+        Histogram(filename, "jet_jet_mass", 50, 0, 1000)
+    )
+    analysis.jet_jet_eta12.push_back(
+        Histogram(filename, "jet_jet_eta12", 50, 0, 9)
+    )
+    analysis.diphoton_dijet_phi.push_back(
+        Histogram(filename, "diphoton_dijet_phi", 31, 0, math.pi+1e-10)
+    )
+    analysis.diphoton_dijet_ystar.push_back(
+        Histogram(filename, "diphoton_dijet_ystar", 50, 0, 6)
     )
 
     return

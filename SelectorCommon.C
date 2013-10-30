@@ -17,6 +17,42 @@
 // Selector
 // --------------------------------------------------------------------------- //
 
+SelectorCommon::SelectorCommon(TTree* /*tree*/)
+  : fChain(0), alphasPower(-1), // ROOT
+    analysis(0),
+    stat_Q2_min(1e100), stat_Q2_max(0.),
+    stat_x1_min(1e100), stat_x1_max(0.),
+    stat_x2_min(1e100), stat_x2_max(0.)
+{
+  // no rescaler by default
+  rescaler = 0;
+  rescale_factor = 1.;
+  rescale_n = -1;
+
+  // print event number every 1e6 events
+  print_event_step = 1e6;
+  // set pdf warning threshold to 1e-9
+  pdf_warning_thresh = 1e-9;
+  // limit pdf warnings to 10000 (to avoid large log files)
+  pdf_warning_limit = 10000;
+  pdf_warning_count = 0;
+
+  // eventoscope disabled
+  stat_step = 0;
+
+  // quark-filter disabled
+  filter_inq = -1;
+  filter_nq = -1;
+
+  // advanced settings disabled
+  use_sherpa_alphas = false;
+  sherpa_alphas = 0;
+  beta0fix = 0;
+  cdr2fdhfix = -1;
+  pi2o12fix = 0;
+}
+
+
 SelectorCommon::~SelectorCommon()
 {
   if (analysis) {
@@ -73,6 +109,10 @@ Bool_t SelectorCommon::Notify()
   // is started when using PROOF. It is normally not necessary to make changes
   // to the generated code, but the routine can be extended by the
   // user if needed. The return value is currently not used.
+
+  if (fChain && fChain->GetCurrentFile()) {
+    std::cout << "File: " << fChain->GetCurrentFile()->GetName() << std::endl;
+  }
 
   return kTRUE;
 }
@@ -327,9 +367,21 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   const double fx1 = LHAPDF::xfx(FROMPDF, x1, fac_scale, lhaid1)/x1;
   const double fx2 = LHAPDF::xfx(FROMPDF, x2, fac_scale, lhaid2)/x2;
 
-  const double calc_weight = me_wgt*(fx1*fx2);
-  if (std::fabs((calc_weight - weight)/weight) > 1e-10 and nuwgt != 18) {  // this simple check does not work for I-part
-    std::cout << "Check your FROMPDF! (" << id << ") " << calc_weight << " != " << weight << std::endl;
+  // this simple check does not work for I-part (hence != 18)
+  if (pdf_warning_count < pdf_warning_limit and nuwgt != 18) {
+    const double pdf_calc_weight = me_wgt*(fx1*fx2);
+    const double pdf_rel_diff = (pdf_calc_weight - weight)/weight;
+    if (abs(pdf_rel_diff) > pdf_warning_thresh) {
+      pdf_warning_count += 1;
+      std::cout << "Check your FROMPDF! " << pdf_warning_count << " (" << id << ") "
+                << pdf_calc_weight << " != " << weight << " (" << pdf_rel_diff << ")\n";
+      if (pdf_warning_count == pdf_warning_limit) {
+        std::cout << "Check your FROMPDF! Reached warning limit " << pdf_warning_count
+                  << " no further warnings will be printed\n";
+        std::cout << "Check your FROMPDF! Fraction of suspicious events "
+                  << pdf_warning_count/analysis->event_count << "\n";
+      }
+    }
   }
 
   if (alphasPower >= 0) {
@@ -516,6 +568,11 @@ Bool_t SelectorCommon::Process(Long64_t entry)
 
   GetEntry(entry);
   analysis->event_count += 1;
+
+  // runtime statistics
+  if (long(analysis->event_count) % print_event_step == 0) {
+    std::cout << "Processing event " << analysis->event_count << std::endl;
+  }
 
   // quark-filter
   if (filter_inq >= 0 and filter_nq >= 0) {

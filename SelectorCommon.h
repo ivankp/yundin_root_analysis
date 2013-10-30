@@ -123,19 +123,7 @@ class SelectorCommon : public TSelector
     // ROOT stuff END           ROOT stuff END          ROOT stuff END
     // -----------------------------------------------------------------------
 
-    SelectorCommon(TTree * /*tree*/ =0)
-    : fChain(0), alphasPower(-1), // ROOT
-      analysis(0),
-      rescale_factor(1.), rescale_n(-1), rescaler(0),
-      filter_inq(-1), filter_nq(-1),
-      use_sherpa_alphas(false), sherpa_alphas(0),
-      beta0fix(0), cdr2fdhfix(-1), pi2o12fix(0),
-      stat_Q2_min(1e100), stat_Q2_max(0.),
-      stat_x1_min(1e100), stat_x1_max(0.),
-      stat_x2_min(1e100), stat_x2_max(0.),
-      stat_step()
-    { }
-
+    SelectorCommon(TTree* tree=0);
     ~SelectorCommon();
 
     // analysis
@@ -238,6 +226,12 @@ class SelectorCommon : public TSelector
     double xsval_cur, xserr_cur;
     std::vector<double> xsvals;
     std::vector<double> xserrs;
+
+    // stats and warnings
+    long print_event_step;
+    long pdf_warning_limit;
+    long pdf_warning_count;
+    double pdf_warning_thresh;
 
   protected:
     void reweight(const PseudoJetVector& input,

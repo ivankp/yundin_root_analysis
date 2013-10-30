@@ -70,6 +70,7 @@ def process(params):
     ROOT.gSystem.Load("libAPPLgrid.so")
 
     # load macros
+    ROOT.gSystem.AddIncludePath("-I%s" % hammer_path)
     ROOT.gROOT.LoadMacro("LHAPDF.h+")
     ROOT.gROOT.LoadMacro("SherpaAlphaS.C+")
     ROOT.gROOT.LoadMacro("SelectorCommon.C+")

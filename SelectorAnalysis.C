@@ -545,7 +545,7 @@ void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
   const Int_t id = event->id;
   const Double_t weight = event->weight;
 
-  const fastjet::PseudoJet AAmom = input[0]+input[1];
+  const fastjet::PseudoJet AAmom = input[0] + input[1];
   const double AAmass = AAmom.m();
   const double AApt = AAmom.pt();
   const double AAeta = AAmom.eta();
@@ -565,14 +565,24 @@ void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
   }
 
   if (jets.size() >= 2) {
-    const double jet1phi = jets[0].phi();
-    const double jet2phi = jets[1].phi();
-    double jj_phi12 = jet1phi > jet2phi ? jet1phi - jet2phi : jet2phi - jet1phi;
-    if (jj_phi12 > M_PI) {
-      jj_phi12 = 2.*M_PI - jj_phi12;
-    }
+    double jj_phi12 = abs(jets[0].phi() - jets[1].phi());
+    jj_phi12 = jj_phi12 > M_PI ? 2.*M_PI - jj_phi12 : jj_phi12;
     bin_histvec(jet_jet_phi12, id, jj_phi12, weight);
     fill_grid(g_jet_jet_phi12, id, jj_phi12, weight, event);
+
+    const fastjet::PseudoJet JJmom = jets[0] + jets[1];
+    const double JJmass = JJmom.m();
+    bin_histvec(jet_jet_mass, id, JJmass, weight);
+
+    const double jj_eta12 = abs(jets[0].eta() - jets[1].eta());
+    bin_histvec(jet_jet_eta12, id, jj_eta12, weight);
+
+    double aa_jj_phi12 = abs(JJmom.phi() - AAmom.phi());
+    aa_jj_phi12 = aa_jj_phi12 > M_PI ? 2.*M_PI - aa_jj_phi12 : aa_jj_phi12;
+    bin_histvec(diphoton_dijet_phi, id, aa_jj_phi12, weight);
+
+    const double aa_j_j_ystar = AAmom.rapidity() - (jets[0].rapidity() + jets[1].rapidity())/2.;
+    bin_histvec(diphoton_dijet_ystar, id, aa_j_j_ystar, weight);
   }
 }
 
@@ -586,6 +596,10 @@ void DiPhotonAnalysis::output_histograms(const TString& filename, std::ofstream&
   output_histvec(photon_eta, filename, stream, dryrun);
   output_histvec(photon_jet_R11, filename, stream, dryrun);
   output_histvec(jet_jet_phi12, filename, stream, dryrun);
+  output_histvec(jet_jet_mass, filename, stream, dryrun);
+  output_histvec(jet_jet_eta12, filename, stream, dryrun);
+  output_histvec(diphoton_dijet_phi, filename, stream, dryrun);
+  output_histvec(diphoton_dijet_ystar, filename, stream, dryrun);
 }
 
 void DiPhotonAnalysis::output_grids()

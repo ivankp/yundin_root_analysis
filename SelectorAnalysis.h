@@ -145,6 +145,10 @@ class DiPhotonAnalysis : public Analysis
     std::vector<Histogram*> photon_eta;
     std::vector<Histogram*> photon_jet_R11;
     std::vector<Histogram*> jet_jet_phi12;
+    std::vector<Histogram*> jet_jet_mass;
+    std::vector<Histogram*> jet_jet_eta12;
+    std::vector<Histogram*> diphoton_dijet_phi;
+    std::vector<Histogram*> diphoton_dijet_ystar;
 
     Grid* g_photon_mass;
     Grid* g_photon_pt;

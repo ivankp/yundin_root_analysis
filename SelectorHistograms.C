@@ -98,6 +98,8 @@ void Histogram::fill(int evt, int n, double w)
   }
 }
 
+// ------------------------- SmearedHistogram base ----------------------------
+
 SmearedHistogram::SmearedHistogram(const TString& filename_, const TString& name_,
                                    int nbin_, double x1_, double x2_,
                                    double smear_, double /*param2*/, double /*param3*/)
@@ -144,7 +146,11 @@ void SmearedHistogram::fill(int evt, int n, double w, double x)
   xwgtvec[n] += x*abs(w);
 }
 
-// specific histograms
+// --------------------------------------------------------------------------- //
+// Specific histograms
+// --------------------------------------------------------------------------- //
+
+// ---------------------- LinearHistogram ------------------------
 
 LinearHistogram::LinearHistogram(const TString& filename_, const TString& name_,
                                  int nbin_, double x1_, double x2_,
@@ -160,15 +166,13 @@ LinearHistogram::LinearHistogram(const TString& filename_, const TString& name_,
 void LinearHistogram::bin(int nextevt, double x, double w)
 {
 //       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
-  if (x < x1 or x > x2) return;
+  if (x < x1 or x >= x2) return;
   int n = static_cast<int>(nbin*(x-x1)/x12);
-//  assert(0 <= n && n < nbin);
-  if (n<0 or n>=nbin) {
-    std::cout << "WARN: " << name << " 0 <= " << n << " " << nbin << " x=" << x << " w=" << w << std::endl;
-    return;
-  }
+  assert(0 <= n && n < nbin);
   fill(nextevt, n, w);
 }
+
+// ---------------------- SmearedLinearHistogram --------------------------
 
 SmearedLinearHistogram::SmearedLinearHistogram(const TString& filename_, const TString& name_,
                                        int nbin_, double x1_, double x2_,
@@ -185,11 +189,13 @@ SmearedLinearHistogram::SmearedLinearHistogram(const TString& filename_, const T
 void SmearedLinearHistogram::bin(int nextevt, double x, double w)
 {
 //       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
-  if (x < x1 or x > x2) return;
+  if (x < x1 or x >= x2) return;
   int n = static_cast<int>(nbin*(x-x1)/x12);
   assert(0 <= n && n < nbin);
   fill(nextevt, n, w, x);
 }
+
+// -------------------------- QuadraticHistogram --------------------------
 
 QuadraticHistogram::QuadraticHistogram(const TString& filename_, const TString& name_,
                                        int nbin_, double x1_, double x2_,
@@ -207,12 +213,14 @@ QuadraticHistogram::QuadraticHistogram(const TString& filename_, const TString& 
 void QuadraticHistogram::bin(int nextevt, double x, double w)
 {
 //       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
-  if (x < x1 or x > x2) return;
+  if (x < x1 or x >= x2) return;
   const double dn = (slope-2 + sqrt((slope-2)*(slope-2) + (8*slope*(x - x1))/step))/(2*slope);
   const int n = static_cast<int>(dn);
   assert(0 <= n && n < nbin);
   fill(nextevt, n, w);
 }
+
+// ---------------------- SmearedQuadraticHistogram -----------------------
 
 SmearedQuadraticHistogram::SmearedQuadraticHistogram(const TString& filename_, const TString& name_,
                                        int nbin_, double x1_, double x2_,
@@ -230,14 +238,16 @@ SmearedQuadraticHistogram::SmearedQuadraticHistogram(const TString& filename_, c
 void SmearedQuadraticHistogram::bin(int nextevt, double x, double w)
 {
 //       std::cout << name << ": E(" << evt << ") LE (" << lastevt << ") LI(" << lastidx << ")" << std::endl; std::cout.flush();
-  if (x < x1 or x > x2) return;
+  if (x < x1 or x >= x2) return;
   const double dn = (slope-2 + sqrt((slope-2)*(slope-2) + (8*slope*(x - x1))/step))/(2*slope);
   const int n = static_cast<int>(dn);
   assert(0 <= n && n < nbin);
   fill(nextevt, n, w, x);
 }
 
+// --------------------------------------------------------------------------- //
 // APPLgrid histograms
+// --------------------------------------------------------------------------- //
 
 double Grid::aparam = 5.;
 std::string Grid::pdf_function = "ntuplejets";

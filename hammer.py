@@ -186,25 +186,32 @@ def process(params):
 def usage():
     print """\
 Usage: hammer [OPTION...] [FILE]
-Reweight events
+Basic options:
   -a, --analysis            Analysis module
   -n, --njet                Number of jets
-  -r, --runname='Test'      Run name
+  -r, --runname='Test'      Run name for AidaPath
   -o, --output='%s.hist'    Output name pattern
 
-  -s, --scale               Multiplicative scale factor (1. does nothing)
-  -p, --power               Alpha_s power (0 does nothing)
+  -s, --scale               Multiplicative scale factor
+  --rescaler=<name>         Use rescaler 'simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat,
+                            'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat'
+
+  -p, --power               Born Alpha_s power
   -f, --frompdf             From PDF set "name.LHgrid:member"
   -t, --topdf               To PDF set "name.LHgrid:member"
 
+  --grid                    Specify to activate APPLgrid (for both warmup and fill)
+  --warmup                  Select "warmup" mode for APPLgrid (otherwise "fill" mode)
+
+Expert options:
   --beta0fix=true/[n]       Fix beta0 weight
   --debug                   Use sherpa alphas
 
-  --qfilter=inq:nq           Filter input by 'incoming quarks':'total quarks'
-
+  --qfilter=inq:nq          Filter input by 'incoming quarks':'total quarks'
   --stat=<N>                Eventoscope with step N
-  --rescaler=<name>         Use rescaler 'simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat,
-                            'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat'
+
+  --cdr2fdhfix=n            Convert CDR to FDH
+  --pi2o12fix               Change prefactor conventions
 
 Other options:
   -h, --help                show this help message

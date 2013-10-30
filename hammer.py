@@ -5,6 +5,7 @@ import sys
 import os
 import re
 import imp
+import glob
 
 
 # python 2.4 does not have any and all
@@ -361,7 +362,10 @@ class Params:
             sys.exit(2)
 
         if len(args) > 0:
-            self.inputs = args[:]
+            self.inputs = []
+            for a in args:
+                self.inputs.extend(glob.glob(a))
+            self.inputs.sort()
         else:
             print "Error: missing input files"
             usage()

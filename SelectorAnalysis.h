@@ -172,6 +172,7 @@ class DiPhotonAnalysis : public Analysis
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class std::vector<Histogram*>;
 #pragma link C++ class std::vector<std::vector<Histogram*> >;
+#pragma link C++ class std::vector<Grid*>;
 #endif
 
 #endif // SELECTOR_ANALYSIS_H

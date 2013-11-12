@@ -262,7 +262,11 @@ void QuadraticHistogram::bin(int nextevt, double x, double w)
   if (x < x1 or x >= x2) return;
   const double dn = (slope-2 + sqrt((slope-2)*(slope-2) + (8*slope*(x - x1))/step))/(2*slope);
   const int n = static_cast<int>(dn);
-  assert(0 <= n && n < nbin);
+  if (n < 0 or n >= nbin) {
+    std::cout << "WARNING " << 0 << " <= " << n << " < " << nbin
+              << " while " << x1 << " <= " << x << " < " << x2 << std::endl;
+    return;
+  }
   fill(nextevt, n, w);
 }
 
@@ -287,7 +291,11 @@ void SmearedQuadraticHistogram::bin(int nextevt, double x, double w)
   if (x < x1 or x >= x2) return;
   const double dn = (slope-2 + sqrt((slope-2)*(slope-2) + (8*slope*(x - x1))/step))/(2*slope);
   const int n = static_cast<int>(dn);
-  assert(0 <= n && n < nbin);
+  if (n < 0 or n >= nbin) {
+    std::cout << "WARNING " << 0 << " <= " << n << " < " << nbin
+              << " while " << x1 << " <= " << x << " < " << x2 << std::endl;
+    return;
+  }
   fill(nextevt, n, w, x);
 }
 

@@ -137,7 +137,20 @@ void SelectorCommon::SlaveBegin(TTree * /*tree*/)
   TString option = GetOption();
 }
 
-static LHAPDF::Flavour pdg2lha(int pdgnum)
+//---------------------------------------------------------------------
+// static members
+//---------------------------------------------------------------------
+
+#if !defined(__MAKECINT__)
+const double SelectorCommon::Nf = 5.;
+const double SelectorCommon::CA = 3.;
+const double SelectorCommon::CF = 4./3.;
+
+const double SelectorCommon::b0 = (33. - 2.*SelectorCommon::Nf)/(12.*M_PI);
+const double SelectorCommon::b1 = (153. - 19.*SelectorCommon::Nf)/(24.*M_PI*M_PI);
+#endif
+
+int SelectorCommon::pdg2lha(int pdgnum)
 {
   switch (pdgnum) {
     case 21:
@@ -171,10 +184,8 @@ static LHAPDF::Flavour pdg2lha(int pdgnum)
   }
 }
 
-static inline double adim(Int_t flav)
+double SelectorCommon::adim(Int_t flav)
 {
-  static const double CA = 3.;
-  static const double CF = 4./3.;
   if (flav == 21) {
     return CA;
   } else if (abs(flav) <= 6) {
@@ -182,6 +193,8 @@ static inline double adim(Int_t flav)
   }
   return 0;
 }
+
+// Misc functions
 
 double SelectorCommon::pole2(int id1_, int id2_, int n_, const Int_t* kf_)
 {
@@ -198,20 +211,11 @@ double SelectorCommon::pole2(int id1_, int id2_, int n_, const Int_t* kf_)
 
 double SelectorCommon::beta0pole2(int id1_, int id2_, int n_, const Int_t* kf_)
 {
-  static const double CA = 3.;
-//   static const double CF = 4./3.;
-  static const double Nf = 5.;
-
-  static const double b0 = 0.5*(11./3.*CA - 2./3.*Nf);
-
-  return b0/pole2(id1_, id2_, n_, kf_);
+  return (2.*M_PI*b0)/pole2(id1_, id2_, n_, kf_);
 }
 
 double SelectorCommon::cdr2fdh(int id1_, int id2_, int n_, const Int_t* kf_)
 {
-  static const double CA = 3.;
-  static const double CF = 4./3.;
-
   int nQ = 0;
   int nG = 0;
 
@@ -346,9 +350,67 @@ double SelectorCommon::rescaler_maa2sumpt2hat(const double /*scale*/,
   return newscale;
 }
 
+double SelectorCommon::rescaler_minlo(const double /*scale*/,
+                                      const PseudoJetVector& input,
+                                      const PseudoJetVector& /*jets*/)
+{
+  PseudoJetVector ktinput;
+  for (unsigned i=0; i<input.size(); i++) {
+    const int flav = kf[i];
+    if (flav == 21 or abs(flav) <= 6) {
+      fastjet::PseudoJet parton = input[i];
+      FlavourKTPlugin::addFlavour(parton, flav);
+      ktinput.push_back(parton);
+    }
+  }
+
+  fastjet::ClusterSequence cs(ktinput, clustering_def);
+  return 0.;
+}
+
+
+double SelectorCommon::Deltaf(double Q0sq, double Qsq, int flav)
+{
+  const double C = adim(flav);
+  const double B = flav == 21 ? M_PI*b0/CA : 3./4.;
+
+  const double Lsq = 1.;
+
+  return exp(-C/(M_PI*b0)*
+             (log(log(Qsq/Lsq)/log(Q0sq/Lsq))*(0.5*log(Qsq/Lsq)-B)-0.5*log(Qsq/Q0sq))
+            );
+}
+
+double SelectorCommon::Deltaf1(double Q0sq, double Qsq, int flav)
+{
+  const double C = adim(flav);
+  const double B = flav == 21 ? M_PI*b0/CA : 3./4.;
+
+  const double logQoQ0 = log(Qsq/Q0sq);
+  return -C/M_PI*(0.25*logQoQ0*logQoQ0 - logQoQ0*B);
+}
+
 // ----------------------------------------------------------------------------
 // Reweighting: Scale, PDF and AlphaS change
 // ----------------------------------------------------------------------------
+
+double SelectorCommon::LambdaQCD(double muR, double aS) const
+{
+  if (aS < 0.) {
+    aS = LHAPDF::alphasPDF(TOPDF, muR);
+  }
+  double Lam = 0.2;
+  double diff = 1;
+  while (diff > 1e-7) {
+    double t = log((muR*muR)/(Lam*Lam));
+    double f = aS*b0*b0*t + (b1*log(t))/(b0*t) - b0;
+    double fp = -(2.*(b1 + aS*b0*b0*b0*t*t - b1*log(t)))/(b0*Lam*t*t);
+    double newLam = Lam - f/fp;
+    diff = abs(2.*(newLam-Lam)/(newLam+Lam));
+    Lam = newLam;
+  }
+  return Lam;
+}
 
 void SelectorCommon::reweight(const PseudoJetVector& input,
                               const PseudoJetVector& jets)

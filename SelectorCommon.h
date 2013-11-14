@@ -23,6 +23,7 @@ using std::sqrt;
 #include "SherpaAlphaS.h"
 #include "SelectorHistograms.h"
 #include "SelectorAnalysis.h"
+#include "FlavourKT.h"
 
 // Header file for the classes stored in the TTree if any.
 
@@ -164,6 +165,9 @@ class SelectorCommon : public TSelector
     double rescaler_maa2sumpt2hat(const double scale,
                               const PseudoJetVector& input,
                               const PseudoJetVector& jets);
+    double rescaler_minlo(const double scale,
+                          const PseudoJetVector& input,
+                          const PseudoJetVector& jets);
 
 
     void setrescaler_none() { rescaler = 0; }
@@ -176,10 +180,33 @@ class SelectorCommon : public TSelector
     void setrescaler_maahthat() { rescaler = &SelectorCommon::rescaler_maahthat; }
     void setrescaler_maa2sumpt2() { rescaler = &SelectorCommon::rescaler_maa2sumpt2; }
     void setrescaler_maa2sumpt2hat() { rescaler = &SelectorCommon::rescaler_maa2sumpt2hat; }
+    void setrescaler_minlo() {
+      clustering_def = fastjet::JetDefinition(new FlavourKTPlugin());
+      lambda = LambdaQCD();
+      std::cout << "Set LambdaQCD = " << lambda << std::endl;
+      rescaler = &SelectorCommon::rescaler_minlo;
+    }
 
+    // static functions
+    static const double Nf;
+    static const double CA;
+    static const double CF;
+    static const double b0;
+    static const double b1;
+
+    static int pdg2lha(int pdgnum);
+    static double adim(Int_t flav);
+    static double Deltaf(double Q0sq, double Qsq, int flav);
+    static double Deltaf1(double Q0sq, double Qsq, int flav);
+    double LambdaQCD(double muR=91.188, double aS=-1.) const;
+
+    // member variables
     double rescale_factor;
     int rescale_n;
     RescalerType rescaler;
+    // minlo-specific
+    fastjet::JetDefinition clustering_def;
+    double lambda;
 
     int born_alphapower;
     int event_alphapower;

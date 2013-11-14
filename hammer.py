@@ -73,6 +73,7 @@ def process(params):
     ROOT.gSystem.AddIncludePath("-I%s" % hammer_path)
     ROOT.gROOT.LoadMacro("LHAPDF.h+")
     ROOT.gROOT.LoadMacro("SherpaAlphaS.C+")
+    ROOT.gROOT.LoadMacro("FlavourKT.cpp+")
     ROOT.gROOT.LoadMacro("SelectorCommon.C+")
     ROOT.gROOT.LoadMacro("appl_grid.h+")
 

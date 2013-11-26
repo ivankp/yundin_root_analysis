@@ -31,6 +31,9 @@ void Analysis::clear()
   clear_var(jet_exclusive);
   clear_var(jet_inclusive);
 
+  clear_histvec(scale_wgt);
+  clear_histvec(scale_nowgt);
+
   for (unsigned i=0; i<jet_pt_n.size(); i++) {
     clear_histvec(jet_pt_n[i]);
   }
@@ -221,6 +224,7 @@ void Analysis::analysis_bin(SelectorCommon* event)
 {
   const Int_t id = event->id;
   const Double_t weight = event->weight;
+  const Double_t scale = event->ren_scale;
 
   event_binned += 1;
 
@@ -229,6 +233,10 @@ void Analysis::analysis_bin(SelectorCommon* event)
     jet_inclusive->bin(id, i, weight);
     fill_grid(g_jet_inclusive, id, i, weight, event);
   }
+
+  bin_histvec(scale_wgt, id, scale, weight);
+  bin_histvec(scale_nowgt, id, scale, Double_t(1.));
+
   for (unsigned i=0; i<jets.size(); i++) {
     assert(i<jet_pt_n.size());
     const double jetpt = jets[i].pt();
@@ -263,6 +271,9 @@ void Analysis::output_histograms(const TString& filename, std::ofstream& stream,
 {
   jet_exclusive->print(stream, runname, event_count);
   jet_inclusive->print(stream, runname, event_count);
+
+  output_histvec(scale_wgt, filename, stream, dryrun);
+  output_histvec(scale_nowgt, filename, stream, dryrun);
 
   for (unsigned i=0; i<=jet_number; i++) {
     output_histvec(jet_pt_n[i], filename, stream, dryrun);

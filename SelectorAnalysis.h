@@ -157,6 +157,42 @@ class PhotonJetAnalysis : public Analysis
     virtual void clear();
 };
 
+class VJetAnalysis : public Analysis
+{
+  public:
+    static VJetAnalysis* create() { return new VJetAnalysis(); }
+
+    VJetAnalysis();
+
+    virtual bool check_cuts(SelectorCommon* event);
+    virtual void analysis_bin(SelectorCommon* event);
+
+    double lepton_ptmin;
+    double lepton_etamax;
+    double lepton_etagap_min;
+    double lepton_etagap_max;
+    double etmiss_min;
+    double vboson_mass_min;
+    double vboson_mass_max;
+    double lepton_jet_Rsep;
+    double lepton_lepton_Rsep;
+    double vboson_onshell_mass;
+
+    std::vector<Histogram*> vboson_pt;
+    std::vector<Histogram*> vboson_eta;
+
+    Grid* g_vboson_pt;
+    Grid* g_vboson_eta;
+
+    virtual void reset();
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
+    virtual void output_grids();
+    virtual void clear();
+};
+
 class DiPhotonAnalysis : public Analysis
 {
   public:
@@ -216,6 +252,7 @@ class DiPhotonAnalysisBH : public DiPhotonAnalysis
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
 #pragma link C++ class JetMAnalysis;
+#pragma link C++ class VJetAnalysis;
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class DiPhotonAnalysisBH;

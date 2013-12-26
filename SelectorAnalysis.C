@@ -411,7 +411,7 @@ bool JetMAnalysis::check_cuts(SelectorCommon* event)
     const double y3 = jets[2].rap();
     const double ystar = abs(y1 - y2) + abs(y2 - y3) + abs(y1 - y3);
     if (ystar < ystar_min or ystar >= ystar_max) {
-      return false;
+    return false;
     }
   }
 
@@ -421,10 +421,6 @@ bool JetMAnalysis::check_cuts(SelectorCommon* event)
 void JetMAnalysis::analysis_bin(SelectorCommon* event)
 {
   BaseClass::analysis_bin(event);
-
-  const Int_t id = event->id;
-  const Double_t weight = event->weight;
-
   if (jets.size() >= 3) {
     const double mass_jjj = (jets[0] + jets[1] + jets[2]).m();
     bin_histvec(jet_mass_jjj, id, mass_jjj, weight);
@@ -445,6 +441,143 @@ void JetMAnalysis::output_grids()
 
   if (g_jet_mass_jjj) {
     g_jet_mass_jjj->write(event_count);
+  }
+}
+
+
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+//   VJetAnalysis
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+VJetAnalysis::VJetAnalysis()
+  : lepton_ptmin(0), lepton_etamax(0),
+    lepton_etagap_min(0), lepton_etagap_max(0),
+    etmiss_min(0),
+    vboson_mass_min(0), vboson_mass_max(0),
+    lepton_jet_Rsep(0), lepton_lepton_Rsep(0)
+{
+  g_vboson_pt = 0;
+  g_vboson_eta = 0;
+}
+
+void VJetAnalysis::clear()
+{
+  Analysis::clear();
+
+  clear_histvec(vboson_pt);
+  clear_histvec(vboson_eta);
+}
+
+void VJetAnalysis::reset()
+{
+  Analysis::reset();
+}
+
+bool VJetAnalysis::check_cuts(SelectorCommon* event)
+{
+  if (not Analysis::check_cuts(event)) {
+    return false;
+  }
+
+  // check for W/Z bosons in first two flavours
+  PseudoJetVector leptons;
+  if (event->kf[0] == 11 || event->kf[1] == -11) {
+    leptons.push_back(input[0]);
+  }
+  if (event->kf[0] == 11 || event->kf[1] == -11) {
+    leptons.push_back(input[1]);
+  }
+
+  PseudoJetVector neutrino;
+  if (leptons.size() == 1) {
+    assert(event->kf[1] == 12 || event->kf[1] == -12);
+    neutrino.push_back(input[1]);
+  }
+  // missing energy/neutrino cuts
+  for (unsigned int j=0; j<neutrino.size; j++) {
+    if (neutrino[j].pt() < etmiss_min) {
+      return false;
+    }
+  }
+
+  // lepton cuts
+  for (unsigned int j=0; j<leptons.size; j++) {
+    if (leptons[j].pt() < lepton_ptmin) {
+      return false;
+    }
+    if (abs(leptons[j].eta()) > lepton_etamax) {
+      return false;
+    }
+    if (abs(leptons[j].eta()) > lepton_etagap_min && abs(leptons[j].eta()) < lepton_etagap_max) {
+      return false;
+    }
+
+    // lepton-jets R-separation
+    for (unsigned i=0; i<jets.size(); i++) {
+      if (leptons[j].delta_R(jets[i]) < lepton_jet_Rsep) {
+        return false;
+      }
+    }
+  }
+
+  if (leptons.size == 2) {
+    if (leptons[j].delta_R(leptons[i]) < lepton_lepton_Rsep) {
+      return false;
+    }
+  }
+
+  // vector boson mass cut
+  const fastjet::PseudoJet& vboson = input[0]+input[1];
+  const double vpt = vboson.pt();
+  const double vm = vboson_onshell_mass;
+  const double vmass = sqrt(vm*vm + vpt*vpt);
+
+  if (vmass < vboson_mass_min || vmass > vboson_mass_max) {
+    return false;
+  }
+
+}
+
+void VJetAnalysis::analysis_bin(SelectorCommon* event)
+{
+  Analysis::analysis_bin(event);
+
+  const Int_t id = event->id;
+  const Double_t weight = event->weight;
+
+  const fastjet::PseudoJet& vboson = input[0]+input[1];
+  const double LLpt = vboson.pt();
+  const double LLeta = bboson.eta();
+
+  bin_histvec(photon_pt, id, LLpt, weight);
+  bin_histvec(photon_eta, id, LLeta, weight);
+
+  fill_grid(g_vboson_pt, id, LLpt, weight, event);
+  fill_grid(g_vboson_eta, id, LLeta, weight, event);
+
+}
+
+void VJetAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  // all jet histograms are already in the base class
+  Analysis::output_histograms(filename, stream, dryrun);
+
+  output_histvec(vboson_pt, filename, stream, dryrun);
+  output_histvec(vboson_eta, filename, stream, dryrun);
+}
+
+void VJetAnalysis::output_grids()
+{
+  Analysis::output_grids();
+
+  if (g_vboson_pt) {
+    g_photon_pt->write(event_count);
+  }
+  if (g_vboson_eta) {
+    g_photon_eta->write(event_count);
   }
 }
 

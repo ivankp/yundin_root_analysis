@@ -54,7 +54,7 @@ def add_histograms_all(analysis, params):
     filename = (params.output % "l64_l20") + '.hist'
 
     # if there is not enough limits, last one is taken for excess elements
-    minpt = [analysis.jet_pt1min, analysis.jet_ptmin]
+    minpt = [analysis.jet_ptmin]
     maxpt = [1420, 1400, 800]
 
     # jet-pT histograms
@@ -78,9 +78,8 @@ def add_histograms_all(analysis, params):
     analysis.vboson_pt.push_back(
         ROOT.LinearHistogram(filename, "vboson_pt", 15, 0, 500)
     )
-    maxeta = analysis.vboson_etamax
     analysis.vboson_eta.push_back(
-        ROOT.LinearHistogram(filename, "vboson_eta", 15, -maxeta, maxeta)
+        ROOT.LinearHistogram(filename, "vboson_eta", 15, -4, 4)
     )
 
     return

@@ -497,14 +497,14 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
     neutrino.push_back(input[1]);
   }
   // missing energy/neutrino cuts
-  for (unsigned int j=0; j<neutrino.size; j++) {
+  for (unsigned int j=0; j<neutrino.size(); j++) {
     if (neutrino[j].pt() < etmiss_min) {
       return false;
     }
   }
 
   // lepton cuts
-  for (unsigned int j=0; j<leptons.size; j++) {
+  for (unsigned int j=0; j<leptons.size(); j++) {
     if (leptons[j].pt() < lepton_ptmin) {
       return false;
     }
@@ -523,8 +523,8 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
     }
   }
 
-  if (leptons.size == 2) {
-    if (leptons[j].delta_R(leptons[i]) < lepton_lepton_Rsep) {
+  if (leptons.size() == 2) {
+    if (leptons[0].delta_R(leptons[1]) < lepton_lepton_Rsep) {
       return false;
     }
   }
@@ -539,6 +539,7 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
     return false;
   }
 
+  return true;
 }
 
 void VJetAnalysis::analysis_bin(SelectorCommon* event)
@@ -550,10 +551,10 @@ void VJetAnalysis::analysis_bin(SelectorCommon* event)
 
   const fastjet::PseudoJet& vboson = input[0]+input[1];
   const double LLpt = vboson.pt();
-  const double LLeta = bboson.eta();
+  const double LLeta = vboson.eta();
 
-  bin_histvec(photon_pt, id, LLpt, weight);
-  bin_histvec(photon_eta, id, LLeta, weight);
+  bin_histvec(vboson_pt, id, LLpt, weight);
+  bin_histvec(vboson_eta, id, LLeta, weight);
 
   fill_grid(g_vboson_pt, id, LLpt, weight, event);
   fill_grid(g_vboson_eta, id, LLeta, weight, event);
@@ -574,10 +575,10 @@ void VJetAnalysis::output_grids()
   Analysis::output_grids();
 
   if (g_vboson_pt) {
-    g_photon_pt->write(event_count);
+    g_vboson_pt->write(event_count);
   }
   if (g_vboson_eta) {
-    g_photon_eta->write(event_count);
+    g_vboson_eta->write(event_count);
   }
 }
 

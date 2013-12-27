@@ -32,6 +32,8 @@ def set_rescaler(selector, params):
         selector.setrescaler_maaht()
     elif params.rescaler == 'maahthat':
         selector.setrescaler_maahthat()
+    elif params.rescaler == 'mwhthat':
+        selector.setrescaler_mwhthat()
     elif params.rescaler == 'maa2sumpt2':
         selector.setrescaler_maa2sumpt2()
     elif params.rescaler == 'maa2sumpt2hat':

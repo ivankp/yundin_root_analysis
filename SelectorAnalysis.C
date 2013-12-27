@@ -484,18 +484,21 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
 
   // check for W/Z bosons in first two flavours
   PseudoJetVector leptons;
-  if (event->kf[0] == 11 || event->kf[1] == -11) {
+  if (event->kf[0] == 11 || event->kf[0] == -11) {
     leptons.push_back(input[0]);
   }
-  if (event->kf[0] == 11 || event->kf[1] == -11) {
+  if (event->kf[1] == 11 || event->kf[1] == -11) {
     leptons.push_back(input[1]);
   }
 
   PseudoJetVector neutrino;
-  if (leptons.size() == 1) {
-    assert(event->kf[1] == 12 || event->kf[1] == -12);
+  if (event->kf[0] == 12 || event->kf[0] == -12) {
+    neutrino.push_back(input[0]);
+  }
+  if (event->kf[1] == 12 || event->kf[1] == -12) {
     neutrino.push_back(input[1]);
   }
+
   // missing energy/neutrino cuts
   for (unsigned int j=0; j<neutrino.size(); j++) {
     if (neutrino[j].pt() < etmiss_min) {
@@ -531,10 +534,8 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
 
   // vector boson mass cut
   const fastjet::PseudoJet& vboson = input[0]+input[1];
-  const double vpt = vboson.pt();
-  const double vm = vboson_onshell_mass;
-  const double vmass = sqrt(vm*vm + vpt*vpt);
 
+  double vmass = vboson.m();
   if (vmass < vboson_mass_min || vmass > vboson_mass_max) {
     return false;
   }

@@ -134,6 +134,8 @@ class DiPhotonAnalysis : public Analysis
     virtual bool check_cuts(SelectorCommon* event);
     virtual void analysis_bin(SelectorCommon* event);
 
+    double jet_pt1min;  // extra cut on leading jet-pt
+
     double photon_R;
     double photon_pt1min;
     double photon_pt2min;

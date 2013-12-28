@@ -472,7 +472,8 @@ void PhotonJetAnalysis::output_grids()
 // ---------------------------------------------------------------------------
 
 DiPhotonAnalysis::DiPhotonAnalysis()
-  : photon_R(0), photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
+  : jet_pt1min(0),
+    photon_R(0), photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
     photon_photon_Rsep(0), photon_jet_Rsep(0)
 {
   g_photon_mass = 0;
@@ -546,7 +547,8 @@ bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
     }
   }
 
-  return true;
+  // leading jet pt-cut
+  return jets[0].pt() >= jet_pt1min;
 }
 
 void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)

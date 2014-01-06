@@ -34,6 +34,8 @@ def set_rescaler(selector, params):
         selector.setrescaler_maahthat()
     elif params.rescaler == 'mwhthat':
         selector.setrescaler_mwhthat()
+    elif params.rescaler == 'mwfhthat':
+        selector.setrescaler_mwFhthat()
     elif params.rescaler == 'maa2sumpt2':
         selector.setrescaler_maa2sumpt2()
     elif params.rescaler == 'maa2sumpt2hat':
@@ -338,7 +340,8 @@ class Params:
             sys.exit(2)
 
         if self.rescaler not in ['simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat',
-                                 'maaht', 'maahthat', 'mwhthat', 'maa2sumpt2', 'maa2sumpt2hat']:
+                                 'maaht', 'maahthat', 'mwhthat', 'mwfhthat',
+                                 'maa2sumpt2', 'maa2sumpt2hat']:
             print "Unknown value for rescaler: %s" % self.rescaler
             usage()
             sys.exit(2)

@@ -161,6 +161,9 @@ class SelectorCommon : public TSelector
     double rescaler_mwhthat(const double scale,
                        const PseudoJetVector& input,
                        const PseudoJetVector& jets);
+    double rescaler_mwFhthat(const double scale,
+                       const PseudoJetVector& input,
+                       const PseudoJetVector& jets);
     double rescaler_maa2sumpt2(const double scale,
                            const PseudoJetVector& input,
                            const PseudoJetVector& jets);
@@ -178,6 +181,7 @@ class SelectorCommon : public TSelector
     void setrescaler_maaht() { rescaler = &SelectorCommon::rescaler_maaht; }
     void setrescaler_maahthat() { rescaler = &SelectorCommon::rescaler_maahthat; }
     void setrescaler_mwhthat() { rescaler = &SelectorCommon::rescaler_mwhthat; }
+    void setrescaler_mwFhthat() { rescaler = &SelectorCommon::rescaler_mwFhthat; }
     void setrescaler_maa2sumpt2() { rescaler = &SelectorCommon::rescaler_maa2sumpt2; }
     void setrescaler_maa2sumpt2hat() { rescaler = &SelectorCommon::rescaler_maa2sumpt2hat; }
 

@@ -16,18 +16,19 @@
 #include <algorithm>
 #include <limits>
 
-class FlavourInfo : public fastjet::PseudoJet::UserInfoBase
-{
-  public:
-    FlavourInfo(int lhid_)
-      : lhid(lhid_)
-    {}
-
-    const int lhid;
-};
+// class FlavourInfo : public fastjet::PseudoJet::UserInfoBase
+// {
+//   public:
+//     FlavourInfo(int lhid_)
+//       : lhid(lhid_)
+//     {}
+//
+//     const int lhid;
+// };
 
 class FlavourKTPlugin : public fastjet::JetDefinition::Plugin
 {
+  friend class FlavourKTBJ;
   public:
     FlavourKTPlugin(double radius_=1.)
       : radius(radius_)
@@ -42,10 +43,13 @@ class FlavourKTPlugin : public fastjet::JetDefinition::Plugin
 
     static int getFlavour(const fastjet::PseudoJet& jet);
     static void addFlavour(fastjet::PseudoJet& jet, int lhid);
+
+
   protected:
     static fastjet::PseudoJet combine(const fastjet::PseudoJet& jet1,
                                       const fastjet::PseudoJet& jet2);
     static int combineFlavour(int lh1, int lh2);
+    static bool isQCD(int id) { return id == 21 or abs(id) <= 6; }
 
     double radius;
 };

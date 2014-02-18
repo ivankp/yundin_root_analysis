@@ -182,6 +182,7 @@ class SelectorCommon : public TSelector
     void setrescaler_maa2sumpt2hat() { rescaler = &SelectorCommon::rescaler_maa2sumpt2hat; }
     void setrescaler_minlo() {
       clustering_def = fastjet::JetDefinition(new FlavourKTPlugin());
+      clustering_def.delete_plugin_when_unused();
       lambda = LambdaQCD();
       std::cout << "Set LambdaQCD = " << lambda << std::endl;
       rescaler = &SelectorCommon::rescaler_minlo;

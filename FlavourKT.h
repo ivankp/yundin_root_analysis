@@ -30,6 +30,8 @@ class FlavourKTPlugin : public fastjet::JetDefinition::Plugin
 {
   friend class FlavourKTBJ;
   public:
+    static const int NONFLAV = 999;
+
     FlavourKTPlugin(double radius_=1.)
       : radius(radius_)
     {}

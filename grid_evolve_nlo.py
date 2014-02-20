@@ -90,9 +90,9 @@ def process(params):
     if True:
         for g,n in zip(grids, params.inputs):
             print n
-            print ROOT.vconvolute(g, 0, 1, 1)[2]
+            print list(ROOT.vconvolute(g, 0, 1, 1))
             if order > 0:
-                print ROOT.vconvolute(g, 1, 1, 1)[2]
+                print list(ROOT.vconvolute(g, 1, 1, 1))
 
     # sum grids
     g = grids[0]
@@ -100,13 +100,13 @@ def process(params):
       g += grids[i]
       grids[i] = None
 
-    if False:
+    if True:
         xsec = ROOT.vconvolute(g, order, 1, 1)
-        print 1, [x for x in xsec]
+        print 1, list(xsec)
         xsec = ROOT.vconvolute(g, order, 2, 2)
-        print 2, [x for x in xsec]
+        print 2, list(xsec)
         xsec = ROOT.vconvolute(g, order, 0.5, 0.5)
-        print 0.5, [x for x in xsec]
+        print 0.5, list(xsec)
 
     try:
         tmp = np.loadtxt(firstname + '-lo.txt')
@@ -128,8 +128,8 @@ def process(params):
         xval_nlo = xval_lo
         yval_lo, yval_nlo = evolve(firstname + '-%s.txt', g, order, xval_lo, xval_nlo, fac)
     # pick total XS
-    yval_lo = yval_lo[...,2]
-    yval_nlo = yval_nlo[...,2]
+    yval_lo = yval_lo[...,0]
+    yval_nlo = yval_nlo[...,0]
 
     if True:
         import matplotlib.pyplot as plt

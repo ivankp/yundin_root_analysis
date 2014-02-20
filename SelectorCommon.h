@@ -205,9 +205,13 @@ class SelectorCommon : public TSelector
     double rescale_factor;
     int rescale_n;
     RescalerType rescaler;
+    double fac_scalefactor;
+    double ren_scalefactor;
+    double alphafactor;
     // minlo-specific
     fastjet::JetDefinition clustering_def;
     double lambda;
+    std::vector<double> minlo_scales;
 
     int born_alphapower;
     int event_alphapower;
@@ -262,6 +266,7 @@ class SelectorCommon : public TSelector
     double pdf_warning_thresh;
 
   protected:
+    double getAlphaS(double mur);
     void reweight(const PseudoJetVector& input,
                   const PseudoJetVector& jets);
     void statUpdate();

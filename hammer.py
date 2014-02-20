@@ -38,9 +38,12 @@ def set_rescaler(selector, params):
         selector.setrescaler_maa2sumpt2hat()
     else:
         name = 'setrescaler_%s' % params.rescaler
-        func = selector.__dict__.get(name, None)
-        if func is not None:
-            func(selector)
+        try:
+            func = getattr(selector, name)
+            func()
+        except:
+            print "Rescaler %s not found" % (name)
+            sys.exit(2)
 
 
 def get_pdfname(pdfopt, name=''):
@@ -98,9 +101,6 @@ def process(params):
         selector.born_alphapower = params.power
         selector.rescale_factor = params.scale
 
-        # scale change
-        set_rescaler(selector, params)
-
         # FROMPDF is always initialized
         if True:
             selector.FROMPDF = 1
@@ -114,6 +114,9 @@ def process(params):
             selector.TOPDF = selector.FROMPDF + 1
             pdf, m = get_pdfname(params.topdf, 'TOPDF')
             ROOT.LHAPDF.initPDFSet(selector.TOPDF, pdf,  ROOT.LHAPDF.LHGRID, int(m))
+
+        # set rescaler after PDFs
+        set_rescaler(selector, params)
 
         print "Scale: '%s (%d)' x %f, AlphaPow %d" % (params.rescaler, selector.rescale_n,
                                                       selector.rescale_factor, selector.born_alphapower)
@@ -337,7 +340,8 @@ class Params:
             sys.exit(2)
 
         if self.rescaler not in ['simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat',
-                                 'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat']:
+                                 'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat',
+                                 'minlo']:
             print "Unknown value for rescaler: %s" % self.rescaler
             usage()
             sys.exit(2)

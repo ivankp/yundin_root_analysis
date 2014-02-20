@@ -8,6 +8,12 @@ using namespace fastjet;
 class FlavourKTBJ
 {
   public:
+    static const int NONFLAV = FlavourKTPlugin::NONFLAV;
+
+    FlavourKTBJ()
+      : pt2(), rap(), phi(), lhid(NONFLAV)
+    {}
+
     void init(const PseudoJet& jet) {
       if (jet.E() == 0.) { // beam representative
         pt2 = 0.;
@@ -24,7 +30,7 @@ class FlavourKTBJ
     double distance(const FlavourKTBJ* other) const {
       // check that flavours are compatible
       const int newlhid = FlavourKTPlugin::combineFlavour(lhid, other->lhid);
-      if (newlhid == 999) {
+      if (newlhid == NONFLAV) {
         return std::numeric_limits<double>::max();
       }
       // cannot fold beams on each other
@@ -76,7 +82,7 @@ void FlavourKTPlugin::run_clustering(ClusterSequence& cs) const
     int i, j, k;
     double dij = nnh.dij_min(i, j);  // i,j are return values
 
-    std::cout << "dij = " << dij << std::endl;
+//     std::cout << "dij = " << dij << std::endl;
 
     const PseudoJet& jet1 = cs.jets()[i];
     if (not isQCD(getFlavour(jet1))) {
@@ -89,9 +95,9 @@ void FlavourKTPlugin::run_clustering(ClusterSequence& cs) const
       }
       cs.plugin_record_ij_recombination(i, j, dij, combine(jet1, jet2), k);
       nnh.merge_jets(i, j, cs.jets()[k], k);
-      std::cout << getFlavour(cs.jets()[k]) << " -> " << getFlavour(jet1) << " + " << getFlavour(jet2) << std::endl;
+//       std::cout << getFlavour(cs.jets()[k]) << " -> " << getFlavour(jet1) << " + " << getFlavour(jet2) << std::endl;
     } else {
-      std::cout << getFlavour(jet1) << " -> beam " << std::endl;
+//       std::cout << getFlavour(jet1) << " -> beam " << std::endl;
       if (dij > 1e300) {
         dij = 0.;
       }
@@ -138,7 +144,7 @@ int FlavourKTPlugin::combineFlavour(int lh1, int lh2)
     if (q2 or lh2 == 25) {
       return lh2;
     } else {
-      return 999;
+      return NONFLAV;
     }
   }
 
@@ -152,11 +158,11 @@ int FlavourKTPlugin::combineFlavour(int lh1, int lh2)
     } else if (not q2 and lh2 != 25) {
       return lh1;
     } else {
-      return 999;
+      return NONFLAV;
     }
   }
 
-  return 999;
+  return NONFLAV;
 }
 
 #if defined(__MAKECINT__)

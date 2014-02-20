@@ -355,17 +355,169 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
                                       const PseudoJetVector& /*jets*/)
 {
   PseudoJetVector ktinput;
+  PseudoJetVector primary;
+
+  // inputs 0,1 are dummy beams
+  {
+    fastjet::PseudoJet beamA = fastjet::PseudoJet(0., 0., 0., 0.);
+    FlavourKTPlugin::addFlavour(beamA, abs(id1) > 6 ? id1 : -id1);
+    ktinput.push_back(beamA);
+    fastjet::PseudoJet beamB = fastjet::PseudoJet(0., 0., 0., 0.);
+    FlavourKTPlugin::addFlavour(beamB, abs(id2) > 6 ? id2 : -id2);
+    ktinput.push_back(beamB);
+  }
+
   for (unsigned i=0; i<input.size(); i++) {
     const int flav = kf[i];
-    if (flav == 21 or abs(flav) <= 6) {
-      fastjet::PseudoJet parton = input[i];
-      FlavourKTPlugin::addFlavour(parton, flav);
-      ktinput.push_back(parton);
+    fastjet::PseudoJet parton = input[i];
+    FlavourKTPlugin::addFlavour(parton, flav);
+    if (/*onlyqcd and */abs(flav) > 6 and flav != 21) {
+      primary.push_back(parton);
+      continue;
     }
+    ktinput.push_back(parton);
   }
 
   fastjet::ClusterSequence cs(ktinput, clustering_def);
-  return 0.;
+  minlo_scales.clear();
+  alphafactor = 1.;
+  double minlo_mur = 1.;
+  double minlo_alpha = 0.;
+
+  int imax = ktinput.size()-1;
+  int clust_first = 0;
+  if (part[0] == 'R') {
+    imax -= 1;
+    clust_first += 1;
+  }
+  int clust_last = clust_first;
+  double dij = 0.;
+  for (int i = imax; i >= 0; i--) {
+    const double nextdij = sqrt(cs.exclusive_dmerge(i));
+    if (nextdij > 0.) {
+      if (nextdij < dij) {
+        break;
+      }
+      clust_last += 1;  // number of clusterings, can be limited to keep more stuff in primary system
+      dij = nextdij;
+      minlo_scales.push_back(dij);
+      minlo_mur *= dij;
+      double as = getAlphaS(dij);
+      minlo_alpha += as;
+      alphafactor *= as/alphas;
+    }
+  }
+
+  const std::vector<fastjet::ClusterSequence::history_element>& cshist = cs.history();
+  const std::vector<fastjet::PseudoJet>& csjets = cs.jets();
+
+  for (int i = 0; cshist[i].jetp_index >= 0; i++) {
+    assert(i == cshist[i].jetp_index);
+  }
+
+  // add un-clustered non-beam partons to the primary system
+  clust_first += ktinput.size();  // everything before it is input
+  clust_last += ktinput.size();   // everything from it and up is primary system
+  for (int i = clust_last; cshist[i].jetp_index >= 0; i++) {
+    assert(cshist[i].parent1 >= 0);
+    const fastjet::PseudoJet& parent1 = csjets[cshist[i].parent1];
+    if (parent1.E() > 0.) {
+      primary.push_back(parent1);
+    }
+    assert(cshist[i].parent2 >= 2);
+    const fastjet::PseudoJet& parent2 = csjets[cshist[i].parent2];
+    if (parent2.E() > 0.) {
+      primary.push_back(parent2);
+    }
+  }
+
+  double minlo_Q0 = minlo_scales.front();
+  double minlo_Q = 0.;
+  for (unsigned i = 0; i < primary.size(); i++) {
+    minlo_Q += primary[i].pt();
+  }
+  minlo_Q = std::max(minlo_Q, minlo_scales.back());
+
+  double sudakov1 = 1.;
+  double sudakov1sub = 0.;
+  for (int i = 0; i < clust_first; i++) {
+    const int child_idx = cshist[i].child;
+    const int flav = FlavourKTPlugin::getFlavour(csjets[cshist[i].jetp_index]);
+    double scale1 = 0;
+    if (child_idx < clust_first) {  // NLO radiation
+      // ignore
+    } else if (child_idx < clust_last) {  // clustering scale
+      scale1 = sqrt(cshist[child_idx].dij);
+    } else {  // hard scale1
+      scale1 = minlo_Q;
+    }
+    if (scale1 != 0. and scale1 != minlo_Q0) {
+      sudakov1 *= Deltaf(minlo_Q0, scale1, flav);
+      if (part[0] == 'B') {
+        sudakov1sub += Deltaf1(minlo_Q0, scale1, flav);
+      }
+      if (sudakov1 != sudakov1) {
+        std::cout << "Df1 " << i << " " << minlo_Q0 << " " << scale1 << " " << flav << " " << Deltaf(minlo_Q0, scale1, flav) << "\n";
+      }
+    }
+  }
+
+  double sudakov2 = 1.;
+  double sudakov2sub = 0.;
+  for (int i = clust_first; i < clust_last; i++) {
+    const int child_idx = cshist[i].child;
+    const int flav = FlavourKTPlugin::getFlavour(csjets[cshist[i].jetp_index]);
+    double scale1 = sqrt(cshist[i].dij);
+    double scale2 = 0;
+//     std::cout << "II " << child_idx << " " << clust_last << " " << minlo_Q0 << " " << minlo_Q << "\n";
+    if (child_idx < clust_last) {  // clustering scale
+      scale2 = sqrt(cshist[child_idx].dij);
+//       std::cout << "1 " << scale1 << " " << scale2 << "\n";
+    } else {  // hard scale
+      scale2 = minlo_Q;
+//       std::cout << "2 " << scale1 << " " << scale2 << "\n";
+    }
+    assert(scale2 > scale1 or (scale2 == scale1 and scale1 == minlo_Q));
+    if (scale1 == minlo_Q0) {
+      sudakov2 *= Deltaf(minlo_Q0, scale2, flav);
+      if (part[0] == 'B') {
+        sudakov2sub += Deltaf1(minlo_Q0, scale2, flav);
+      }
+    } else {
+      sudakov2 *= Deltaf(minlo_Q0, scale2, flav)/Deltaf(minlo_Q0, scale1, flav);
+      if (part[0] == 'B') {
+        sudakov2sub += Deltaf1(minlo_Q0, scale2, flav) - Deltaf1(minlo_Q0, scale1, flav);
+      }
+    }
+    if (sudakov2 != sudakov2) {
+      std::cout << "Df2 " << i << " " << child_idx << " " << minlo_Q0 << " " << scale1 << " " << flav << " " << Deltaf(minlo_Q0, scale2, flav) << " " << Deltaf(minlo_Q0, scale1, flav) << "\n";
+    }
+  }
+
+  for (int i = minlo_scales.size(); i < born_alphapower; i++) {
+    minlo_mur *= minlo_Q;
+    double as = getAlphaS(minlo_Q);
+    minlo_alpha += as;
+    alphafactor *= as/alphas;
+  }
+  minlo_alpha /= born_alphapower;
+  fac_scalefactor = minlo_Q0/fac_scale;
+  ren_scalefactor = pow(minlo_mur, 1./born_alphapower)/ren_scale;
+  if (event_alphapower > born_alphapower) {
+    alphafactor *= minlo_alpha/alphas;
+  }
+
+  alphafactor *= sudakov1*sudakov2*(1. - sudakov2sub - sudakov1sub);
+  if (alphafactor != alphafactor) {
+    std::cout << id1 << " " << id2 << " -> "; for (unsigned i=0; i<input.size(); i++) std::cout << kf[i] << " "; std::cout << "\n";
+    std::cout << "MM ";for (unsigned i=0; i<minlo_scales.size(); i++) std::cout << minlo_scales[i] << " "; std::cout << "\n";
+    for (unsigned i = 0; i < cshist.size(); i++) {
+      std::cout << cshist[i].parent1 << " " << cshist[i].parent2 << " " << cshist[i].child << " " << cshist[i].jetp_index << " " << cshist[i].dij << "\n";
+    }
+    std::cout << "S " << sudakov1 << " " << sudakov2 << " " << sudakov2sub << " " << sudakov1sub << std::endl;
+    std::cout << "alphafactor = " << alphafactor << " fac = " << fac_scalefactor << " ren = " << ren_scalefactor << "\n";
+  }
+  return 0.; // zero means that we use fac_scalefactor/ren_scalefactor
 }
 
 
@@ -412,15 +564,20 @@ double SelectorCommon::LambdaQCD(double muR, double aS) const
   return Lam;
 }
 
+double SelectorCommon::getAlphaS(double mur)
+{
+  if (use_sherpa_alphas) {
+    return sherpa_alphas->AlphaS(mur);
+  } else {
+    return LHAPDF::alphasPDF(TOPDF, mur);
+  }
+}
+
 void SelectorCommon::reweight(const PseudoJetVector& input,
                               const PseudoJetVector& jets)
 {
   if (FROMPDF == 0 and TOPDF == 0 and rescaler == 0) {
     return;
-  }
-  double scalefactor = 1.;
-  if (rescaler) {
-    scalefactor = (*this.*rescaler)(fac_scale, input, jets)/fac_scale;
   }
 
   lhaid1 = pdg2lha(id1);
@@ -455,25 +612,31 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     std::cout << "Check your alpha power " << int(alphasPower) << " != " << born_alphapower << std::endl;
   }
 
+  double scalefactor = 1.;
+  if (rescaler) {
+    scalefactor = (*this.*rescaler)(fac_scale, input, jets)/fac_scale;
+  }
+  if (scalefactor != 0.) {  // zero means that fac_scalefactor/ren_scalefactor are set in rescaler
+    fac_scalefactor = scalefactor;
+    ren_scalefactor = scalefactor;
+  }
+
   // below new scales
+  fac_scale *= fac_scalefactor;
+  ren_scale *= ren_scalefactor;
 
-  fac_scale *= scalefactor;
-  ren_scale *= scalefactor;
-
-  const double log_r = log(scalefactor*scalefactor);  // log(murnew^2/murold^2)
-  const double log_f = log(scalefactor*scalefactor);  // log(mufnew^2/mufold^2)
+  const double log_r = log(ren_scalefactor*ren_scalefactor);  // log(murnew^2/murold^2)
+  const double log_f = log(fac_scalefactor*fac_scalefactor);  // log(mufnew^2/mufold^2)
 
   LHAPDF::xfx(TOPDF, x1, fac_scale, pdfx1);
   LHAPDF::xfx(TOPDF, x2, fac_scale, pdfx2);
   const double new_fx1 = pdfx1[lhaid1+6]/x1;
   const double new_fx2 = pdfx2[lhaid2+6]/x2;
 
-  double alphafactor = 0;
-  if (use_sherpa_alphas) {
-    alphafactor = sherpa_alphas->AlphaS(ren_scale*ren_scale)/alphas;
-  } else {
-    alphafactor = LHAPDF::alphasPDF(TOPDF, ren_scale)/alphas;
+  if (scalefactor != 0.) {  // zero means that alphafactor is set in rescaler
+    alphafactor = pow(getAlphaS(ren_scale)/alphas, event_alphapower);
   }
+
   coll_weights_count = 0;
   if (nuwgt == 0) {
     weight = me_wgt*(new_fx1*new_fx2);
@@ -564,7 +727,7 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     coll_weights[i] /= appl_alphas;
   }
   naked_weight = me_wgt/appl_alphas;
-  weight *= pow(alphafactor, event_alphapower);
+  weight *= alphafactor;
 
   statUpdate();
 }

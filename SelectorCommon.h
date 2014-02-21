@@ -197,8 +197,8 @@ class SelectorCommon : public TSelector
 
     static int pdg2lha(int pdgnum);
     static double adim(Int_t flav);
-    static double Deltaf(double Q0sq, double Qsq, int flav);
-    static double Deltaf1(double Q0sq, double Qsq, int flav);
+    double Deltaf(double Q0sq, double Qsq, int flav);
+    double Deltaf1(double Q0sq, double Qsq, int flav);
     double LambdaQCD(double muR=91.188, double aS=-1.) const;
 
     // member variables

@@ -432,7 +432,7 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
     }
   }
 
-  double minlo_Q0 = 3.*lambda;  // NP cutoff
+  double minlo_Q0 = 4.*lambda;  // NP cutoff
   minlo_Q0 = std::max(minlo_Q0, minlo_scales.front());
   minlo_scales.front() = minlo_Q0;
 

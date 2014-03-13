@@ -436,11 +436,11 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   minlo_Q0 = std::max(minlo_Q0, minlo_scales.front());
   minlo_scales.front() = minlo_Q0;
 
-  double minlo_Q = 0.;
+  fastjet::PseudoJet primarysum = fastjet::PseudoJet(0., 0., 0., 0.);
   for (unsigned i = 0; i < primary.size(); i++) {
-    minlo_Q += primary[i].pt();
+    primarysum += primary[i];
   }
-  minlo_Q *= 0.5;  // primary system scale = sum pt/2
+  double minlo_Q = primarysum.m();
   minlo_Q = std::max(minlo_Q, minlo_scales.back());  // round up to q_n if needed
 
   // compute alpha factor

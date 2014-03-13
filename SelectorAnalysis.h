@@ -87,6 +87,24 @@ class JetAnalysis : public Analysis
                                    bool dryrun);
 };
 
+class Jet3Analysis : public JetAnalysis
+{
+  public:
+    static Jet3Analysis* create() { return new Jet3Analysis(); }
+
+    Jet3Analysis() {}
+
+//     virtual bool check_cuts(SelectorCommon* event);
+    virtual void analysis_bin(SelectorCommon* event);
+
+    std::vector<Histogram*> jet_jet_beta23;
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
+};
+
+
 class PhotonJetAnalysis : public Analysis
 {
   public:

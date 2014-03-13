@@ -320,6 +320,46 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
+//   Jet3Analysis -- three jet analysis with beta23 observable
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+void Jet3Analysis::analysis_bin(SelectorCommon* event)
+{
+  JetAnalysis::analysis_bin(event);
+
+  const Int_t id = event->id;
+  const Double_t weight = event->weight;
+
+  if (jets.size() >= 3) {
+    const double jet2phi = jets[1].phi();
+    const double jet3phi = jets[2].phi();
+    double jj_phi23 = jet3phi - jet2phi;
+    if (jj_phi23 > M_PI) {
+      jj_phi23 = jj_phi23 - 2.*M_PI;
+    } else if (jj_phi23 < -M_PI) {
+      jj_phi23 = jj_phi23 + 2.*M_PI;
+    }
+    const double jet2eta = jets[1].eta();
+    const double jet3eta = jets[2].eta();
+    double jj_eta23 = jet3eta - jet2eta;
+    if (jet2eta < 0) {
+      jj_eta23 = -jj_eta23;
+    }
+
+    const double jj_beta23 = atan(abs(jj_phi23)/jj_eta23);
+    bin_histvec(jet_jet_beta23, id, jj_beta23, weight);
+  }
+}
+
+void Jet3Analysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  JetAnalysis::output_histograms(filename, stream, dryrun);
+  output_histvec(jet_jet_beta23, filename, stream, dryrun);
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 //   PhotonJetAnalysis
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

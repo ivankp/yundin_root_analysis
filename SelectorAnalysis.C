@@ -1,4 +1,6 @@
 
+#include <utility>
+
 // --------------------------------------------------------------------------- //
 // Parameters
 // --------------------------------------------------------------------------- //
@@ -220,6 +222,34 @@ void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCo
 }
 
 
+bool Analysis::photonIsolation(const SelectorCommon* event, double photon_R,
+                               double photon_n, double photon_eps) const
+{
+  for (int i=0; i<event->nparticle; i++) {
+    if (event->kf[i] != 22) continue;
+    const double Eeps = input[i].Et()*photon_eps/pow(1. - cos(photon_R), photon_n);
+    std::vector<std::pair<double,double> > hadronic;
+    for (int j=0; j<event->nparticle; j++) {
+      if (abs(event->kf[j]) <= 6) {
+        const double Rij = input[i].delta_R(input[j]);
+        if (Rij <= photon_R) {
+          hadronic.push_back(make_pair(Rij, input[j].Et()));
+        }
+      }
+    }
+    sort(hadronic.begin(), hadronic.end());
+    double energy = 0.;
+    for (unsigned j=0; j<hadronic.size(); j++) {
+      energy += hadronic[j].second;
+      if (energy > Eeps*pow(1. - cos(hadronic[j].first), photon_n)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+
 void Analysis::analysis_bin(SelectorCommon* event)
 {
   const Int_t id = event->id;
@@ -336,8 +366,8 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 // ---------------------------------------------------------------------------
 
 PhotonJetAnalysis::PhotonJetAnalysis()
-  : jet_pt1min(0), photon_R(0), photon_ptmin(0), photon_etamax(0),
-    photon_jet_Rsep(0)
+  : jet_pt1min(0), photon_R(0), photon_n(0), photon_eps(0),
+    photon_ptmin(0), photon_etamax(0), photon_jet_Rsep(0)
 {
   g_photon_pt = 0;
   g_photon_eta = 0;
@@ -393,6 +423,13 @@ bool PhotonJetAnalysis::check_cuts(SelectorCommon* event)
   // photon-jets R-separation
   for (unsigned i=0; i<jets.size(); i++) {
     if (photon.delta_R(jets[i]) < photon_jet_Rsep) {
+      return false;
+    }
+  }
+
+  // photon isolation
+  if (photon_n > 0 and photon_eps > 0) {
+    if (not photonIsolation(event, photon_R, photon_n, photon_eps)) {
       return false;
     }
   }
@@ -473,7 +510,8 @@ void PhotonJetAnalysis::output_grids()
 
 DiPhotonAnalysis::DiPhotonAnalysis()
   : jet_pt1min(0),
-    photon_R(0), photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
+    photon_R(0), photon_n(0), photon_eps(0),
+    photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
     photon_photon_Rsep(0), photon_jet_Rsep(0)
 {
   g_photon_mass = 0;
@@ -543,6 +581,13 @@ bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
   for (unsigned i=0; i<jets.size(); i++) {
     if (input[0].delta_R(jets[i]) < photon_jet_Rsep or
         input[1].delta_R(jets[i]) < photon_jet_Rsep) {
+      return false;
+    }
+  }
+
+  // photon isolation
+  if (photon_n > 0 and photon_eps > 0) {
+    if (not photonIsolation(event, photon_R, photon_n, photon_eps)) {
       return false;
     }
   }

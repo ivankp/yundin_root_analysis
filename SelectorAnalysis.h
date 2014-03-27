@@ -70,6 +70,9 @@ class Analysis
     virtual void clear();
 
     void fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event);
+
+    bool photonIsolation(const SelectorCommon* event, double photon_R,
+                         double photon_n, double photon_eps) const;
 };
 
 class JetAnalysis : public Analysis
@@ -101,6 +104,8 @@ class PhotonJetAnalysis : public Analysis
 
     double jet_pt1min;  // extra cut on leading jet-pt
     double photon_R;
+    double photon_n;
+    double photon_eps;
     double photon_ptmin;
     double photon_etamax;
     double photon_jet_Rsep;
@@ -137,6 +142,8 @@ class DiPhotonAnalysis : public Analysis
     double jet_pt1min;  // extra cut on leading jet-pt
 
     double photon_R;
+    double photon_n;
+    double photon_eps;
     double photon_pt1min;
     double photon_pt2min;
     double photon_etamax;

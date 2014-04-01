@@ -292,6 +292,15 @@ double SelectorCommon::rescaler_sumpt2hat(const double /*scale*/,
   return newscale;
 }
 
+double SelectorCommon::rescaler_maa(const double /*scale*/,
+                                   const PseudoJetVector& input,
+                                   const PseudoJetVector& /*jets*/)
+{
+  double newscale = (input[0]+input[1]).m();
+  newscale *= 0.5*rescale_factor;
+  return newscale;
+}
+
 double SelectorCommon::rescaler_maaht(const double /*scale*/,
                                    const PseudoJetVector& input,
                                    const PseudoJetVector& jets)

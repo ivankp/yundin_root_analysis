@@ -1,6 +1,17 @@
 
 #include <utility>
 
+// analog of delta_R using pseudorapidity
+static double DeltaEtaPhi(const fastjet::PseudoJet& a, const fastjet::PseudoJet& b)
+{
+  double dphi = abs(a.phi() - b.phi());
+  if (dphi > fastjet::pi) {
+    dphi = fastjet::twopi - dphi;
+  }
+  const double deta = a.eta() - b.eta();
+  return sqrt(dphi*dphi + deta*deta);
+}
+
 // --------------------------------------------------------------------------- //
 // Parameters
 // --------------------------------------------------------------------------- //
@@ -679,4 +690,57 @@ void DiPhotonAnalysis::output_grids()
   if (g_photon_jet_R11) {
     g_photon_jet_R11->write(event_count);
   }
+}
+
+bool DiPhotonAnalysisBH::check_cuts(SelectorCommon* event)
+{
+  if (not Analysis::check_cuts(event)) {
+    return false;
+  }
+
+  assert(event->kf[0] == 22 and event->kf[1] == 22);
+
+  double pt1 = input[0].pt();
+  double pt2 = input[1].pt();
+  if (pt1 < pt2) {
+    std::swap(pt1, pt2);
+    std::swap(input[0], input[1]);
+  }
+
+  if (pt1 < photon_pt1min) {
+    return false;
+  }
+  if (pt2 < photon_pt2min) {
+    return false;
+  }
+  if (abs(input[0].eta()) > photon_etamax or
+      abs(input[1].eta()) > photon_etamax) {
+    return false;
+  }
+  if (input[0].delta_R(input[1]) < photon_photon_Rsep) {
+    return false;
+  }
+
+  for (unsigned i=0; i<jet_number; i++) {
+    if (DeltaEtaPhi(input[0], jets[i]) < photon_jet_Rsep or
+        DeltaEtaPhi(input[1], jets[i]) < photon_jet_Rsep) {
+      return false;
+    }
+  }
+  for (unsigned i=jet_number; i<jets.size(); i++) {
+    if (DeltaEtaPhi(input[0], jets[i]) < photon_R or
+        DeltaEtaPhi(input[1], jets[i]) < photon_R) {
+      return false;
+    }
+  }
+
+  // photon isolation
+  if (photon_n > 0 and photon_eps > 0) {
+    if (not photonIsolation(event, photon_R, photon_n, photon_eps)) {
+      return false;
+    }
+  }
+
+  // leading jet pt-cut
+  return jets[0].pt() >= jet_pt1min;
 }

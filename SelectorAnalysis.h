@@ -176,11 +176,20 @@ class DiPhotonAnalysis : public Analysis
     virtual void clear();
 };
 
+class DiPhotonAnalysisBH : public DiPhotonAnalysis
+{
+  public:
+    static DiPhotonAnalysisBH* create() { return new DiPhotonAnalysisBH(); }
+
+    virtual bool check_cuts(SelectorCommon* event);
+};
+
 #if defined(__MAKECINT__)
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
+#pragma link C++ class DiPhotonAnalysisBH;
 #pragma link C++ class std::vector<Histogram*>;
 #pragma link C++ class std::vector<std::vector<Histogram*> >;
 #pragma link C++ class std::vector<Grid*>;

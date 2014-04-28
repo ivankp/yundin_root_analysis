@@ -344,7 +344,7 @@ void Analysis::output_grids()
 // ---------------------------------------------------------------------------
 
 JetAnalysis::JetAnalysis()
-  : jet_pt1min(0)
+  : jet_pt1min(0.), jet_pt2min(0.), jet_pt3min(0.)
 {
 }
 
@@ -354,7 +354,17 @@ bool JetAnalysis::check_cuts(SelectorCommon* event)
     return false;
   }
 
-  return jets[0].pt() >= jet_pt1min;
+  if (jet_number >= 1 and jet_pt1min > 0. and jets[0].pt() < jet_pt1min) {
+    return false;
+  }
+  if (jet_number >= 2 and jet_pt2min > 0. and jets[1].pt() < jet_pt2min) {
+    return false;
+  }
+  if (jet_number >= 3 and jet_pt3min > 0. and jets[2].pt() < jet_pt3min) {
+    return false;
+  }
+
+  return true;
 }
 
 void JetAnalysis::analysis_bin(SelectorCommon* event)
@@ -368,6 +378,74 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 {
   // all jet histograms are already in the base class
   Analysis::output_histograms(filename, stream, dryrun);
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+//   JetMAnalysis
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+JetMAnalysis::JetMAnalysis()
+  : ystar_min(0), ystar_max(1e10)
+{
+  g_jet_mass_jjj = 0;
+}
+
+void JetMAnalysis::clear()
+{
+  BaseClass::clear();
+
+  clear_histvec(jet_mass_jjj);
+}
+
+bool JetMAnalysis::check_cuts(SelectorCommon* event)
+{
+  if (not BaseClass::check_cuts(event)) {
+    return false;
+  }
+
+  if (jets.size() >= 3) {
+    const double y1 = jets[0].rap();
+    const double y2 = jets[1].rap();
+    const double y3 = jets[2].rap();
+    const double ystar = abs(y1 - y2) + abs(y2 - y3) + abs(y1 - y3);
+    if (ystar < ystar_min or ystar >= ystar_max) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void JetMAnalysis::analysis_bin(SelectorCommon* event)
+{
+  BaseClass::analysis_bin(event);
+
+  const Int_t id = event->id;
+  const Double_t weight = event->weight;
+
+  if (jets.size() >= 3) {
+    const double mass_jjj = (jets[0] + jets[1] + jets[2]).m();
+    bin_histvec(jet_mass_jjj, id, mass_jjj, weight);
+    fill_grid(g_jet_mass_jjj, id, mass_jjj, weight, event);
+  }
+}
+
+void JetMAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  BaseClass::output_histograms(filename, stream, dryrun);
+
+  output_histvec(jet_mass_jjj, filename, stream, dryrun);
+}
+
+void JetMAnalysis::output_grids()
+{
+  BaseClass::output_grids();
+
+  if (g_jet_mass_jjj) {
+    g_jet_mass_jjj->write(event_count);
+  }
 }
 
 // ---------------------------------------------------------------------------

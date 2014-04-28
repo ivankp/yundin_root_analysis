@@ -86,10 +86,38 @@ class JetAnalysis : public Analysis
     virtual void analysis_bin(SelectorCommon* event);
 
     double jet_pt1min;
+    double jet_pt2min;
+    double jet_pt3min;
 
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
                                    bool dryrun);
+};
+
+class JetMAnalysis : public JetAnalysis
+{
+  public:
+    typedef JetAnalysis BaseClass;
+
+    static JetMAnalysis* create() { return new JetMAnalysis(); }
+
+    JetMAnalysis();
+
+    virtual bool check_cuts(SelectorCommon* event);
+    virtual void analysis_bin(SelectorCommon* event);
+
+    double ystar_min;
+    double ystar_max;
+
+    std::vector<Histogram*> jet_mass_jjj;
+
+    Grid* g_jet_mass_jjj;
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
+    virtual void output_grids();
+    virtual void clear();
 };
 
 class PhotonJetAnalysis : public Analysis
@@ -187,6 +215,7 @@ class DiPhotonAnalysisBH : public DiPhotonAnalysis
 #if defined(__MAKECINT__)
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
+#pragma link C++ class JetMAnalysis;
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class DiPhotonAnalysisBH;

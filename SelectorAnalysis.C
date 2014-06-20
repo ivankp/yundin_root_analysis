@@ -294,13 +294,18 @@ void Analysis::output_grids()
 // ---------------------------------------------------------------------------
 
 JetAnalysis::JetAnalysis()
-  : jet_pt1min(0)
+  : jet_pt1min(0), jet_ht2min(0)
 {
 }
 
 bool JetAnalysis::check_cuts(SelectorCommon* event)
 {
   if (not Analysis::check_cuts(event)) {
+    return false;
+  }
+
+  double ht2 = jets[0].pt()+jets[1].pt();
+  if (ht2 < jet_ht2min) {
     return false;
   }
 
@@ -325,6 +330,38 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 //   Jet3Analysis -- three jet analysis with beta23 observable
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
+Jet3Analysis::Jet3Analysis()
+  : jet_eta1max(10), jet_eta2max(10), jet_eta2min(0),
+    jet_jet_DR23min(0), jet_jet_DR23max(10), jet_jet_M12min(0)
+{
+}
+
+bool Jet3Analysis::check_cuts(SelectorCommon* event)
+{
+  if (not JetAnalysis::check_cuts(event)) {
+    return false;
+  }
+
+  if (abs(jets[0].eta()) > jet_eta1max) {
+    return false;
+  }
+
+  if (abs(jets[1].eta()) > jet_eta2max or abs(jets[1].eta()) < jet_eta2min) {
+    return false;
+  }
+
+  double M12 = (jets[0]+jets[1]).m();
+  if (M12 < jet_jet_M12min) {
+    return false;
+  }
+
+  double DR23 = jets[1].delta_R(jets[2]);
+  if (DR23 < jet_jet_DR23min or DR23 > jet_jet_DR23max) {
+    return false;
+  }
+
+  return true;
+}
 
 void Jet3Analysis::analysis_bin(SelectorCommon* event)
 {
@@ -349,7 +386,11 @@ void Jet3Analysis::analysis_bin(SelectorCommon* event)
       jj_eta23 = -jj_eta23;
     }
 
-    const double jj_beta23 = atan(abs(jj_phi23)/jj_eta23);
+    double jj_beta23 = atan(abs(jj_phi23)/jj_eta23);
+    if (jj_beta23<0.) jj_beta23 += M_PI;
+
+    bin_histvec(jet_jet_eta23, id, jj_eta23, weight);
+    bin_histvec(jet_jet_phi23, id, jj_phi23, weight);
     bin_histvec(jet_jet_beta23, id, jj_beta23, weight);
   }
 }
@@ -357,6 +398,8 @@ void Jet3Analysis::analysis_bin(SelectorCommon* event)
 void Jet3Analysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
 {
   JetAnalysis::output_histograms(filename, stream, dryrun);
+  output_histvec(jet_jet_eta23, filename, stream, dryrun);
+  output_histvec(jet_jet_phi23, filename, stream, dryrun);
   output_histvec(jet_jet_beta23, filename, stream, dryrun);
 }
 

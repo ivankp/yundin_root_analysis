@@ -83,6 +83,7 @@ class JetAnalysis : public Analysis
     virtual void analysis_bin(SelectorCommon* event);
 
     double jet_pt1min;
+    double jet_ht2min;
 
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
@@ -94,11 +95,16 @@ class Jet3Analysis : public JetAnalysis
   public:
     static Jet3Analysis* create() { return new Jet3Analysis(); }
 
-    Jet3Analysis() {}
+    Jet3Analysis();
 
-//     virtual bool check_cuts(SelectorCommon* event);
+    virtual bool check_cuts(SelectorCommon* event);
     virtual void analysis_bin(SelectorCommon* event);
 
+    double jet_eta1max, jet_eta2max, jet_eta2min;
+    double jet_jet_DR23min, jet_jet_DR23max, jet_jet_M12min;
+
+    std::vector<Histogram*> jet_jet_eta23;
+    std::vector<Histogram*> jet_jet_phi23;
     std::vector<Histogram*> jet_jet_beta23;
 
   protected:
@@ -188,6 +194,7 @@ class DiPhotonAnalysis : public Analysis
 #if defined(__MAKECINT__)
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
+#pragma link C++ class Jet3Analysis;
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class std::vector<Histogram*>;

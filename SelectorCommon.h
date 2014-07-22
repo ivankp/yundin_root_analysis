@@ -131,6 +131,10 @@ class SelectorCommon : public TSelector
     typedef std::vector<fastjet::PseudoJet> PseudoJetVector;
     Analysis* analysis;
 
+    enum {MODE_PLAIN=0, MODE_LOOPSIM};
+    int analysis_mode;
+    void ProcessSingleEvent();
+
     // scale change
     typedef double (SelectorCommon::*RescalerType)(const double scale,
                                                    const PseudoJetVector& partons,

@@ -19,7 +19,7 @@
 
 SelectorCommon::SelectorCommon(TTree* /*tree*/)
   : fChain(0), alphasPower(-1), // ROOT
-    analysis(0),
+    analysis(0), analysis_mode(MODE_PLAIN),
     stat_Q2_min(1e100), stat_Q2_max(0.),
     stat_x1_min(1e100), stat_x1_max(0.),
     stat_x2_min(1e100), stat_x2_max(0.)
@@ -807,6 +807,25 @@ Bool_t SelectorCommon::Process(Long64_t entry)
   }
 
   GetEntry(entry);
+  if (analysis_mode == MODE_PLAIN) {
+    ProcessSingleEvent();
+  } else if (analysis_mode == MODE_LOOPSIM) {
+//     LoopSim ls(...);
+//     while (ls.there_is_a_next_event()) {
+//       const Event & ev = ls.extract_next_event();
+//       FillLoopSimEvent(ev);
+//       ProcessSingleEvent();
+//     }
+  } else {
+    Abort("Unknown mode");
+  }
+
+
+  return kTRUE;
+}
+
+void SelectorCommon::ProcessSingleEvent()
+{
   analysis->event_count += 1;
 
   // runtime statistics
@@ -822,7 +841,7 @@ Bool_t SelectorCommon::Process(Long64_t entry)
       nq += int(abs(kf[i]) <= 6);
     }
     if (inq != filter_inq or nq != filter_nq) {
-      return kTRUE;
+      return;
     }
   }
 
@@ -840,8 +859,6 @@ Bool_t SelectorCommon::Process(Long64_t entry)
       }
     }
   }
-
-  return kTRUE;
 }
 
 void SelectorCommon::SlaveTerminate()

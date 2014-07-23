@@ -18,16 +18,16 @@
 // --------------------------------------------------------------------------- //
 
 SelectorCommon::SelectorCommon(TTree* /*tree*/)
-  : fChain(0), alphasPower(-1), // ROOT
+  : fChain(0), // ROOT
     analysis(0), analysis_mode(MODE_PLAIN),
     stat_Q2_min(1e100), stat_Q2_max(0.),
     stat_x1_min(1e100), stat_x1_max(0.),
     stat_x2_min(1e100), stat_x2_max(0.)
 {
   // no rescaler by default
-  rescaler = 0;
-  rescale_factor = 1.;
-  rescale_n = -1;
+  opt_rescaler = 0;
+  opt_rescale_factor = 1.;
+  opt_rescale_n = -1;
 
   // print event number every 1e6 events
   print_event_step = 1e6;
@@ -38,18 +38,20 @@ SelectorCommon::SelectorCommon(TTree* /*tree*/)
   pdf_warning_count = 0;
 
   // eventoscope disabled
-  stat_step = 0;
+  opt_stat_step = 0;
 
   // quark-filter disabled
-  filter_inq = -1;
-  filter_nq = -1;
+  opt_filter_inq = -1;
+  opt_filter_nq = -1;
 
   // advanced settings disabled
   use_sherpa_alphas = false;
   sherpa_alphas = 0;
-  beta0fix = 0;
-  cdr2fdhfix = -1;
-  pi2o12fix = 0;
+  opt_beta0fix = 0;
+  opt_cdr2fdhfix = -1;
+  opt_pi2o12fix = 0;
+  // used by APPLgrid
+  opt_born_alphaspower = -1;
 }
 
 
@@ -76,30 +78,30 @@ void SelectorCommon::Init(TTree *tree)
   fChain = tree;
   fChain->SetMakeClass(1);
 
-  fChain->SetBranchAddress("id", &id, &b_id);
-  fChain->SetBranchAddress("nparticle", &nparticle, &b_nparticle);
-  fChain->SetBranchAddress("px", px, &b_px);
-  fChain->SetBranchAddress("py", py, &b_py);
-  fChain->SetBranchAddress("pz", pz, &b_pz);
-  fChain->SetBranchAddress("E", E, &b_E);
-  fChain->SetBranchAddress("alphas", &alphas, &b_alphas);
-  fChain->SetBranchAddress("kf", kf, &b_kf);
-  fChain->SetBranchAddress("weight", &weight, &b_weight);
-  fChain->SetBranchAddress("weight2", &weight2, &b_weight2);
-  fChain->SetBranchAddress("me_wgt", &me_wgt, &b_me_wtg);
-  fChain->SetBranchAddress("me_wgt2", &me_wgt2, &b_me_wtg2);
-  fChain->SetBranchAddress("x1", &x1, &b_x1);
-  fChain->SetBranchAddress("x2", &x2, &b_x2);
-  fChain->SetBranchAddress("x1p", &x1p, &b_x1p);
-  fChain->SetBranchAddress("x2p", &x2p, &b_x2p);
-  fChain->SetBranchAddress("id1", &id1, &b_id1);
-  fChain->SetBranchAddress("id2", &id2, &b_id2);
-  fChain->SetBranchAddress("fac_scale", &fac_scale, &b_fac_scale);
-  fChain->SetBranchAddress("ren_scale", &ren_scale, &b_ren_scale);
-  fChain->SetBranchAddress("nuwgt", &nuwgt, &b_nuwgt);
-  fChain->SetBranchAddress("usr_wgts", &usr_wgts, &b_usr_wgts);
-  fChain->SetBranchAddress("alphasPower", &alphasPower, &b_alphasPower);
-  fChain->SetBranchAddress("part", part, &b_part);
+  fChain->SetBranchAddress("id", &ntuple_id, &b_id);
+  fChain->SetBranchAddress("nparticle", &ntuple_nparticle, &b_nparticle);
+  fChain->SetBranchAddress("px", ntuple_px, &b_px);
+  fChain->SetBranchAddress("py", ntuple_py, &b_py);
+  fChain->SetBranchAddress("pz", ntuple_pz, &b_pz);
+  fChain->SetBranchAddress("E", ntuple_E, &b_E);
+  fChain->SetBranchAddress("alphas", &ntuple_alphas, &b_alphas);
+  fChain->SetBranchAddress("kf", ntuple_kf, &b_kf);
+  fChain->SetBranchAddress("weight", &ntuple_weight, &b_weight);
+  fChain->SetBranchAddress("weight2", &ntuple_weight2, &b_weight2);
+  fChain->SetBranchAddress("me_wgt", &ntuple_me_wgt, &b_me_wtg);
+  fChain->SetBranchAddress("me_wgt2", &ntuple_me_wgt2, &b_me_wtg2);
+  fChain->SetBranchAddress("x1", &ntuple_x1, &b_x1);
+  fChain->SetBranchAddress("x2", &ntuple_x2, &b_x2);
+  fChain->SetBranchAddress("x1p", &ntuple_x1p, &b_x1p);
+  fChain->SetBranchAddress("x2p", &ntuple_x2p, &b_x2p);
+  fChain->SetBranchAddress("id1", &ntuple_id1, &b_id1);
+  fChain->SetBranchAddress("id2", &ntuple_id2, &b_id2);
+  fChain->SetBranchAddress("fac_scale", &ntuple_fac_scale, &b_fac_scale);
+  fChain->SetBranchAddress("ren_scale", &ntuple_ren_scale, &b_ren_scale);
+  fChain->SetBranchAddress("nuwgt", &ntuple_nuwgt, &b_nuwgt);
+  fChain->SetBranchAddress("usr_wgts", &ntuple_usr_wgts, &b_usr_wgts);
+  fChain->SetBranchAddress("alphaspower", &ntuple_alphaspower, &b_alphaspower);
+  fChain->SetBranchAddress("part", ntuple_part, &b_part);
 }
 
 Bool_t SelectorCommon::Notify()
@@ -117,7 +119,7 @@ Bool_t SelectorCommon::Notify()
   return kTRUE;
 }
 
-void SelectorCommon::Begin(TTree * /*tree*/)
+void SelectorCommon::Begin(TTree* /*tree*/)
 {
   // The Begin() function is called at the start of the query.
   // When running with PROOF Begin() is only called on the client.
@@ -127,7 +129,7 @@ void SelectorCommon::Begin(TTree * /*tree*/)
 
 }
 
-void SelectorCommon::SlaveBegin(TTree * /*tree*/)
+void SelectorCommon::SlaveBegin(TTree* /*tree*/)
 {
   // The SlaveBegin() function is called after the Begin() function.
   // When running with PROOF SlaveBegin() is called on each slave server.
@@ -238,7 +240,7 @@ double SelectorCommon::rescaler_multiplicative(const double scale,
                                                const PseudoJetVector& /*partons*/,
                                                const PseudoJetVector& /*jets*/)
 {
-  double newscale = scale*rescale_factor;
+  double newscale = scale*opt_rescale_factor;
   return newscale;
 }
 
@@ -247,11 +249,11 @@ double SelectorCommon::rescaler_ht(const double /*scale*/,
                                    const PseudoJetVector& jets)
 {
   double newscale = 0;
-  const int imax = rescale_n >= 0 ? rescale_n : jets.size();
+  const int imax = opt_rescale_n >= 0 ? opt_rescale_n : jets.size();
   for (int i=0; i<imax; i++) {
     newscale += jets[i].pt();
   }
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -260,11 +262,11 @@ double SelectorCommon::rescaler_hthat(const double /*scale*/,
                                       const PseudoJetVector& /*jets*/)
 {
   double newscale = 0;
-  const int imax = rescale_n >= 0 ? rescale_n : partons.size();
+  const int imax = opt_rescale_n >= 0 ? opt_rescale_n : partons.size();
   for (int i=0; i<imax; i++) {
     newscale += partons[i].pt();
   }
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -273,12 +275,12 @@ double SelectorCommon::rescaler_sumpt2(const double /*scale*/,
                                        const PseudoJetVector& jets)
 {
   double newscale = 0;
-  const int imax = rescale_n >= 0 ? rescale_n : jets.size();
+  const int imax = opt_rescale_n >= 0 ? opt_rescale_n : jets.size();
   for (int i=0; i<imax; i++) {
     newscale += jets[i].pt2();
   }
   newscale = sqrt(newscale);
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -287,12 +289,12 @@ double SelectorCommon::rescaler_sumpt2hat(const double /*scale*/,
                                           const PseudoJetVector& /*jets*/)
 {
   double newscale = 0;
-  const int imax = rescale_n >= 0 ? rescale_n : partons.size();
+  const int imax = opt_rescale_n >= 0 ? opt_rescale_n : partons.size();
   for (int i=0; i<imax; i++) {
     newscale += partons[i].pt2();
   }
   newscale = sqrt(newscale);
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -301,11 +303,11 @@ double SelectorCommon::rescaler_maaht(const double /*scale*/,
                                    const PseudoJetVector& jets)
 {
   double newscale = (input[0]+input[1]).m();
-  const int imax = rescale_n >= 0 ? rescale_n : jets.size();
+  const int imax = opt_rescale_n >= 0 ? opt_rescale_n : jets.size();
   for (int i=0; i<imax; i++) {
     newscale += jets[i].pt();
   }
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -314,11 +316,11 @@ double SelectorCommon::rescaler_maahthat(const double /*scale*/,
                                       const PseudoJetVector& /*jets*/)
 {
   double newscale = (input[0]+input[1]).m();
-  const int imax = rescale_n >= 0 ? 2+rescale_n : input.size();
+  const int imax = opt_rescale_n >= 0 ? 2+opt_rescale_n : input.size();
   for (int i=2; i<imax; i++) {
     newscale += input[i].pt();
   }
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -327,12 +329,12 @@ double SelectorCommon::rescaler_maa2sumpt2(const double /*scale*/,
                                        const PseudoJetVector& jets)
 {
   double newscale = (input[0]+input[1]).m2();
-  const int imax = rescale_n >= 0 ? rescale_n : jets.size();
+  const int imax = opt_rescale_n >= 0 ? opt_rescale_n : jets.size();
   for (int i=0; i<imax; i++) {
     newscale += jets[i].pt2();
   }
   newscale = sqrt(newscale);
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -341,12 +343,12 @@ double SelectorCommon::rescaler_maa2sumpt2hat(const double /*scale*/,
                                           const PseudoJetVector& /*jets*/)
 {
   double newscale = (input[0]+input[1]).m2();
-  const int imax = rescale_n >= 0 ? 2+rescale_n : input.size();
+  const int imax = opt_rescale_n >= 0 ? 2+opt_rescale_n : input.size();
   for (int i=2; i<imax; i++) {
     newscale += input[i].pt2();
   }
   newscale = sqrt(newscale);
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -360,15 +362,15 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   // inputs 0,1 are dummy beams
   {
     fastjet::PseudoJet beamA = fastjet::PseudoJet(0., 0., 0., 0.);
-    FlavourKTPlugin::addFlavour(beamA, abs(id1) > 6 ? id1 : -id1);
+    FlavourKTPlugin::addFlavour(beamA, abs(get_id1()) > 6 ? get_id1() : -get_id1());
     ktinput.push_back(beamA);
     fastjet::PseudoJet beamB = fastjet::PseudoJet(0., 0., 0., 0.);
-    FlavourKTPlugin::addFlavour(beamB, abs(id2) > 6 ? id2 : -id2);
+    FlavourKTPlugin::addFlavour(beamB, abs(get_id2()) > 6 ? get_id2() : -get_id2());
     ktinput.push_back(beamB);
   }
 
   for (unsigned i=0; i<input.size(); i++) {
-    const int flav = kf[i];
+    const int flav = get_kf(i);
     fastjet::PseudoJet parton = input[i];
     FlavourKTPlugin::addFlavour(parton, flav);
     if (/*onlyqcd and */abs(flav) > 6 and flav != 21) { // non-qcd stuff goes into primary system
@@ -384,7 +386,7 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   // determine clust_first index of the first clustering
   int imax = ktinput.size()-1;
   int clust_first = 0;
-  if (part[0] == 'R') {
+  if (get_part(0) == 'R') {
     static long unsigned maxinputlen = 0;
     maxinputlen = std::max(maxinputlen, ktinput.size());
     if (ktinput.size() == maxinputlen) {
@@ -451,25 +453,26 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   for (unsigned i = 0; i < minlo_scales.size(); i++) {
     const double minlo_qi = minlo_scales[i];
     minlo_mur *= minlo_qi;
-    const double as = getAlphaS(rescale_factor*minlo_qi);
+    const double as = get_alphas(opt_rescale_factor*minlo_qi);
     minlo_alpha += as;
-    alphafactor *= as/alphas;
+    alphafactor *= as/orig_alphas();
   }
+  const int born_alphaspower = get_alphaspower() - get_event_order();
   // then m powers corresponding to primary system
-  for (int i = minlo_scales.size(); i < born_alphapower; i++) {
+  for (int i = minlo_scales.size(); i < born_alphaspower; i++) {
     minlo_mur *= minlo_Q;
-    const double as = getAlphaS(rescale_factor*minlo_Q);
+    const double as = get_alphas(opt_rescale_factor*minlo_Q);
     minlo_alpha += as;
-    alphafactor *= as/alphas;
+    alphafactor *= as/orig_alphas();
   }
-  minlo_alpha /= born_alphapower; // a_s(n+m+1) as in (3.2)
-  if (event_alphapower > born_alphapower) {  // if NLO multiply a_s(n+m+1)
-    alphafactor *= minlo_alpha/alphas;
+  minlo_alpha /= born_alphaspower; // a_s(n+m+1) as in (3.2)
+  if (get_event_order() == 1) {  // if NLO multiply a_s(n+m+1)
+    alphafactor *= minlo_alpha/orig_alphas();
   }
 
   // set mF and mR scale factors
-  fac_scalefactor = rescale_factor*minlo_Q0/fac_scale;
-  ren_scalefactor = rescale_factor*pow(minlo_mur, 1./born_alphapower)/ren_scale;
+  fac_scalefactor = opt_rescale_factor*minlo_Q0/orig_fac_scale();
+  ren_scalefactor = opt_rescale_factor*pow(minlo_mur, 1./born_alphaspower)/orig_ren_scale();
 
   // compute sudakov FFs for external legs
   double sudakov1 = 1.;
@@ -487,7 +490,7 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
     }
     if (scale1 != 0. and scale1 != minlo_Q0) {
       sudakov1 *= Deltaf(minlo_Q0, scale1, flav);
-      if (part[0] == 'B') {
+      if (get_part(0) == 'B') {
         sudakov1sub += Deltaf1(minlo_Q0, scale1, flav);
       }
     }
@@ -509,12 +512,12 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
     assert(scale2 > scale1 or (scale2 == scale1 and scale1 == minlo_Q));
     if (scale1 == minlo_Q0) {
       sudakov2 *= Deltaf(minlo_Q0, scale2, flav);
-      if (part[0] == 'B') {
+      if (get_part(0) == 'B') {
         sudakov2sub += Deltaf1(minlo_Q0, scale2, flav);
       }
     } else {
       sudakov2 *= Deltaf(minlo_Q0, scale2, flav)/Deltaf(minlo_Q0, scale1, flav);
-      if (part[0] == 'B') {
+      if (get_part(0) == 'B') {
         sudakov2sub += Deltaf1(minlo_Q0, scale2, flav) - Deltaf1(minlo_Q0, scale1, flav);
       }
     }
@@ -524,7 +527,7 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   alphafactor *= sudakov1*sudakov2*(1. - minlo_alpha*sudakov2sub - minlo_alpha*sudakov1sub);
 
   if (alphafactor != alphafactor) {
-    std::cout << id1 << " " << id2 << " -> "; for (unsigned i=0; i<input.size(); i++) std::cout << kf[i] << " "; std::cout << "\n";
+    std::cout << get_id1() << " " << get_id2() << " -> "; for (unsigned i=0; i<input.size(); i++) std::cout << get_kf(i) << " "; std::cout << "\n";
     std::cout << "MM ";for (unsigned i=0; i<minlo_scales.size(); i++) std::cout << minlo_scales[i] << " "; std::cout << "\n";
     for (unsigned i = 0; i < cshist.size(); i++) {
       std::cout << cshist[i].parent1 << " " << cshist[i].parent2 << " " << cshist[i].child << " " << cshist[i].jetp_index << " " << cshist[i].dij << "\n";
@@ -564,7 +567,7 @@ double SelectorCommon::Deltaf1(double Q0sq, double Qsq, int flav)
 double SelectorCommon::LambdaQCD(double muR, double aS) const
 {
   if (aS < 0.) {
-    aS = LHAPDF::alphasPDF(TOPDF, muR);
+    aS = LHAPDF::alphasPDF(opt_topdf, muR);
   }
   double Lam = 0.2;
   double diff = 1;
@@ -579,36 +582,49 @@ double SelectorCommon::LambdaQCD(double muR, double aS) const
   return Lam;
 }
 
-double SelectorCommon::getAlphaS(double mur)
+double SelectorCommon::get_alphas(double mur)
 {
   if (use_sherpa_alphas) {
     return sherpa_alphas->AlphaS(mur);
   } else {
-    return LHAPDF::alphasPDF(TOPDF, mur);
+    return LHAPDF::alphasPDF(opt_topdf, mur);
   }
 }
 
-void SelectorCommon::reweight(const PseudoJetVector& input,
-                              const PseudoJetVector& jets)
+// ---------------------------------------------------------------------------
+// reweighting
+// ---------------------------------------------------------------------------
+
+void SelectorCommon::prepare_event()
 {
-  if (FROMPDF == 0 and TOPDF == 0 and rescaler == 0) {
-    return;
+  // init LHA codes for incoming partons
+  lhaid1 = pdg2lha(get_id1());
+  lhaid2 = pdg2lha(get_id2());
+
+  x1r = get_x1()/get_x1p();
+  x2r = get_x2()/get_x2p();
+
+  event_order = (get_part(0) == 'B') ? 0 : 1;
+  if (opt_born_alphaspower >= 0 and
+      get_alphaspower() - event_order != opt_born_alphaspower) {
+      std::cout << "Check your opt_born_alphaspower = " << opt_born_alphaspower
+                << " != " << get_alphaspower() - event_order << " (" << get_event_id() << ")\n";
   }
+}
 
-  lhaid1 = pdg2lha(id1);
-  lhaid2 = pdg2lha(id2);
-
-  const double fx1 = LHAPDF::xfx(FROMPDF, x1, fac_scale, lhaid1)/x1;
-  const double fx2 = LHAPDF::xfx(FROMPDF, x2, fac_scale, lhaid2)/x2;
-
+void SelectorCommon::reweight_pdfcheck()
+{
   // this simple check does not work for I-part (hence != 18)
-  if (pdf_warning_count < pdf_warning_limit and nuwgt != 18) {
-    const double pdf_calc_weight = me_wgt*(fx1*fx2);
-    const double pdf_rel_diff = (pdf_calc_weight - weight)/weight;
+  if (pdf_warning_count < pdf_warning_limit and get_nuwgt() != 18) {
+    const double fx1 = LHAPDF::xfx(opt_frompdf, get_x1(), orig_fac_scale(), get_lhaid1())/get_x1();
+    const double fx2 = LHAPDF::xfx(opt_frompdf, get_x2(), orig_fac_scale(), get_lhaid2())/get_x2();
+
+    const double pdf_calc_weight = orig_me_wgt()*(fx1*fx2);
+    const double pdf_rel_diff = (pdf_calc_weight - orig_weight())/orig_weight();
     if (abs(pdf_rel_diff) > pdf_warning_thresh) {
       pdf_warning_count += 1;
-      std::cout << "Check your FROMPDF! " << pdf_warning_count << " (" << id << ") "
-                << pdf_calc_weight << " != " << weight << " (" << pdf_rel_diff << ")\n";
+      std::cout << "Check your FROMPDF! " << pdf_warning_count << " (" << get_event_id() << ") "
+                << pdf_calc_weight << " != " << orig_weight() << " (" << pdf_rel_diff << ")\n";
       if (pdf_warning_count == pdf_warning_limit) {
         std::cout << "Check your FROMPDF! Reached warning limit " << pdf_warning_count
                   << " no further warnings will be printed\n";
@@ -617,19 +633,50 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
       }
     }
   }
+}
 
-  if (alphasPower >= 0) {
-    event_alphapower = int(alphasPower);
-  } else {
-    event_alphapower = born_alphapower;
+double SelectorCommon::reweight_applyfixes(double new_me_wgt, double log_r)
+{
+  const Double_t* usr_wgts = orig_usr_wgts();
+
+  // pi^2 scheme conversion
+  if (opt_pi2o12fix) {
+    new_me_wgt += -M_PI*M_PI/12.*usr_wgts[1];
   }
-  if (event_order() < 0 or event_order() > 1) {
-    std::cout << "Check your alpha power " << int(alphasPower) << " != " << born_alphapower << std::endl;
+
+  // CDR to DRED conversion
+  if (opt_cdr2fdhfix >= 0) {
+    const double cdr2fdh_term = cdr2fdh(get_id1(), get_id2(), get_nparticle(), get_kf());
+    const double pole2_term = pole2(get_id1(), get_id2(), get_nparticle(), get_kf());
+    new_me_wgt += -(opt_cdr2fdhfix - cdr2fdh_term)*usr_wgts[1]/pole2_term;
   }
+
+  // fix for wrong alpha power in old Sherpa ntuples
+  if (opt_beta0fix > 0) {
+    const double beta0pole2_fac = beta0pole2(get_id1(), get_id2(), get_nparticle(), get_kf());
+//     usr_wgts[0] -= (opt_beta0fix - (get_alphaspower()-1))*2.*usr_wgts[1]*beta0pole2_fac;
+    new_me_wgt -= (opt_beta0fix - (get_alphaspower()-1))*2.*usr_wgts[1]*beta0pole2_fac*log_r;
+  }
+
+  return new_me_wgt;
+}
+
+// sets: event_weight, naked_weight, coll_weights
+//       pdfx1, pdfx2, pdfx1p, pdfx2p
+//       alphafactor, fac_scalefactor, ren_scalefactor
+void SelectorCommon::reweight(const PseudoJetVector& input,
+                              const PseudoJetVector& jets)
+{
+  if (opt_frompdf == 0 and opt_topdf == 0 and opt_rescaler == 0) {
+    event_weight = orig_weight();
+    return;
+  }
+
+  reweight_pdfcheck();  // check input PDF correctness (uses lhaid1 and lhaid2)
 
   double scalefactor = 1.;
-  if (rescaler) {
-    scalefactor = (*this.*rescaler)(fac_scale, input, jets)/fac_scale;
+  if (opt_rescaler) {
+    scalefactor = (*this.*opt_rescaler)(orig_fac_scale(), input, jets)/orig_fac_scale();
   }
   if (scalefactor != 0.) {  // zero means that fac_scalefactor/ren_scalefactor are set in rescaler
     fac_scalefactor = scalefactor;
@@ -637,99 +684,81 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   }
 
   // below new scales
-  fac_scale *= fac_scalefactor;
-  ren_scale *= ren_scalefactor;
+  const double fac_scale = get_fac_scale();
+  const double ren_scale = get_ren_scale();
+
+  if (scalefactor != 0.) {  // zero means that alphafactor is set in rescaler
+    alphafactor = pow(get_alphas(ren_scale)/orig_alphas(), get_alphaspower());
+  }
 
   const double log_r = log(ren_scalefactor*ren_scalefactor);  // log(murnew^2/murold^2)
   const double log_f = log(fac_scalefactor*fac_scalefactor);  // log(mufnew^2/mufold^2)
 
-  LHAPDF::xfx(TOPDF, x1, fac_scale, pdfx1);
-  LHAPDF::xfx(TOPDF, x2, fac_scale, pdfx2);
-  const double new_fx1 = pdfx1[lhaid1+6]/x1;
-  const double new_fx2 = pdfx2[lhaid2+6]/x2;
+  LHAPDF::xfx(opt_topdf, get_x1(), fac_scale, pdfx1);
+  LHAPDF::xfx(opt_topdf, get_x2(), fac_scale, pdfx2);
+  const int id1 = get_lhaid1();
+  const int id2 = get_lhaid2();
+  const double new_fx1 = pdfx1[id1+6]/get_x1();
+  const double new_fx2 = pdfx2[id2+6]/get_x2();
 
-  if (scalefactor != 0.) {  // zero means that alphafactor is set in rescaler
-    alphafactor = pow(getAlphaS(ren_scale)/alphas, event_alphapower);
-  }
+  const Double_t* usr_wgts = orig_usr_wgts();
+  const int nuwgt = get_nuwgt();
+
+  double new_me_wgt = orig_me_wgt();
+  double weight = orig_weight();
 
   coll_weights_count = 0;
   if (nuwgt == 0) {
-    weight = me_wgt*(new_fx1*new_fx2);
+    weight = new_me_wgt*(new_fx1*new_fx2);
   } else if (nuwgt == 2) {
 
-    // pi^2 scheme conversion
-    if (pi2o12fix) {
-      me_wgt += -M_PI*M_PI/12.*usr_wgts[1];
-    }
-    // CDR to DRED conversion
-    if (cdr2fdhfix >= 0) {
-      me_wgt += -(cdr2fdhfix - cdr2fdh(id1, id2, nparticle, kf))*usr_wgts[1]/pole2(id1, id2, nparticle, kf);
-    }
-    // fix for wrong alpha power in old Sherpa ntuples
-    if (beta0fix > 0) {
-      usr_wgts[0] -= (beta0fix - (event_alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
-    }
+    new_me_wgt = reweight_applyfixes(new_me_wgt, log_r);
 
-    if (beta0fix >= 0) {
-      me_wgt += usr_wgts[0]*log_r + 0.5*usr_wgts[1]*log_r*log_r;
+    if (opt_beta0fix >= 0) {
+      new_me_wgt += usr_wgts[0]*log_r + 0.5*usr_wgts[1]*log_r*log_r;
     }
-
-    weight = me_wgt*(new_fx1*new_fx2);
+    weight = new_me_wgt*(new_fx1*new_fx2);
   } else if (nuwgt == 18) {
     coll_weights_count = 8;
     for (int i=0; i<8; i++) {
       coll_weights[i] = usr_wgts[2+i] + usr_wgts[10+i]*log_f;
     }
 
-    coll_weights[1] /= x1p;
-    coll_weights[3] /= x1p;
-    coll_weights[5] /= x2p;
-    coll_weights[7] /= x2p;
+    coll_weights[1] /= get_x1p();
+    coll_weights[3] /= get_x1p();
+    coll_weights[5] /= get_x2p();
+    coll_weights[7] /= get_x2p();
 
-    x1r = x1/x1p;
-    x2r = x2/x2p;
-
-    LHAPDF::xfx(TOPDF, x1r, fac_scale, pdfx1p);
-    LHAPDF::xfx(TOPDF, x2r, fac_scale, pdfx2p);
+    LHAPDF::xfx(opt_topdf, get_x1r(), fac_scale, pdfx1p);
+    LHAPDF::xfx(opt_topdf, get_x2r(), fac_scale, pdfx2p);
 
     // no top pdf below
-    pdf_f1[0] = (lhaid1 != 0) ? pdfx1[6+lhaid1]/x1 :
-                              ( pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]
-                              + pdfx1[1] + pdfx1[2] + pdfx1[3] + pdfx1[4]  + pdfx1[5])/x1;
-    pdf_f2[0] = (lhaid2 != 0) ? pdfx2[6+lhaid2]/x2 :
-                              ( pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]
-                              + pdfx2[1] + pdfx2[2] + pdfx2[3] + pdfx2[4]  + pdfx2[5])/x2;
+    pdf_f1[0] = (id1 != 0) ? pdfx1[6+id1]/get_x1() :
+                           ( pdfx1[7] + pdfx1[8] + pdfx1[9] + pdfx1[10] + pdfx1[11]
+                           + pdfx1[1] + pdfx1[2] + pdfx1[3] + pdfx1[4]  + pdfx1[5])/get_x1();
+    pdf_f2[0] = (id2 != 0) ? pdfx2[6+id2]/get_x2() :
+                           ( pdfx2[7] + pdfx2[8] + pdfx2[9] + pdfx2[10] + pdfx2[11]
+                           + pdfx2[1] + pdfx2[2] + pdfx2[3] + pdfx2[4]  + pdfx2[5])/get_x2();
 
-    pdf_f1[1] = (lhaid1 != 0) ? pdfx1p[6+lhaid1]/x1r :
-                              ( pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]
-                              + pdfx1p[1] + pdfx1p[2] + pdfx1p[3] + pdfx1p[4]  + pdfx1p[5])/x1r;
-    pdf_f2[1] = (lhaid2 != 0) ? pdfx2p[6+lhaid2]/x2r :
-                              ( pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]
-                              + pdfx2p[1] + pdfx2p[2] + pdfx2p[3] + pdfx2p[4]  + pdfx2p[5])/x2r;
+    pdf_f1[1] = (id1 != 0) ? pdfx1p[6+id1]/get_x1r() :
+                           ( pdfx1p[7] + pdfx1p[8] + pdfx1p[9] + pdfx1p[10] + pdfx1p[11]
+                           + pdfx1p[1] + pdfx1p[2] + pdfx1p[3] + pdfx1p[4]  + pdfx1p[5])/get_x1r();
+    pdf_f2[1] = (id2 != 0) ? pdfx2p[6+id2]/get_x2r() :
+                           ( pdfx2p[7] + pdfx2p[8] + pdfx2p[9] + pdfx2p[10] + pdfx2p[11]
+                           + pdfx2p[1] + pdfx2p[2] + pdfx2p[3] + pdfx2p[4]  + pdfx2p[5])/get_x2r();
 
-    pdf_f1[2] = pdfx1[6]/x1;
-    pdf_f2[2] = pdfx2[6]/x2;
+    pdf_f1[2] = pdfx1[6]/get_x1();
+    pdf_f2[2] = pdfx2[6]/get_x2();
 
-    pdf_f1[3] = pdfx1p[6]/x1r;
-    pdf_f2[3] = pdfx2p[6]/x2r;
+    pdf_f1[3] = pdfx1p[6]/get_x1r();
+    pdf_f2[3] = pdfx2p[6]/get_x2r();
 
-    // pi^2 scheme conversion
-    if (pi2o12fix) {
-      me_wgt += -M_PI*M_PI/12.*usr_wgts[1];
+    new_me_wgt = reweight_applyfixes(new_me_wgt, log_r);
+
+    if (opt_beta0fix >= 0) {
+      new_me_wgt += usr_wgts[0]*log_r + 0.5*usr_wgts[1]*log_r*log_r;
     }
-    // CDR to DRED conversion
-    if (cdr2fdhfix >= 0) {
-      me_wgt += -(cdr2fdhfix - cdr2fdh(id1, id2, nparticle, kf))*usr_wgts[1]/pole2(id1, id2, nparticle, kf);
-    }
-    // fix for wrong alpha power in old Sherpa ntuples
-    if (beta0fix) {
-      usr_wgts[0] -= (beta0fix - (event_alphapower-1))*2.*usr_wgts[1]*beta0pole2(id1, id2, nparticle, kf);
-    }
-
-    if (beta0fix >= 0) {
-      me_wgt += usr_wgts[0]*log_r + 0.5*usr_wgts[1]*log_r*log_r;
-    }
-    weight = me_wgt*(new_fx1*new_fx2)
+    weight = new_me_wgt*(new_fx1*new_fx2)
            + (coll_weights[0]*pdf_f1[0] + coll_weights[1]*pdf_f1[1] +
               coll_weights[2]*pdf_f1[2] + coll_weights[3]*pdf_f1[3])*new_fx2
            + (coll_weights[4]*pdf_f2[0] + coll_weights[5]*pdf_f2[1] +
@@ -737,17 +766,17 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   } else {
     std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
   }
-  const double appl_alphas = pow(alphas/(2.*M_PI), event_alphapower);
+  const double appl_alphas = pow(orig_alphas()/(2.*M_PI), get_alphaspower());
   for (int i=0; i<coll_weights_count; i++) {
     coll_weights[i] /= appl_alphas;
   }
-  naked_weight = me_wgt/appl_alphas;
-  weight *= alphafactor;
+  naked_weight = new_me_wgt/appl_alphas;
+  event_weight = weight*alphafactor;
 
-  statUpdate();
+  stat_update(fac_scale, ren_scale);
 }
 
-void SelectorCommon::statUpdate()
+void SelectorCommon::stat_update(double /*fac_scale*/, double ren_scale)
 {
   if (ren_scale < stat_Q2_min) {
     stat_Q2_min = ren_scale;
@@ -755,20 +784,20 @@ void SelectorCommon::statUpdate()
     stat_Q2_max = ren_scale;
   }
 
-  if (x1 < stat_x1_min) {
-    stat_x1_min = x1;
-  } else if (x1 > stat_x1_max) {
-    stat_x1_max = x1;
+  if (get_x1() < stat_x1_min) {
+    stat_x1_min = get_x1();
+  } else if (get_x1() > stat_x1_max) {
+    stat_x1_max = get_x1();
   }
 
-  if (x2 < stat_x2_min) {
-    stat_x2_min = x2;
-  } else if (x2 > stat_x2_max) {
-    stat_x2_max = x2;
+  if (get_x2() < stat_x2_min) {
+    stat_x2_min = get_x2();
+  } else if (get_x2() > stat_x2_max) {
+    stat_x2_max = get_x2();
   }
 }
 
-void SelectorCommon::statReport()
+void SelectorCommon::stat_report()
 {
   std::cout << "STAT Q2 in [" << stat_Q2_min << ", " << stat_Q2_max << "]\n";
   std::cout << "STAT x1 in [" << stat_x1_min << ", " << stat_x1_max << "]\n";
@@ -807,14 +836,16 @@ Bool_t SelectorCommon::Process(Long64_t entry)
   }
 
   GetEntry(entry);
+  prepare_event();
+
   if (analysis_mode == MODE_PLAIN) {
-    ProcessSingleEvent();
+    process_single_event();
   } else if (analysis_mode == MODE_LOOPSIM) {
 //     LoopSim ls(...);
 //     while (ls.there_is_a_next_event()) {
 //       const Event & ev = ls.extract_next_event();
 //       FillLoopSimEvent(ev);
-//       ProcessSingleEvent();
+//       process_single_event();
 //     }
   } else {
     Abort("Unknown mode");
@@ -824,7 +855,7 @@ Bool_t SelectorCommon::Process(Long64_t entry)
   return kTRUE;
 }
 
-void SelectorCommon::ProcessSingleEvent()
+void SelectorCommon::process_single_event()
 {
   analysis->event_count += 1;
 
@@ -834,13 +865,13 @@ void SelectorCommon::ProcessSingleEvent()
   }
 
   // quark-filter
-  if (filter_inq >= 0 and filter_nq >= 0) {
-    int inq = int(abs(id1) <= 6) + int(abs(id2) <= 6);
+  if (opt_filter_inq >= 0 and opt_filter_nq >= 0) {
+    int inq = int(abs(get_id1()) <= 6) + int(abs(get_id2()) <= 6);
     int nq = inq;
-    for (int i=0; i<nparticle; i++) {
-      nq += int(abs(kf[i]) <= 6);
+    for (int i=0; i<get_nparticle(); i++) {
+      nq += int(abs(get_kf(i)) <= 6);
     }
-    if (inq != filter_inq or nq != filter_nq) {
+    if (inq != opt_filter_inq or nq != opt_filter_nq) {
       return;
     }
   }
@@ -850,10 +881,10 @@ void SelectorCommon::ProcessSingleEvent()
     analysis->analysis_bin(this);
 
     // evento-scope
-    if (stat_step) {
-      xsval_cur += weight;
-      xserr_cur += weight*weight;
-      if (int(analysis->event_count) % stat_step == 0) {
+    if (opt_stat_step) {
+      xsval_cur += event_weight;
+      xserr_cur += event_weight*event_weight;
+      if (int(analysis->event_count) % opt_stat_step == 0) {
         xsvals.push_back(xsval_cur/analysis->event_count);
         xserrs.push_back(sqrt(xserr_cur)/analysis->event_count);
       }

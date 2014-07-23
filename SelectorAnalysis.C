@@ -115,10 +115,11 @@ bool Analysis::check_cuts(SelectorCommon* event)
   jets.clear();
 
   PseudoJetVector jetinput;
-  for (int i=0; i<event->nparticle; i++) {
-    const fastjet::PseudoJet vec = fastjet::PseudoJet(event->px[i], event->py[i], event->pz[i], event->E[i]);
+  for (int i=0; i<event->get_nparticle(); i++) {
+    const fastjet::PseudoJet vec = fastjet::PseudoJet(event->get_px(i), event->get_py(i),
+                                                      event->get_pz(i), event->get_E(i));
     input.push_back(vec);
-    if (event->kf[i] == 21 or abs(event->kf[i]) <= 6) {
+    if (event->get_kf(i) == 21 or abs(event->get_kf(i)) <= 6) {
       jetinput.push_back(vec);
     }
   }
@@ -140,24 +141,21 @@ void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCo
   static const int lhaids[] = {5,-5,4,-4,3,-3,2,-2,1,-1};
 
   if (grid) {
-    grid->fill(nextevt,
-               event->lhaid1, event->lhaid2,
-               event->x1, event->x2, event->fac_scale,
-               event->pdfx1, event->pdfx2,
-               x, event->naked_weight, w, event->event_order());
+    const int id1 = event->get_lhaid1();
+    const int id2 = event->get_lhaid2();
+    const double x1 = event->get_x1();
+    const double x2 = event->get_x2();
+    const double x1r = event->get_x1r();
+    const double x2r = event->get_x2r();
+    const double fac_scale = event->get_fac_scale();
+    const double* pdfx1 = event->pdfx1;
+    const double* pdfx2 = event->pdfx2;
+    const double* pdfx1p = event->pdfx1p;
+    const double* pdfx2p = event->pdfx2p;
+    const int order = event->get_event_order();
+    grid->fill(nextevt, id1, id2, x1, x2, fac_scale, pdfx1, pdfx2,
+               x, event->naked_weight, w, order);
     if (event->coll_weights_count == 8) { // I-part, bin collinear CTs separately
-      const int id1 = event->lhaid1;
-      const int id2 = event->lhaid2;
-      const double x1 = event->x1;
-      const double x2 = event->x2;
-      const double x1r = event->x1r;
-      const double x2r = event->x2r;
-      const double fac_scale = event->fac_scale;
-      const double* pdfx1 = event->pdfx1;
-      const double* pdfx2 = event->pdfx2;
-      const double* pdfx1p = event->pdfx1p;
-      const double* pdfx2p = event->pdfx2p;
-      const int order = event->event_order();
       // f1q
       // f1qx
       if (id1 != 0) {
@@ -219,8 +217,8 @@ void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCo
 
 void Analysis::analysis_bin(SelectorCommon* event)
 {
-  const Int_t id = event->id;
-  const Double_t weight = event->weight;
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
 
   event_binned += 1;
 
@@ -307,8 +305,8 @@ bool JetAnalysis::check_cuts(SelectorCommon* event)
 
 void JetAnalysis::analysis_bin(SelectorCommon* event)
 {
-//   const Int_t id = event->id;
-//   const Double_t weight = event->weight;
+//   const Int_t id = event->get_event_id();
+//   const Double_t weight = event->get_event_weight();
   Analysis::analysis_bin(event);
 }
 
@@ -328,8 +326,8 @@ void Jet3Analysis::analysis_bin(SelectorCommon* event)
 {
   JetAnalysis::analysis_bin(event);
 
-  const Int_t id = event->id;
-  const Double_t weight = event->weight;
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
 
   if (jets.size() >= 3) {
     const double jet2phi = jets[1].phi();
@@ -395,7 +393,7 @@ bool PhotonJetAnalysis::check_cuts(SelectorCommon* event)
     return false;
   }
 
-  assert(event->kf[0] == 22 and event->kf[1] != 22);  // safe-guard against di-photon
+  assert(event->get_kf(0) == 22 and event->get_kf(1) != 22);  // safe-guard against di-photon
 
   const fastjet::PseudoJet& photon = input[0];
 
@@ -434,8 +432,8 @@ void PhotonJetAnalysis::analysis_bin(SelectorCommon* event)
 {
   Analysis::analysis_bin(event);
 
-  const Int_t id = event->id;
-  const Double_t weight = event->weight;
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
 
   const fastjet::PseudoJet& photon = input[0];
   const double AApt = photon.pt();
@@ -533,7 +531,7 @@ bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
     return false;
   }
 
-  assert(event->kf[0] == 22 and event->kf[1] == 22);
+  assert(event->get_kf(0) == 22 and event->get_kf(1) == 22);
 
   double pt1 = input[0].pt();
   double pt2 = input[1].pt();
@@ -582,8 +580,8 @@ void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
 {
   Analysis::analysis_bin(event);
 
-  const Int_t id = event->id;
-  const Double_t weight = event->weight;
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
 
   const fastjet::PseudoJet AAmom = input[0] + input[1];
   const double AAmass = AAmom.m();

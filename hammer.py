@@ -16,9 +16,9 @@ except NameError:
 
 # all custom rescalers
 def set_rescaler(selector, params):
-    selector.rescale_n = params.rescale_n
+    selector.opt_rescale_n = params.rescale_n
     if params.rescaler == 'simple':
-        if selector.rescale_factor != 1:
+        if selector.opt_rescale_factor != 1:
             selector.setrescaler_multiplicative()
     elif params.rescaler == 'ht':
         selector.setrescaler_ht()
@@ -71,6 +71,7 @@ def process(params):
     ROOT.gSystem.Load("libfastjet.so")
     ROOT.gSystem.Load("libLHAPDF.so")
     ROOT.gSystem.Load("libAPPLgrid.so")
+    ROOT.gSystem.Load("libLoopSim.so")
 
     # load macros
     ROOT.gSystem.AddIncludePath("-I%s" % hammer_path)
@@ -88,51 +89,56 @@ def process(params):
     selector = ROOT.SelectorCommon()
 
     # Initialize reweighting
-    selector.FROMPDF = 0
-    selector.TOPDF = 0
-    selector.rescale_factor = 1
-    selector.born_alphapower = 0
+    selector.opt_frompdf = 0
+    selector.opt_topdf = 0
+    selector.opt_rescale_factor = 1
+    if params.power is not None:
+        selector.opt_born_alphaspower = params.power
+
     if params.qfilter:
-        selector.filter_inq = params.qfilter[0]
-        selector.filter_nq = params.qfilter[1]
+        selector.opt_filter_inq = params.qfilter[0]
+        selector.opt_filter_nq = params.qfilter[1]
     if params.frompdf is not None:
         ROOT.LHAPDF.setVerbosity(0)  # comment out for more output
 
-        selector.born_alphapower = params.power
-        selector.rescale_factor = params.scale
+        selector.opt_rescale_factor = params.scale
 
         # FROMPDF is always initialized
         if True:
-            selector.FROMPDF = 1
+            selector.opt_frompdf = 1
             pdf, m = get_pdfname(params.frompdf, 'FROMPDF')
-            ROOT.LHAPDF.initPDFSet(selector.FROMPDF, pdf, ROOT.LHAPDF.LHGRID, int(m))
+            ROOT.LHAPDF.initPDFSet(selector.opt_frompdf, pdf, ROOT.LHAPDF.LHGRID, int(m))
 
-        # TOPDF is initialized is it is different
+        # TOPDF is initialized and it is different
         if params.topdf == params.frompdf:
-            selector.TOPDF = selector.FROMPDF
+            selector.opt_topdf = selector.opt_frompdf
         else:
-            selector.TOPDF = selector.FROMPDF + 1
+            selector.opt_topdf = selector.opt_frompdf + 1
             pdf, m = get_pdfname(params.topdf, 'TOPDF')
-            ROOT.LHAPDF.initPDFSet(selector.TOPDF, pdf,  ROOT.LHAPDF.LHGRID, int(m))
+            ROOT.LHAPDF.initPDFSet(selector.opt_topdf, pdf,  ROOT.LHAPDF.LHGRID, int(m))
 
         # set rescaler after PDFs
         set_rescaler(selector, params)
 
-        print "Scale: '%s (%d)' x %f, AlphaPow %d" % (params.rescaler, selector.rescale_n,
-                                                      selector.rescale_factor, selector.born_alphapower)
-        print "------------- FROMPDF %d - %s (Nf=%d) ---------------" % (selector.FROMPDF, params.frompdf, ROOT.LHAPDF.getNf(selector.FROMPDF))
-        print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
-        print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.FROMPDF, qn) for qn in [1,2,3,4,5,6]])
-        ROOT.LHAPDF.getDescription(selector.FROMPDF)
-        print "------------- TOPDF %d - %s (Nf=%d) -----------------" % (selector.TOPDF, params.topdf, ROOT.LHAPDF.getNf(selector.TOPDF))
-        print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.TOPDF, qn) for qn in [1,2,3,4,5,6]])
-        print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.TOPDF, qn) for qn in [1,2,3,4,5,6]])
-        ROOT.LHAPDF.getDescription(selector.TOPDF)
+        print "Scale: '%s (%d)' x %f" % (
+            params.rescaler, selector.opt_rescale_n, selector.opt_rescale_factor)
+
+        print "------------- FROMPDF %d - %s (Nf=%d) ---------------" % (
+            selector.opt_frompdf, params.frompdf, ROOT.LHAPDF.getNf(selector.opt_frompdf))
+        print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.opt_frompdf, qn) for qn in [1,2,3,4,5,6]])
+        print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.opt_frompdf, qn) for qn in [1,2,3,4,5,6]])
+        ROOT.LHAPDF.getDescription(selector.opt_frompdf)
+
+        print "------------- TOPDF %d - %s (Nf=%d) -----------------" % (
+            selector.opt_topdf, params.topdf, ROOT.LHAPDF.getNf(selector.opt_topdf))
+        print "QMASS %s" % repr([ROOT.LHAPDF.getQMass(selector.opt_topdf, qn) for qn in [1,2,3,4,5,6]])
+        print "QTHRE %s" % repr([ROOT.LHAPDF.getThreshold(selector.opt_topdf, qn) for qn in [1,2,3,4,5,6]])
+        ROOT.LHAPDF.getDescription(selector.opt_topdf)
         print "--------------------------------------------------"
 
         if params.debug:
             print "WARNING! using SHERPA running AlphaS!"
-            order = ROOT.LHAPDF.getOrderAlphaS(selector.FROMPDF)
+            order = ROOT.LHAPDF.getOrderAlphaS(selector.opt_frompdf)
             # MUST set mZ, asMZ and qmass exactly as in Sherpa
             mZ = 91.188
             asMZ = 0.12018  # MSTW2008
@@ -148,25 +154,28 @@ def process(params):
         if params.beta0fix is True:
             params.beta0fix = 99
         if params.beta0fix:
-            selector.beta0fix = params.beta0fix
-            print "WARNING! nonsense beta0 fix enabled with for m_oqcd = %d" % selector.beta0fix
+            selector.opt_beta0fix = params.beta0fix
+            if params.beta0fix > 0:
+                print "WARNING! nonsense beta0 fix enabled with for m_oqcd = %d" % params.beta0fix
+            elif params.beta0fix < 0:
+                print "WARNING! scheme dependence is disabled"
 
         if params.pi2o12fix:
-            selector.pi2o12fix = params.pi2o12fix
+            selector.opt_pi2o12fix = params.pi2o12fix
             print "WARNING! pi^2/12 factor included"
 
         if params.cdr2fdhfix is not None:
-            selector.cdr2fdhfix = params.cdr2fdhfix
-            print "WARNING! CDR-DRED conversion factor included"
+            selector.opt_cdr2fdhfix = params.cdr2fdhfix
+            print "WARNING! CDR-DRED conversion factor included = %d" % params.cdr2fdhfix
 
     # call analysis module to initialize all settings
     params.analysis_mod.initialize(params, selector)
 
-    selector.stat_step = params.stat
+    selector.opt_stat_step = params.stat
     chain.Process(selector)
-    selector.statReport()
+    selector.stat_report()
 
-    if selector.stat_step:
+    if selector.opt_stat_step:
         import matplotlib.pyplot as plt
         import numpy as np
 
@@ -177,7 +186,7 @@ def process(params):
         for x in selector.xserrs:
             yerr.append(x)
 
-        xval = [1+i*selector.stat_step for i in range(len(yval))]
+        xval = [1+i*selector.opt_stat_step for i in range(len(yval))]
 
         fig = plt.figure()
         axs = plt.subplot(111)
@@ -201,15 +210,15 @@ Basic options:
   --rescaler=<name>         Use rescaler 'simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat,
                             'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat'
 
-  -p, --power               Born Alpha_s power
+  -p, --power               Born Alpha_s power (needed only for APPLgrid)
   -f, --frompdf             From PDF set "name.LHgrid:member"
   -t, --topdf               To PDF set "name.LHgrid:member"
 
-  --grid                    Specify to activate APPLgrid (for both warmup and fill)
+  --grids                   Specify to activate APPLgrid (for both warmup and fill)
   --warmup                  Select "warmup" mode for APPLgrid (otherwise "fill" mode)
 
 Expert options:
-  --beta0fix=true/[n]       Fix beta0 weight
+  --beta0fix=true/[n]       Fix beta0 weight (0 turns off scheme dep)
   --debug                   Use sherpa alphas
 
   --qfilter=inq:nq          Filter input by 'incoming quarks':'total quarks'
@@ -346,12 +355,20 @@ class Params:
             usage()
             sys.exit(2)
 
-        rewparam = [self.scale, self.power, self.frompdf, self.topdf]
+        rewparam = [self.scale, self.frompdf, self.topdf]
         print rewparam
         if any(v is not None for v in rewparam) and any(v is None for v in rewparam):
-            print "Error: must set --scale, --power, --frompdf and --topdf"
+            print "Error: must set --scale, --frompdf and --topdf together"
             usage()
             sys.exit(2)
+
+        if self.grids and not self.scale:
+            print "Error: has to specify --scale with --grids"
+            usage()
+            sys.exit(2)
+
+        if self.power is not None and not self.grids:
+            print "Warning: --power option without --grids is deprecated (taken from event data)"
 
         if self.rescale_n is None:
             self.rescale_n = -1

@@ -108,19 +108,21 @@ void Analysis::setAntiKt(double R)
   jet_definition = fastjet::JetDefinition(fastjet::antikt_algorithm, R);
 }
 
-
-bool Analysis::check_cuts(SelectorCommon* event)
+void Analysis::set_input(PseudoJetVector& newinput)
 {
   input.clear();
+  input.swap(newinput);
+}
+
+bool Analysis::check_cuts(SelectorCommon* /*event*/)
+{
   jets.clear();
 
   PseudoJetVector jetinput;
-  for (int i=0; i<event->get_nparticle(); i++) {
-    const fastjet::PseudoJet vec = fastjet::PseudoJet(event->get_px(i), event->get_py(i),
-                                                      event->get_pz(i), event->get_E(i));
-    input.push_back(vec);
-    if (event->get_kf(i) == 21 or abs(event->get_kf(i)) <= 6) {
-      jetinput.push_back(vec);
+  for (unsigned i=0; i<input.size(); i++) {
+    int lhid = FlavourKTPlugin::getFlavour(input[i]);
+    if (lhid == 21 or abs(lhid) <= 5) {
+      jetinput.push_back(input[i]);
     }
   }
   if (jetinput.size() > 0) {

@@ -13,6 +13,8 @@
 
 #include <LHAPDF.h>
 
+#include <LoopSim.hh>
+
 // --------------------------------------------------------------------------- //
 // Selector
 // --------------------------------------------------------------------------- //
@@ -838,14 +840,41 @@ Bool_t SelectorCommon::Process(Long64_t entry)
   GetEntry(entry);
   prepare_event();
 
+  // set input for analysis
+  {
+    PseudoJetVector newinput;
+    for (int i=0; i<get_nparticle(); i++) {
+      newinput.push_back(get_vec(i));
+    }
+    analysis->set_input(newinput);
+  }
+
   if (analysis_mode == MODE_PLAIN) {
     process_single_event();
   } else if (analysis_mode == MODE_LOOPSIM) {
+    analysis->Analysis::check_cuts(this);  // run jet algorithm
+    reweight(analysis->input, analysis->jets);  // get real weight
+
+    Event lsevent;
+    {
+      std::vector<LSParticle> newinput;
+      for (int i=0; i<get_nparticle(); i++) {
+        const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), get_kf(i));
+        newinput.push_back(vec);
+      }
+      lsevent.particles.swap(newinput);
+    }
+    lsevent.weight = get_event_weight();
+    int iloops = int(get_part(0) == 'V' or get_part(0) == 'V');
+    double ls_R = 1.0;
+    int ls_nborn = 2;
+    LoopSim loopsim = LoopSim(get_event_order(), iloops, lsevent, ls_R, ls_nborn);
+//                            double R = 1.0, int nborn = 2);
 //     LoopSim ls(...);
 //     while (ls.there_is_a_next_event()) {
 //       const Event & ev = ls.extract_next_event();
 //       FillLoopSimEvent(ev);
-//       process_single_event();
+//       process_single_event(false);
 //     }
   } else {
     Abort("Unknown mode");
@@ -855,7 +884,7 @@ Bool_t SelectorCommon::Process(Long64_t entry)
   return kTRUE;
 }
 
-void SelectorCommon::process_single_event()
+void SelectorCommon::process_single_event(bool do_reweight)
 {
   analysis->event_count += 1;
 
@@ -877,7 +906,9 @@ void SelectorCommon::process_single_event()
   }
 
   if (analysis->check_cuts(this)) {
-    reweight(analysis->input, analysis->jets);  // reweight event in-place
+    if (do_reweight) {
+      reweight(analysis->input, analysis->jets);
+    }
     analysis->analysis_bin(this);
 
     // evento-scope

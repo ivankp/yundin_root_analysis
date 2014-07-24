@@ -99,6 +99,12 @@ class SelectorCommon : public TSelector
     const Char_t*   get_part() const { return ntuple_part; }
     Char_t          get_part(int i) const { return ntuple_part[i]; }
 
+    fastjet::PseudoJet get_vec(int i) const {
+      fastjet::PseudoJet vec = fastjet::PseudoJet(get_px(i), get_py(i), get_pz(i), get_E(i));
+      FlavourKTPlugin::addFlavour(vec, get_kf(i));
+      return vec;
+    }
+
     // List of branches
     TBranch        *b_id;   //!
     TBranch        *b_nparticle;   //!
@@ -166,7 +172,7 @@ class SelectorCommon : public TSelector
 
     enum {MODE_PLAIN=0, MODE_LOOPSIM};
     int analysis_mode;
-    void process_single_event();
+    void process_single_event(bool do_reweight=true);
 
     // scale change
     typedef double (SelectorCommon::*RescalerType)(const double scale,

@@ -16,7 +16,7 @@ class Analysis
     Analysis();
     virtual ~Analysis();
 
-    void set_input(PseudoJetVector& newinput);
+    void set_input(PseudoJetVector newinput);
     virtual bool check_cuts(SelectorCommon* event);
     virtual void analysis_bin(SelectorCommon* event);
     virtual void analysis_finalize();

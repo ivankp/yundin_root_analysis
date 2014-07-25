@@ -94,6 +94,8 @@ def process(params):
     selector.opt_rescale_factor = 1
     if params.power is not None:
         selector.opt_born_alphaspower = params.power
+    if params.nborn is not None:
+        selector.opt_loopsim_nborn = params.nborn
 
     if params.qfilter:
         selector.opt_filter_inq = params.qfilter[0]
@@ -214,6 +216,8 @@ Basic options:
   -f, --frompdf             From PDF set "name.LHgrid:member"
   -t, --topdf               To PDF set "name.LHgrid:member"
 
+  --nborn=n                 Set nborn for LoopSim
+
   --grids                   Specify to activate APPLgrid (for both warmup and fill)
   --warmup                  Select "warmup" mode for APPLgrid (otherwise "fill" mode)
 
@@ -262,6 +266,7 @@ class Params:
         self.stat = 0
         self.rescaler = 'simple'
         self.rescale_n = None
+        self.nborn = None
 
         for op, oparg in opts:
             if op in ("-h", "--help"):
@@ -304,6 +309,8 @@ class Params:
                 self.warmup = True
             elif op in ("--qfilter"):
                 self.qfilter = oparg
+            elif op in ("--nborn"):
+                self.nborn = int(oparg)
             elif op in ("--stat"):
                 self.stat = int(oparg)
             elif op in ("--rescaler"):

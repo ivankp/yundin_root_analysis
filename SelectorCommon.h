@@ -24,6 +24,7 @@ using std::sqrt;
 #include "SelectorHistograms.h"
 #include "SelectorAnalysis.h"
 #include "FlavourKT.h"
+#include <LoopSim.hh>
 
 // Header file for the classes stored in the TTree if any.
 
@@ -99,12 +100,6 @@ class SelectorCommon : public TSelector
     const Char_t*   get_part() const { return ntuple_part; }
     Char_t          get_part(int i) const { return ntuple_part[i]; }
 
-    fastjet::PseudoJet get_vec(int i) const {
-      fastjet::PseudoJet vec = fastjet::PseudoJet(get_px(i), get_py(i), get_pz(i), get_E(i));
-      FlavourKTPlugin::addFlavour(vec, get_kf(i));
-      return vec;
-    }
-
     // List of branches
     TBranch        *b_id;   //!
     TBranch        *b_nparticle;   //!
@@ -167,8 +162,14 @@ class SelectorCommon : public TSelector
     ~SelectorCommon();
 
     // analysis
-    typedef std::vector<fastjet::PseudoJet> PseudoJetVector;
     Analysis* analysis;
+    typedef std::vector<fastjet::PseudoJet> PseudoJetVector;
+
+    fastjet::PseudoJet get_vec(int i) const;
+    PseudoJetVector get_fjinput() const;
+    std::vector<LSParticle> get_lsinput() const;
+    static PseudoJetVector lsinput2fjinput(const std::vector<LSParticle>& in);
+
 
     enum {MODE_PLAIN=0, MODE_LOOPSIM};
     int analysis_mode;
@@ -269,6 +270,10 @@ class SelectorCommon : public TSelector
     double get_fac_scale() const { return orig_fac_scale()*fac_scalefactor; }
     double get_event_weight() const { return event_weight; }
     int get_event_order() const { return event_order; }
+
+    // LoopSim parameters
+    double opt_loopsim_R;
+    int opt_loopsim_nborn;
 
     // qfilter
     int opt_filter_inq;

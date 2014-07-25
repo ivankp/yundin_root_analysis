@@ -13,8 +13,6 @@
 
 #include <LHAPDF.h>
 
-#include <LoopSim.hh>
-
 // --------------------------------------------------------------------------- //
 // Selector
 // --------------------------------------------------------------------------- //
@@ -54,6 +52,10 @@ SelectorCommon::SelectorCommon(TTree* /*tree*/)
   opt_pi2o12fix = 0;
   // used by APPLgrid
   opt_born_alphaspower = -1;
+
+  // used by LoopSim
+  opt_loopsim_nborn = 0.;
+  opt_loopsim_R = 1.0;
 }
 
 
@@ -812,6 +814,43 @@ void SelectorCommon::initAS(const int order, const double asMZ, const double mZ2
   sherpa_alphas = new SHERPA::One_Running_AlphaS(order, asMZ, mZ2, qmasses);
 }
 
+fastjet::PseudoJet SelectorCommon::get_vec(int i) const
+{
+  fastjet::PseudoJet vec = fastjet::PseudoJet(get_px(i), get_py(i), get_pz(i), get_E(i));
+  FlavourKTPlugin::addFlavour(vec, get_kf(i));
+  return vec;
+}
+
+SelectorCommon::PseudoJetVector SelectorCommon::get_fjinput() const
+{
+  PseudoJetVector newinput;
+  for (int i=0; i<get_nparticle(); i++) {
+    newinput.push_back(get_vec(i));
+  }
+  return newinput;
+}
+
+std::vector<LSParticle> SelectorCommon::get_lsinput() const
+{
+  std::vector<LSParticle> newinput;
+  for (int i=0; i<get_nparticle(); i++) {
+    const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), get_kf(i));
+    newinput.push_back(vec);
+  }
+  return newinput;
+}
+
+SelectorCommon::PseudoJetVector SelectorCommon::lsinput2fjinput(const std::vector<LSParticle>& in)
+{
+  PseudoJetVector out;
+  for (unsigned i=0; i<in.size(); i++) {
+    fastjet::PseudoJet vec = fastjet::PseudoJet(in[i].px(), in[i].py(), in[i].pz(), in[i].E());
+    FlavourKTPlugin::addFlavour(vec, in[i].flavour().pdg_id());
+    out.push_back(vec);
+  }
+  return out;
+}
+
 Bool_t SelectorCommon::Process(Long64_t entry)
 {
   // The Process() function is called for each entry in the tree (or possibly
@@ -841,13 +880,7 @@ Bool_t SelectorCommon::Process(Long64_t entry)
   prepare_event();
 
   // set input for analysis
-  {
-    PseudoJetVector newinput;
-    for (int i=0; i<get_nparticle(); i++) {
-      newinput.push_back(get_vec(i));
-    }
-    analysis->set_input(newinput);
-  }
+  analysis->set_input(get_fjinput());
 
   if (analysis_mode == MODE_PLAIN) {
     process_single_event();
@@ -856,26 +889,20 @@ Bool_t SelectorCommon::Process(Long64_t entry)
     reweight(analysis->input, analysis->jets);  // get real weight
 
     Event lsevent;
-    {
-      std::vector<LSParticle> newinput;
-      for (int i=0; i<get_nparticle(); i++) {
-        const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), get_kf(i));
-        newinput.push_back(vec);
-      }
-      lsevent.particles.swap(newinput);
-    }
+    lsevent.particles = get_lsinput();
     lsevent.weight = get_event_weight();
+    std::cout << "Original weight " << event_weight << "\n";
+
     int iloops = int(get_part(0) == 'V' or get_part(0) == 'V');
-    double ls_R = 1.0;
-    int ls_nborn = 2;
-    LoopSim loopsim = LoopSim(get_event_order(), iloops, lsevent, ls_R, ls_nborn);
-//                            double R = 1.0, int nborn = 2);
-//     LoopSim ls(...);
-//     while (ls.there_is_a_next_event()) {
-//       const Event & ev = ls.extract_next_event();
-//       FillLoopSimEvent(ev);
-//       process_single_event(false);
-//     }
+    LoopSim loopsim = LoopSim(get_event_order(), iloops, lsevent, opt_loopsim_R, opt_loopsim_nborn);
+
+    while (loopsim.there_is_a_next_event()) {
+      const Event& newlsevent = loopsim.extract_next_event();
+      analysis->set_input(lsinput2fjinput(newlsevent.particles));
+      event_weight = newlsevent.weight;
+      std::cout << "Modified weight " << event_weight << "\n";
+      process_single_event(false);
+    }
   } else {
     Abort("Unknown mode");
   }

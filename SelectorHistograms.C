@@ -305,13 +305,16 @@ void SmearedQuadraticHistogram::bin(int nextevt, double x, double w)
 
 double Grid::aparam = 5.;
 std::string Grid::pdf_function = "ntuplejets";
-ntuple_pdf* Grid::pdf_object = 0;
 bool Grid::pdfWeight = false;
 int Grid::born_alphapower = 0;
 int Grid::nloops = 0;
 
 GridOpts Grid::def_opts = GridOpts(50, 0., 16e6, 5,
                                    50, 1e-6, 1., 5);
+
+#ifndef DISABLE_APPLGRID
+
+ntuple_pdf* Grid::pdf_object = 0;
 
 bool Grid::valid = false;
 
@@ -410,3 +413,6 @@ void Grid::write(double count)
   }
   m_grid->Write(filename);
 }
+
+#endif // DISABLE_APPLGRID
+// --------------------------------------------------------------------------- //

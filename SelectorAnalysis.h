@@ -3,6 +3,7 @@
 #define SELECTOR_ANALYSIS_H
 
 #include "SelectorCommon.h"
+#include "SelectorHistograms.h"
 
 class SelectorCommon;
 

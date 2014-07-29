@@ -67,11 +67,19 @@ def process(params):
     hammer_path = os.path.dirname(__file__)
     ROOT.gROOT.SetMacroPath(ROOT.gROOT.GetMacroPath().rstrip(':') + ':' + hammer_path)
 
+    if params.noapplgrid:
+        ROOT.gSystem.AddIncludePath("-DDISABLE_APPLGRID")
+
+    if params.noloopsim:
+        ROOT.gSystem.AddIncludePath("-DDISABLE_LOOPSIM")
+
     # load libraries
     ROOT.gSystem.Load("libfastjet.so")
     ROOT.gSystem.Load("libLHAPDF.so")
-    ROOT.gSystem.Load("libAPPLgrid.so")
-    ROOT.gSystem.Load("libLoopSim.so")
+    if not params.noapplgrid:
+        ROOT.gSystem.Load("libAPPLgrid.so")
+    if not params.noloopsim:
+        ROOT.gSystem.Load("libLoopSim.so")
 
     # load macros
     ROOT.gSystem.AddIncludePath("-I%s" % hammer_path)
@@ -79,7 +87,8 @@ def process(params):
     ROOT.gROOT.LoadMacro("SherpaAlphaS.C+")
     ROOT.gROOT.LoadMacro("FlavourKT.cpp+")
     ROOT.gROOT.LoadMacro("SelectorCommon.C+")
-    ROOT.gROOT.LoadMacro("appl_grid.h+")
+    if not params.noapplgrid:
+        ROOT.gROOT.LoadMacro("appl_grid.h+")
 
     # create a chain
     chain = ROOT.TChain("t3")
@@ -242,7 +251,8 @@ class Params:
             opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:h",
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix=", "cdr2fdhfix=", "pi2o12fix", "debug", "help",
-                                  "stat=", "rescaler=", "qfilter=", "grids", "warmup"])
+                                  "stat=", "rescaler=", "qfilter=", "grids", "warmup",
+                                  "noapplgrid", "noloopsim"])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -262,6 +272,8 @@ class Params:
         self.debug = False
         self.grids = False
         self.warmup = False
+        self.noapplgrid = False
+        self.noloopsim = False
         self.qfilter = None
         self.stat = 0
         self.rescaler = 'simple'
@@ -307,6 +319,10 @@ class Params:
                 self.grids = True
             elif op in ("--warmup"):
                 self.warmup = True
+            elif op in ("--noapplgrid"):
+                self.noapplgrid = True
+            elif op in ("--noloopsim"):
+                self.noloopsim = True
             elif op in ("--qfilter"):
                 self.qfilter = oparg
             elif op in ("--nborn"):
@@ -371,6 +387,11 @@ class Params:
 
         if self.grids and not self.scale:
             print "Error: has to specify --scale with --grids"
+            usage()
+            sys.exit(2)
+
+        if self.grids and self.noapplgrid:
+            print "Error: cannot use --noapplgrid with --grids"
             usage()
             sys.exit(2)
 

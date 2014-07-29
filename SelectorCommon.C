@@ -830,6 +830,7 @@ SelectorCommon::PseudoJetVector SelectorCommon::get_fjinput() const
   return newinput;
 }
 
+#ifndef DISABLE_LOOPSIM
 std::vector<LSParticle> SelectorCommon::get_lsinput() const
 {
   std::vector<LSParticle> newinput;
@@ -850,6 +851,7 @@ SelectorCommon::PseudoJetVector SelectorCommon::lsinput2fjinput(const std::vecto
   }
   return out;
 }
+#endif // DISABLE_LOOPSIM
 
 Bool_t SelectorCommon::Process(Long64_t entry)
 {
@@ -885,6 +887,7 @@ Bool_t SelectorCommon::Process(Long64_t entry)
   if (analysis_mode == MODE_PLAIN) {
     process_single_event();
   } else if (analysis_mode == MODE_LOOPSIM) {
+#ifndef DISABLE_LOOPSIM
     analysis->Analysis::check_cuts(this);  // run jet algorithm
     reweight(analysis->input, analysis->jets);  // get real weight
 
@@ -903,6 +906,9 @@ Bool_t SelectorCommon::Process(Long64_t entry)
       std::cout << "Modified weight " << event_weight << "\n";
       process_single_event(false);
     }
+#else // DISABLE_LOOPSIM
+    Abort("LoopSim mode disabled");
+#endif // DISABLE_LOOPSIM
   } else {
     Abort("Unknown mode");
   }

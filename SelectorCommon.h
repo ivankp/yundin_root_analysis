@@ -24,7 +24,10 @@ using std::sqrt;
 #include "SelectorHistograms.h"
 #include "SelectorAnalysis.h"
 #include "FlavourKT.h"
+
+#ifndef DISABLE_LOOPSIM
 #include <LoopSim.hh>
+#endif // DISABLE_LOOPSIM
 
 // Header file for the classes stored in the TTree if any.
 
@@ -167,8 +170,10 @@ class SelectorCommon : public TSelector
 
     fastjet::PseudoJet get_vec(int i) const;
     PseudoJetVector get_fjinput() const;
+#ifndef DISABLE_LOOPSIM
     std::vector<LSParticle> get_lsinput() const;
     static PseudoJetVector lsinput2fjinput(const std::vector<LSParticle>& in);
+#endif
 
 
     enum {MODE_PLAIN=0, MODE_LOOPSIM};

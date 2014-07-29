@@ -4,6 +4,10 @@
 
 #include <utility>
 
+// --------------------------------------------------------------------------- //
+// Hammer histograms
+// --------------------------------------------------------------------------- //
+
 class Histogram
 {
   public:
@@ -121,8 +125,9 @@ class SmearedQuadraticHistogram : public SmearedHistogram
     const double slope;
 };
 
-#include <appl_grid/appl_grid.h>
-#include "ntuple_pdf.h"
+// --------------------------------------------------------------------------- //
+// APPLgrid histograms
+// --------------------------------------------------------------------------- //
 
 struct GridOpts
 {
@@ -141,19 +146,22 @@ struct GridOpts
   int Xorder;
 };
 
+#ifndef DISABLE_APPLGRID
+#include <appl_grid/appl_grid.h>
+#include "ntuple_pdf.h"
+
 class Grid
 {
   public:
     static double aparam;
     static std::string pdf_function;
-    static ntuple_pdf* pdf_object;
     static bool pdfWeight;
-
     static int born_alphapower;
     static int nloops;
 
     static GridOpts def_opts;
 
+    static ntuple_pdf* pdf_object;
     static bool valid;
     static void static_init();
 
@@ -179,6 +187,21 @@ class Grid
     std::string filename;
     std::vector<double> weights;
 };
+#else // DISABLE_APPLGRID
+class Grid
+{
+  public:
+    static double aparam;
+    static std::string pdf_function;
+    static bool pdfWeight;
+    static int born_alphapower;
+    static int nloops;
+
+    static GridOpts def_opts;
+
+    void write(double /*count*/) { assert(0); }
+};
+#endif // DISABLE_APPLGRID
 
 #if defined(__MAKECINT__)
 #pragma link C++ class Histogram;
@@ -191,5 +214,7 @@ class Grid
 #pragma link C++ class GridOpts;
 #pragma link C++ class Grid;
 #endif
+
+// --------------------------------------------------------------------------- //
 
 #endif // SELECTOR_HISTOGRAMS_H

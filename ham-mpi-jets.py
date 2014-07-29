@@ -76,8 +76,9 @@ def add_histograms_all(analysis, params):
 
     ### effective double diff. type histogram ###
     ### requires params below to be passed correctly ###
+    analysis.jets_d12_d34.resize(15);
     for i in range(15):
-      analysis.jets_d12_d34_[i].push_back(
+      analysis.jets_d12_d34[i].push_back(
           ROOT.SmearedLinearHistogram(filename, "jets_d12_d34_%d" % (i+1),
             15, 0, 1000, 0.5)
           )

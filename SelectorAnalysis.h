@@ -125,12 +125,11 @@ class FourJetMPIAnalysis : public JetAnalysis
     virtual bool check_cuts(SelectorCommon* event);
     virtual void analysis_bin(SelectorCommon* event);
 
+    std::vector<std::vector<Histogram*> > jets_d12_d34;
 
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
                                    bool dryrun);
-
-    std::vector<std::vector<Histogram*> > jets_d12_d34;
 };
 
 
@@ -216,6 +215,7 @@ class DiPhotonAnalysis : public Analysis
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
 #pragma link C++ class Jet3Analysis;
+#pragma link C++ class FourJetMPIAnalysis;
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class std::vector<Histogram*>;

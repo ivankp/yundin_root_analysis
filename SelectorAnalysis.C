@@ -250,7 +250,7 @@ void Analysis::analysis_finalize()
   output_histograms(*it, null, true); // dryrun to get outputfiles
   for (it=outputfiles.begin(); it!=outputfiles.end(); ++it) {
     std::cout << "File: " << it->Data() << std::endl;
-    std::ofstream outfile = std::ofstream(it->Data());
+    std::ofstream outfile(it->Data());
     outfile.precision(15);
     outfile.setf(std::ios::scientific);
 

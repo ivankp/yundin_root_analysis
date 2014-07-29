@@ -68,7 +68,8 @@ void Histogram::flush()
   lastidx = 0;
 }
 
-void Histogram::setedges() {
+void Histogram::setedges()
+{
   edge[0] = x1;
   for (int i=0; i<nbin; i++) {
     edge[i+1] = edge[i] + bwidth[i];
@@ -298,6 +299,90 @@ void SmearedQuadraticHistogram::bin(int nextevt, double x, double w)
   }
   fill(nextevt, n, w, x);
 }
+
+// --------------------------------------------------------------------------- //
+// 2D Histograms
+// --------------------------------------------------------------------------- //
+
+// ---------------------- Histogram2D ------------------------
+
+template <typename Hist1D>
+Histogram2D<Hist1D>::Histogram2D(const TString& filename_, const TString& name_,
+                                 int nbinx_, double x1_, double x2_,
+                                 int nbiny_, double y1_, double y2_)
+  : name(name_), y1(y1_), y2(y2_), y12(y2-y1),
+    nbin(nbiny_), bwidth(nbin), edge(nbin+1)
+{
+  hists1d.reserve(nbin);
+  for (int i=0; i<nbin; i++) {
+    hists1d.push_back(Hist1D(filename_, name_ + TString::Format("_%d", i), nbinx_, x1_, x2_));
+  }
+  assert(nbin > 0);
+}
+
+template <typename Hist1D>
+TString Histogram2D<Hist1D>::getFile() const
+{
+  return hists1d[0].getFile();
+}
+
+template <typename Hist1D>
+void Histogram2D<Hist1D>::print(std::ostream& stream, const TString& runname,
+                                double count, bool unweight)
+{
+  stream << "# BEGIN HISTOGRAM2D /" << runname << "/" << name << std::endl;
+
+  stream << "#";
+  for (unsigned i=0; i<edge.size(); i++) {
+    stream << " " << edge[i];
+  }
+  stream << std::endl;
+
+  for (unsigned i=0; i<hists1d.size(); i++) {
+    hists1d[i].print(stream, runname, count, unweight);
+  }
+  stream << "# END HISTOGRAM2D" << std::endl << std::endl << std::endl;
+}
+
+template <typename Hist1D>
+void Histogram2D<Hist1D>::setedges()
+{
+  edge[0] = y1;
+  for (int i=0; i<nbin; i++) {
+    edge[i+1] = edge[i] + bwidth[i];
+  }
+}
+
+template <typename Hist1D>
+inline
+void Histogram2D<Hist1D>::fill(double x, int evt, int n, double w)
+{
+  assert(0 <= n && n < nbin);
+  hists1d[n].bin(evt, x, w);
+}
+
+// ---------------------- LinearHistogram2D ------------------------
+
+LinearHistogram2D::LinearHistogram2D(const TString& filename_, const TString& name_,
+                                     int nbinx_, double x1_, double x2_,
+                                     int nbiny_, double y1_, double y2_,
+                                     double /*param1*/, double /*param2*/, double /*param3*/)
+  : BaseClass(filename_, name_, nbinx_, x1_, x2_, nbiny_, y1_, y2_), step(y12/nbin)
+{
+  for (int i=0; i<nbin; i++) {
+    bwidth[i] = step;
+  }
+  setedges();
+}
+
+void LinearHistogram2D::bin(int nextevt, double x, double y, double w)
+{
+  if (y < y1 or y >= y2) return;
+  int n = static_cast<int>(nbin*(y-y1)/y12);
+  assert(0 <= n && n < nbin);
+  fill(x, nextevt, n, w);
+}
+
 
 // --------------------------------------------------------------------------- //
 // APPLgrid histograms

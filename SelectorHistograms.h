@@ -41,7 +41,6 @@ class Histogram
     std::vector<double> edge;
 };
 
-
 class SmearedHistogram : public Histogram
 {
   public:
@@ -123,6 +122,47 @@ class SmearedQuadraticHistogram : public SmearedHistogram
   protected:
     const double step;
     const double slope;
+};
+
+template <typename Hist1D> class Histogram2D
+{
+  public:
+    Histogram2D(const TString& filename_, const TString& name_,
+                int nbinx_, double x1_, double x2_,
+                int nbiny_, double y1_, double y2_);
+    virtual ~Histogram2D() {}
+
+    virtual void bin(int nextevt, double x, double y, double w) = 0;
+    virtual void print(std::ostream& stream, const TString& runname, double count, bool unweight=true);
+
+    TString getFile() const;
+
+  protected:
+    std::vector<Hist1D> hists1d;
+
+    void setedges();
+    void fill(double x, int evt, int n, double w);
+
+    TString name;
+
+    double y1, y2, y12;
+    const int nbin;
+    std::vector<double> bwidth;
+    std::vector<double> edge;
+};
+
+class LinearHistogram2D : public Histogram2D<LinearHistogram>
+{
+  typedef Histogram2D<LinearHistogram> BaseClass;
+  public:
+    LinearHistogram2D(const TString& filename_, const TString& name_,
+                      int nbinx_, double x1_, double x2_,
+                      int nbiny_, double y1_, double y2_,
+                      double param1=0, double param2=0, double param3=0);
+    void bin(int nextevt, double x, double y, double w);
+
+  protected:
+    const double step;
 };
 
 // --------------------------------------------------------------------------- //
@@ -211,6 +251,7 @@ class Grid
 #pragma link C++ class SmearedHistogram;
 #pragma link C++ class SmearedLinearHistogram;
 #pragma link C++ class SmearedQuadraticHistogram;
+#pragma link C++ class LinearHistogram2D;
 #pragma link C++ class GridOpts;
 #pragma link C++ class Grid;
 #endif

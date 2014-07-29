@@ -330,6 +330,7 @@ void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stre
 //   Jet3Analysis -- three jet analysis with beta23 observable
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
+
 Jet3Analysis::Jet3Analysis()
   : jet_eta1max(10), jet_eta2max(10), jet_eta2min(0),
     jet_jet_DR23min(0), jet_jet_DR23max(10), jet_jet_M12min(0)
@@ -401,6 +402,81 @@ void Jet3Analysis::output_histograms(const TString& filename, std::ofstream& str
   output_histvec(jet_jet_eta23, filename, stream, dryrun);
   output_histvec(jet_jet_phi23, filename, stream, dryrun);
   output_histvec(jet_jet_beta23, filename, stream, dryrun);
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+//   FourJetMPIAnalysis -- four jet analysis for dble diff. d12 d34 observable
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+FourJetMPIAnalysis::JetMPIAnalysis() :
+  mpivars_d12_bins(1), mpivars_d12_bin_high(100.), mpivars_d34_bin_low(0.);
+{
+}
+
+bool FourJetMPIAnalysis::check_cuts(SelectorCommon* event)
+{
+  if (not JetAnalysis::check_cuts(event)) {
+    return false;
+  }
+
+  return true;
+}
+
+void FourJetMPIAnalysis::analysis_bin(SelectorCommon* event)
+{
+  JetAnalysis::analysis_bin(event);
+
+  const Int_t id = event->id;
+  const Double_t weight = event->weight;
+
+  if (jets.size() >= 4) {
+    double dij[6];
+    for (int i=0; i<4; i++) {
+      for (int j=i+1; j<5; j++) {
+        const double jet1phi = jets[i].phi();
+        const double jet2phi = jets[j].phi();
+        double jj_phi12 = jet1phi - jet2phi;
+        if (jj_phi12 > M_PI) {
+          jj_phi12 = jj_phi12 - 2.*M_PI;
+        } else if (jj_phi12 < -M_PI) {
+          jj_phi12 = jj_phi12 + 2.*M_PI;
+        }
+        const double pt1 = jet[i].pt();
+        const double pt2 = jet[j].pt();
+        dij[i+j*(j-1)/2] = pt1*pt1 + pt2*pt2 + pt1*pt2*cos(jj_dphi12);
+      }
+    }
+
+    double d12=dij[0];
+    unsigned int pos1=0, pos2=1;
+    for (int i=0; i<4; i++) {
+      for (int j=i+1; j<5; j++) {
+        int idx = i+j*(j-1)/2;
+        if (dij[idx]<d12) {
+          d12 = dij[idx];
+          pos1 = i; pos2 = j;
+        }
+      }
+    }
+
+    double d34 = dij[5-pos1+pos2*(pos2-1)/2];
+    unsigned int d12_bin = static_cast<int>(
+        (d12+mpivars_d12_bin_low)*static_cast<double>(mpivars_d12_bins)/(mpivars_d12_bin_high-mpivars_d12_bin_low)
+        );
+
+    bin_histvec(jets_d12_d34[d12_bin], id, d34, weight);
+  }
+}
+
+void FourJetMPIAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  JetAnalysis::output_histograms(filename, stream, dryrun);
+  // output all d12_d34 hists
+  for (int i=0; i<mpivars_d12_bins; i++) {
+    output_histvec(jets_d12_d34[x], filename, stream, dryrun);
+  }
 }
 
 // ---------------------------------------------------------------------------

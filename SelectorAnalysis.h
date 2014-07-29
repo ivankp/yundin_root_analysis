@@ -112,6 +112,27 @@ class Jet3Analysis : public JetAnalysis
                                    bool dryrun);
 };
 
+class FourJetMPIAnalysis : public JetAnalysis
+{
+  public:
+    static FourJetMPIAnalysis* create() { return new FourJetMPIAnalysis(); }
+
+    FourJetMPIAnalysis();
+    int mpivars_d12_bins;
+    double mpivars_d12_bin_low;
+    double mpivars_d12_bin_high;
+
+    virtual bool check_cuts(SelectorCommon* event);
+    virtual void analysis_bin(SelectorCommon* event);
+
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
+
+    std::vector<std::vector<Histogram*> > jets_d12_d34;
+};
+
 
 class PhotonJetAnalysis : public Analysis
 {

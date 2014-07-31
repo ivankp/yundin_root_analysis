@@ -251,7 +251,7 @@ class Params:
             opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:h",
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix=", "cdr2fdhfix=", "pi2o12fix", "debug", "help",
-                                  "stat=", "rescaler=", "qfilter=", "grids", "warmup",
+                                  "stat=", "rescaler=", "qfilter=", "grids", "warmup", "nborn=",
                                   "noapplgrid", "noloopsim"])
         except getopt.GetoptError, err:
             print str(err)

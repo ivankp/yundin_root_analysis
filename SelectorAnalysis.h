@@ -64,6 +64,13 @@ class Analysis
                         const TString& filename, std::ofstream& stream,
                         bool dryrun);
 
+    void bin_histvec(const std::vector<LinearHistogram2D*>& histvec,
+                     int nextevt, double x, double y, double w);
+    void output_histvec(const std::vector<LinearHistogram2D*>& histvec,
+                        const TString& filename, std::ofstream& stream,
+                        bool dryrun);
+
+
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
                                    bool dryrun);
     virtual void output_grids();
@@ -106,6 +113,25 @@ class Jet3Analysis : public JetAnalysis
                                    bool dryrun);
 };
 
+class FourJetMPIAnalysis : public JetAnalysis
+{
+  public:
+    static FourJetMPIAnalysis* create() { return new FourJetMPIAnalysis(); }
+
+    FourJetMPIAnalysis();
+    int mpivars_d12_bins;
+    double mpivars_d12_bin_low;
+    double mpivars_d12_bin_high;
+
+    virtual bool check_cuts(SelectorCommon* event);
+    virtual void analysis_bin(SelectorCommon* event);
+
+    std::vector<LinearHistogram2D*> jets_d12_d34;
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
+};
 
 class PhotonJetAnalysis : public Analysis
 {
@@ -191,6 +217,7 @@ class DiPhotonAnalysis : public Analysis
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class std::vector<Histogram*>;
+#pragma link C++ class std::vector<LinearHistogram2D*>;
 #pragma link C++ class std::vector<std::vector<Histogram*> >;
 #pragma link C++ class std::vector<Grid*>;
 #endif

@@ -87,11 +87,34 @@ void Analysis::output_histvec(const std::vector<Histogram*>& histvec,
   }
 }
 
+void Analysis::output_histvec(const std::vector<LinearHistogram2D*>& histvec,
+                              const TString& filename, std::ofstream& stream,
+                              bool dryrun)
+{
+  for (unsigned i=0; i<histvec.size(); i++) {
+    if (dryrun) {
+      append_output_filename(histvec[i]->getFile());
+    } else {
+      if (filename == histvec[i]->getFile()) {
+        histvec[i]->print(stream, runname, event_count);
+      }
+    }
+  }
+}
+
 void Analysis::bin_histvec(const std::vector<Histogram*>& histvec,
                           int nextevt, double x, double w)
 {
   for (unsigned i=0; i<histvec.size(); i++) {
     histvec[i]->bin(nextevt, x, w);
+  }
+}
+
+void Analysis::bin_histvec(const std::vector<LinearHistogram2D*>& histvec,
+                          int nextevt, double x, double y, double w)
+{
+  for (unsigned i=0; i<histvec.size(); i++) {
+    histvec[i]->bin(nextevt, x, y, w);
   }
 }
 
@@ -358,6 +381,83 @@ void Jet3Analysis::output_histograms(const TString& filename, std::ofstream& str
 {
   JetAnalysis::output_histograms(filename, stream, dryrun);
   output_histvec(jet_jet_beta23, filename, stream, dryrun);
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+//   FourJetMPIAnalysis -- four jet analysis for dble diff. d12 d34 observable
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+FourJetMPIAnalysis::FourJetMPIAnalysis() :
+  mpivars_d12_bins(1), mpivars_d12_bin_low(0.), mpivars_d12_bin_high(100.)
+{
+}
+
+bool FourJetMPIAnalysis::check_cuts(SelectorCommon* event)
+{
+  if (not JetAnalysis::check_cuts(event)) {
+    return false;
+  }
+
+  return true;
+}
+
+void FourJetMPIAnalysis::analysis_bin(SelectorCommon* event)
+{
+  JetAnalysis::analysis_bin(event);
+
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
+
+  if (jets.size() == 4) {
+    double dij[6];
+    for (int i=0; i<3; i++) {
+      for (int j=i+1; j<4; j++) {
+        const double jet1phi = jets[i].phi();
+        const double jet2phi = jets[j].phi();
+        double jj_phi12 = jet1phi - jet2phi;
+        if (jj_phi12 > M_PI) {
+          jj_phi12 = jj_phi12 - 2.*M_PI;
+        } else if (jj_phi12 < -M_PI) {
+          jj_phi12 = jj_phi12 + 2.*M_PI;
+        }
+        const double pt1 = jets[i].pt();
+        const double pt2 = jets[j].pt();
+        dij[i+j*(j-1)/2] = pt1*pt1 + pt2*pt2 + pt1*pt2*cos(jj_phi12);
+      }
+    }
+
+    double d12 = dij[0];
+    int pos1 = 0;
+    int pos2 = 1;
+    for (int i=0; i<3; i++) {
+      for (int j=i+1; j<4; j++) {
+        int idx = i+j*(j-1)/2;
+        if (dij[idx]<d12) {
+          d12 = dij[idx];
+          pos1 = i;
+          pos2 = j;
+        }
+      }
+    }
+    std::cout << pos1 << "," << pos2 << " " << d12 << endl;
+    std::cout << pos1 + pos2*(pos2-1)/2 << endl;
+    std::cout << 5 - pos1 - pos2*(pos2-1)/2 << endl;
+
+    double d34 = dij[5-pos1-pos2*(pos2-1)/2];
+//    unsigned int d12_bin = static_cast<int>(
+//        (d12+mpivars_d12_bin_low)*static_cast<double>(mpivars_d12_bins)/(mpivars_d12_bin_high-mpivars_d12_bin_low)
+//        );
+
+    bin_histvec(jets_d12_d34, id, d12, d34, weight);
+  }
+}
+
+void FourJetMPIAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  JetAnalysis::output_histograms(filename, stream, dryrun);
+  output_histvec(jets_d12_d34, filename, stream, dryrun);
 }
 
 // ---------------------------------------------------------------------------

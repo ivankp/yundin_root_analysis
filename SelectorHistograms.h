@@ -31,7 +31,7 @@ class Histogram
     TString name;
 
     double x1, x2, x12;
-    const int nbin;
+    int nbin;
     int prevevt, lastidx;
     std::vector<TIdxWgt> curidxwgt;
     std::vector<int> events;
@@ -82,7 +82,7 @@ class LinearHistogram : public Histogram
     void bin(int nextevt, double x, double w);
 
   protected:
-    const double step;
+    double step;
 };
 
 
@@ -146,7 +146,7 @@ template <typename Hist1D> class Histogram2D
     TString name;
 
     double y1, y2, y12;
-    const int nbin;
+    int nbin;
     std::vector<double> bwidth;
     std::vector<double> edge;
 };
@@ -162,7 +162,7 @@ class LinearHistogram2D : public Histogram2D<LinearHistogram>
     void bin(int nextevt, double x, double y, double w);
 
   protected:
-    const double step;
+    double step;
 };
 
 // --------------------------------------------------------------------------- //

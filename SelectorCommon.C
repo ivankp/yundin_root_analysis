@@ -894,7 +894,6 @@ Bool_t SelectorCommon::Process(Long64_t entry)
     Event lsevent;
     lsevent.particles = get_lsinput();
     lsevent.weight = get_event_weight();
-    std::cout << "Original weight " << event_weight << "\n";
 
     int iloops = int(get_part(0) == 'V' or get_part(0) == 'I');
     LoopSim loopsim = LoopSim(get_event_order(), iloops, lsevent, opt_loopsim_R, opt_loopsim_nborn);
@@ -903,7 +902,6 @@ Bool_t SelectorCommon::Process(Long64_t entry)
       const Event& newlsevent = loopsim.extract_next_event();
       analysis->set_input(lsinput2fjinput(newlsevent.particles));
       event_weight = newlsevent.weight;
-      std::cout << "Modified weight " << event_weight << "\n";
       process_single_event(false);
     }
 #else // DISABLE_LOOPSIM

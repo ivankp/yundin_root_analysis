@@ -835,7 +835,7 @@ std::vector<LSParticle> SelectorCommon::get_lsinput() const
 {
   std::vector<LSParticle> newinput;
   for (int i=0; i<get_nparticle(); i++) {
-    const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), get_kf(i));
+    const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), 81 /*get_kf(i)*/);
     newinput.push_back(vec);
   }
   return newinput;

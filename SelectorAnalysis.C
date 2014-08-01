@@ -254,8 +254,7 @@ void Analysis::analysis_bin(SelectorCommon* event)
     jet_inclusive->bin(id, i, weight);
     fill_grid(g_jet_inclusive, id, i, weight, event);
   }
-  for (unsigned i=0; i<jets.size(); i++) {
-    assert(i<jet_pt_n.size());
+  for (unsigned i=0; i<jets.size() and i<jet_pt_n.size(); i++) {
     const double jetpt = jets[i].pt();
     const double jeteta = jets[i].eta();
     bin_histvec(jet_pt_n[i], id, jetpt, weight);

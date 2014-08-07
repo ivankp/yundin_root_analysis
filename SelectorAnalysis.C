@@ -440,14 +440,8 @@ void FourJetMPIAnalysis::analysis_bin(SelectorCommon* event)
         }
       }
     }
-    std::cout << pos1 << "," << pos2 << " " << d12 << endl;
-    std::cout << pos1 + pos2*(pos2-1)/2 << endl;
-    std::cout << 5 - pos1 - pos2*(pos2-1)/2 << endl;
 
     double d34 = dij[5-pos1-pos2*(pos2-1)/2];
-//    unsigned int d12_bin = static_cast<int>(
-//        (d12+mpivars_d12_bin_low)*static_cast<double>(mpivars_d12_bins)/(mpivars_d12_bin_high-mpivars_d12_bin_low)
-//        );
 
     bin_histvec(jets_d12_d34, id, d12, d34, weight);
   }

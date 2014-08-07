@@ -214,6 +214,7 @@ class DiPhotonAnalysis : public Analysis
 #if defined(__MAKECINT__)
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
+#pragma link C++ class FourJetMPIAnalysis;
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class std::vector<Histogram*>;

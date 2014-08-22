@@ -38,6 +38,8 @@ class Analysis
 
     LinearHistogram* jet_exclusive;
     LinearHistogram* jet_inclusive;
+    std::vector<Histogram*> scale_wgt;
+    std::vector<Histogram*> scale_nowgt;
     std::vector<std::vector<Histogram*> > jet_pt_n;
     std::vector<std::vector<Histogram*> > jet_eta_n;
 
@@ -77,6 +79,9 @@ class Analysis
     virtual void clear();
 
     void fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event);
+
+    bool photonIsolation(const SelectorCommon* event, double photon_R,
+                         double photon_n, double photon_eps) const;
 };
 
 class JetAnalysis : public Analysis
@@ -90,6 +95,9 @@ class JetAnalysis : public Analysis
     virtual void analysis_bin(SelectorCommon* event);
 
     double jet_pt1min;
+    double jet_pt2min;
+    double jet_pt3min;
+
     double jet_ht2min;
 
   protected:
@@ -139,6 +147,32 @@ class FourJetMPIAnalysis : public JetAnalysis
                                    bool dryrun);
 };
 
+class JetMAnalysis : public JetAnalysis
+{
+  public:
+    typedef JetAnalysis BaseClass;
+
+    static JetMAnalysis* create() { return new JetMAnalysis(); }
+
+    JetMAnalysis();
+
+    virtual bool check_cuts(SelectorCommon* event);
+    virtual void analysis_bin(SelectorCommon* event);
+
+    double ystar_min;
+    double ystar_max;
+
+    std::vector<Histogram*> jet_mass_jjj;
+
+    Grid* g_jet_mass_jjj;
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
+    virtual void output_grids();
+    virtual void clear();
+};
+
 class PhotonJetAnalysis : public Analysis
 {
   public:
@@ -151,6 +185,8 @@ class PhotonJetAnalysis : public Analysis
 
     double jet_pt1min;  // extra cut on leading jet-pt
     double photon_R;
+    double photon_n;
+    double photon_eps;
     double photon_ptmin;
     double photon_etamax;
     double photon_jet_Rsep;
@@ -174,6 +210,42 @@ class PhotonJetAnalysis : public Analysis
     virtual void clear();
 };
 
+class VJetAnalysis : public Analysis
+{
+  public:
+    static VJetAnalysis* create() { return new VJetAnalysis(); }
+
+    VJetAnalysis();
+
+    virtual bool check_cuts(SelectorCommon* event);
+    virtual void analysis_bin(SelectorCommon* event);
+
+    double lepton_ptmin;
+    double lepton_etamax;
+    double lepton_etagap_min;
+    double lepton_etagap_max;
+    double etmiss_min;
+    double vboson_mass_min;
+    double vboson_mass_max;
+    double lepton_jet_Rsep;
+    double lepton_lepton_Rsep;
+    double vboson_onshell_mass;
+
+    std::vector<Histogram*> vboson_pt;
+    std::vector<Histogram*> vboson_eta;
+
+    Grid* g_vboson_pt;
+    Grid* g_vboson_eta;
+
+    virtual void reset();
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
+    virtual void output_grids();
+    virtual void clear();
+};
+
 class DiPhotonAnalysis : public Analysis
 {
   public:
@@ -184,7 +256,11 @@ class DiPhotonAnalysis : public Analysis
     virtual bool check_cuts(SelectorCommon* event);
     virtual void analysis_bin(SelectorCommon* event);
 
+    double jet_pt1min;  // extra cut on leading jet-pt
+
     double photon_R;
+    double photon_n;
+    double photon_eps;
     double photon_pt1min;
     double photon_pt2min;
     double photon_etamax;
@@ -217,13 +293,24 @@ class DiPhotonAnalysis : public Analysis
     virtual void clear();
 };
 
+class DiPhotonAnalysisBH : public DiPhotonAnalysis
+{
+  public:
+    static DiPhotonAnalysisBH* create() { return new DiPhotonAnalysisBH(); }
+
+    virtual bool check_cuts(SelectorCommon* event);
+};
+
 #if defined(__MAKECINT__)
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
 #pragma link C++ class Jet3Analysis;
 #pragma link C++ class FourJetMPIAnalysis;
+#pragma link C++ class JetMAnalysis;
+#pragma link C++ class VJetAnalysis;
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
+#pragma link C++ class DiPhotonAnalysisBH;
 #pragma link C++ class std::vector<Histogram*>;
 #pragma link C++ class std::vector<LinearHistogram2D*>;
 #pragma link C++ class std::vector<std::vector<Histogram*> >;

@@ -202,12 +202,21 @@ class SelectorCommon : public TSelector
                               const PseudoJetVector& partons,
                               const PseudoJetVector& jets);
     // two-nonqcd + jets scales
+    double rescaler_maa(const double scale,
+                       const PseudoJetVector& input,
+                       const PseudoJetVector& jets);
     double rescaler_maaht(const double scale,
                        const PseudoJetVector& input,
                        const PseudoJetVector& jets);
     double rescaler_maahthat(const double scale,
                           const PseudoJetVector& input,
                           const PseudoJetVector& jets);
+    double rescaler_mwhthat(const double scale,
+                       const PseudoJetVector& input,
+                       const PseudoJetVector& jets);
+    double rescaler_mwFhthat(const double scale,
+                       const PseudoJetVector& input,
+                       const PseudoJetVector& jets);
     double rescaler_maa2sumpt2(const double scale,
                            const PseudoJetVector& input,
                            const PseudoJetVector& jets);
@@ -217,7 +226,6 @@ class SelectorCommon : public TSelector
     double rescaler_minlo(const double scale,
                           const PseudoJetVector& input,
                           const PseudoJetVector& jets);
-
 
     void setrescaler_none() { opt_rescaler = 0; }
     void setrescaler_multiplicative() { opt_rescaler = &SelectorCommon::rescaler_multiplicative; }
@@ -229,6 +237,8 @@ class SelectorCommon : public TSelector
     void setrescaler_maahthat() { opt_rescaler = &SelectorCommon::rescaler_maahthat; }
     void setrescaler_maa2sumpt2() { opt_rescaler = &SelectorCommon::rescaler_maa2sumpt2; }
     void setrescaler_maa2sumpt2hat() { opt_rescaler = &SelectorCommon::rescaler_maa2sumpt2hat; }
+    void setrescaler_mwhthat() { opt_rescaler = &SelectorCommon::rescaler_mwhthat; }
+    void setrescaler_mwFhthat() { opt_rescaler = &SelectorCommon::rescaler_mwFhthat; }
     void setrescaler_minlo() {
       clustering_def = fastjet::JetDefinition(new FlavourKTPlugin());
       clustering_def.delete_plugin_when_unused();

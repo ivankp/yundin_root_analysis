@@ -1,4 +1,17 @@
 
+#include <utility>
+
+// analog of delta_R using pseudorapidity
+static double DeltaEtaPhi(const fastjet::PseudoJet& a, const fastjet::PseudoJet& b)
+{
+  double dphi = abs(a.phi() - b.phi());
+  if (dphi > fastjet::pi) {
+    dphi = fastjet::twopi - dphi;
+  }
+  const double deta = a.eta() - b.eta();
+  return sqrt(dphi*dphi + deta*deta);
+}
+
 // --------------------------------------------------------------------------- //
 // Parameters
 // --------------------------------------------------------------------------- //
@@ -30,6 +43,9 @@ void Analysis::clear()
 
   clear_var(jet_exclusive);
   clear_var(jet_inclusive);
+
+  clear_histvec(scale_wgt);
+  clear_histvec(scale_nowgt);
 
   for (unsigned i=0; i<jet_pt_n.size(); i++) {
     clear_histvec(jet_pt_n[i]);
@@ -242,10 +258,39 @@ void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCo
 }
 
 
+bool Analysis::photonIsolation(const SelectorCommon* event, double photon_R,
+                               double photon_n, double photon_eps) const
+{
+  for (int i=0; i<event->nparticle; i++) {
+    if (event->kf[i] != 22) continue;
+    const double Eeps = input[i].Et()*photon_eps/pow(1. - cos(photon_R), photon_n);
+    std::vector<std::pair<double,double> > hadronic;
+    for (int j=0; j<event->nparticle; j++) {
+      if (abs(event->kf[j]) <= 6) {
+        const double Rij = input[i].delta_R(input[j]);
+        if (Rij <= photon_R) {
+          hadronic.push_back(make_pair(Rij, input[j].Et()));
+        }
+      }
+    }
+    sort(hadronic.begin(), hadronic.end());
+    double energy = 0.;
+    for (unsigned j=0; j<hadronic.size(); j++) {
+      energy += hadronic[j].second;
+      if (energy > Eeps*pow(1. - cos(hadronic[j].first), photon_n)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+
 void Analysis::analysis_bin(SelectorCommon* event)
 {
   const Int_t id = event->get_event_id();
   const Double_t weight = event->get_event_weight();
+  const Double_t scale = event->ren_scale;
 
   event_binned += 1;
 
@@ -254,6 +299,10 @@ void Analysis::analysis_bin(SelectorCommon* event)
     jet_inclusive->bin(id, i, weight);
     fill_grid(g_jet_inclusive, id, i, weight, event);
   }
+
+  bin_histvec(scale_wgt, id, scale, weight);
+  bin_histvec(scale_nowgt, id, scale, Double_t(1.));
+
   for (unsigned i=0; i<jets.size() and i<jet_pt_n.size(); i++) {
     const double jetpt = jets[i].pt();
     const double jeteta = jets[i].eta();
@@ -288,6 +337,9 @@ void Analysis::output_histograms(const TString& filename, std::ofstream& stream,
   jet_exclusive->print(stream, runname, event_count);
   jet_inclusive->print(stream, runname, event_count);
 
+  output_histvec(scale_wgt, filename, stream, dryrun);
+  output_histvec(scale_nowgt, filename, stream, dryrun);
+
   for (unsigned i=0; i<=jet_number; i++) {
     output_histvec(jet_pt_n[i], filename, stream, dryrun);
     output_histvec(jet_eta_n[i], filename, stream, dryrun);
@@ -316,7 +368,7 @@ void Analysis::output_grids()
 // ---------------------------------------------------------------------------
 
 JetAnalysis::JetAnalysis()
-  : jet_pt1min(0), jet_ht2min(0)
+  : jet_pt1min(0.), jet_pt2min(0.), jet_pt3min(0.), jet_ht2min(0)
 {
 }
 
@@ -331,7 +383,17 @@ bool JetAnalysis::check_cuts(SelectorCommon* event)
     return false;
   }
 
-  return jets[0].pt() >= jet_pt1min;
+  if (jet_number >= 1 and jet_pt1min > 0. and jets[0].pt() < jet_pt1min) {
+    return false;
+  }
+  if (jet_number >= 2 and jet_pt2min > 0. and jets[1].pt() < jet_pt2min) {
+    return false;
+  }
+  if (jet_number >= 3 and jet_pt3min > 0. and jets[2].pt() < jet_pt3min) {
+    return false;
+  }
+
+  return true;
 }
 
 void JetAnalysis::analysis_bin(SelectorCommon* event)
@@ -428,6 +490,70 @@ void Jet3Analysis::output_histograms(const TString& filename, std::ofstream& str
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
+//   JetMAnalysis
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+JetMAnalysis::JetMAnalysis()
+  : ystar_min(0), ystar_max(1e10)
+{
+  g_jet_mass_jjj = 0;
+}
+
+void JetMAnalysis::clear()
+{
+  BaseClass::clear();
+
+  clear_histvec(jet_mass_jjj);
+}
+
+bool JetMAnalysis::check_cuts(SelectorCommon* event)
+{
+  if (not BaseClass::check_cuts(event)) {
+    return false;
+  }
+
+  if (jets.size() >= 3) {
+    const double y1 = jets[0].rap();
+    const double y2 = jets[1].rap();
+    const double y3 = jets[2].rap();
+    const double ystar = abs(y1 - y2) + abs(y2 - y3) + abs(y1 - y3);
+    if (ystar < ystar_min or ystar >= ystar_max) {
+    return false;
+    }
+  }
+
+  return true;
+}
+
+void JetMAnalysis::analysis_bin(SelectorCommon* event)
+{
+  BaseClass::analysis_bin(event);
+  if (jets.size() >= 3) {
+    const double mass_jjj = (jets[0] + jets[1] + jets[2]).m();
+    bin_histvec(jet_mass_jjj, id, mass_jjj, weight);
+    fill_grid(g_jet_mass_jjj, id, mass_jjj, weight, event);
+  }
+}
+
+void JetMAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  BaseClass::output_histograms(filename, stream, dryrun);
+
+  output_histvec(jet_mass_jjj, filename, stream, dryrun);
+}
+
+void JetMAnalysis::output_grids()
+{
+  BaseClass::output_grids();
+
+  if (g_jet_mass_jjj) {
+    g_jet_mass_jjj->write(event_count);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 //   FourJetMPIAnalysis -- four jet analysis for dble diff. d12 d34 observable
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
@@ -498,13 +624,150 @@ void FourJetMPIAnalysis::output_histograms(const TString& filename, std::ofstrea
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
+//   VJetAnalysis
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+VJetAnalysis::VJetAnalysis()
+  : lepton_ptmin(0), lepton_etamax(0),
+    lepton_etagap_min(0), lepton_etagap_max(0),
+    etmiss_min(0),
+    vboson_mass_min(0), vboson_mass_max(0),
+    lepton_jet_Rsep(0), lepton_lepton_Rsep(0)
+{
+  g_vboson_pt = 0;
+  g_vboson_eta = 0;
+}
+
+void VJetAnalysis::clear()
+{
+  Analysis::clear();
+
+  clear_histvec(vboson_pt);
+  clear_histvec(vboson_eta);
+}
+
+void VJetAnalysis::reset()
+{
+  Analysis::reset();
+}
+
+bool VJetAnalysis::check_cuts(SelectorCommon* event)
+{
+  if (not Analysis::check_cuts(event)) {
+    return false;
+  }
+
+  // check for W/Z bosons in first two flavours
+  PseudoJetVector leptons;
+  if (event->kf[0] == 11 || event->kf[0] == -11) {
+    leptons.push_back(input[0]);
+  }
+  if (event->kf[1] == 11 || event->kf[1] == -11) {
+    leptons.push_back(input[1]);
+  }
+
+  PseudoJetVector neutrino;
+  if (event->kf[0] == 12 || event->kf[0] == -12) {
+    neutrino.push_back(input[0]);
+  }
+  if (event->kf[1] == 12 || event->kf[1] == -12) {
+    neutrino.push_back(input[1]);
+  }
+
+  // missing energy/neutrino cuts
+  for (unsigned int j=0; j<neutrino.size(); j++) {
+    if (neutrino[j].pt() < etmiss_min) {
+      return false;
+    }
+  }
+
+  // lepton cuts
+  for (unsigned int j=0; j<leptons.size(); j++) {
+    if (leptons[j].pt() < lepton_ptmin) {
+      return false;
+    }
+    if (abs(leptons[j].eta()) > lepton_etamax) {
+      return false;
+    }
+    if (abs(leptons[j].eta()) > lepton_etagap_min && abs(leptons[j].eta()) < lepton_etagap_max) {
+      return false;
+    }
+
+    // lepton-jets R-separation
+    for (unsigned i=0; i<jets.size(); i++) {
+      if (leptons[j].delta_R(jets[i]) < lepton_jet_Rsep) {
+        return false;
+      }
+    }
+  }
+
+  if (leptons.size() == 2) {
+    if (leptons[0].delta_R(leptons[1]) < lepton_lepton_Rsep) {
+      return false;
+    }
+  }
+
+  // vector boson mass cut
+  const fastjet::PseudoJet& vboson = input[0]+input[1];
+
+  double vmass = vboson.m();
+  if (vmass < vboson_mass_min || vmass > vboson_mass_max) {
+    return false;
+  }
+
+  return true;
+}
+
+void VJetAnalysis::analysis_bin(SelectorCommon* event)
+{
+  Analysis::analysis_bin(event);
+
+  const Int_t id = event->id;
+  const Double_t weight = event->weight;
+
+  const fastjet::PseudoJet& vboson = input[0]+input[1];
+  const double LLpt = vboson.pt();
+  const double LLeta = vboson.eta();
+
+  bin_histvec(vboson_pt, id, LLpt, weight);
+  bin_histvec(vboson_eta, id, LLeta, weight);
+
+  fill_grid(g_vboson_pt, id, LLpt, weight, event);
+  fill_grid(g_vboson_eta, id, LLeta, weight, event);
+
+}
+
+void VJetAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  // all jet histograms are already in the base class
+  Analysis::output_histograms(filename, stream, dryrun);
+
+  output_histvec(vboson_pt, filename, stream, dryrun);
+  output_histvec(vboson_eta, filename, stream, dryrun);
+}
+
+void VJetAnalysis::output_grids()
+{
+  Analysis::output_grids();
+
+  if (g_vboson_pt) {
+    g_vboson_pt->write(event_count);
+  }
+  if (g_vboson_eta) {
+    g_vboson_eta->write(event_count);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 //   PhotonJetAnalysis
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 
 PhotonJetAnalysis::PhotonJetAnalysis()
-  : jet_pt1min(0), photon_R(0), photon_ptmin(0), photon_etamax(0),
-    photon_jet_Rsep(0)
+  : jet_pt1min(0), photon_R(0), photon_n(0), photon_eps(0),
+    photon_ptmin(0), photon_etamax(0), photon_jet_Rsep(0)
 {
   g_photon_pt = 0;
   g_photon_eta = 0;
@@ -560,6 +823,13 @@ bool PhotonJetAnalysis::check_cuts(SelectorCommon* event)
   // photon-jets R-separation
   for (unsigned i=0; i<jets.size(); i++) {
     if (photon.delta_R(jets[i]) < photon_jet_Rsep) {
+      return false;
+    }
+  }
+
+  // photon isolation
+  if (photon_n > 0 and photon_eps > 0) {
+    if (not photonIsolation(event, photon_R, photon_n, photon_eps)) {
       return false;
     }
   }
@@ -639,7 +909,9 @@ void PhotonJetAnalysis::output_grids()
 // ---------------------------------------------------------------------------
 
 DiPhotonAnalysis::DiPhotonAnalysis()
-  : photon_R(0), photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
+  : jet_pt1min(0),
+    photon_R(0), photon_n(0), photon_eps(0),
+    photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
     photon_photon_Rsep(0), photon_jet_Rsep(0)
 {
   g_photon_mass = 0;
@@ -713,7 +985,15 @@ bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
     }
   }
 
-  return true;
+  // photon isolation
+  if (photon_n > 0 and photon_eps > 0) {
+    if (not photonIsolation(event, photon_R, photon_n, photon_eps)) {
+      return false;
+    }
+  }
+
+  // leading jet pt-cut
+  return jets[0].pt() >= jet_pt1min;
 }
 
 void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
@@ -799,4 +1079,57 @@ void DiPhotonAnalysis::output_grids()
   if (g_photon_jet_R11) {
     g_photon_jet_R11->write(event_count);
   }
+}
+
+bool DiPhotonAnalysisBH::check_cuts(SelectorCommon* event)
+{
+  if (not Analysis::check_cuts(event)) {
+    return false;
+  }
+
+  assert(event->kf[0] == 22 and event->kf[1] == 22);
+
+  double pt1 = input[0].pt();
+  double pt2 = input[1].pt();
+  if (pt1 < pt2) {
+    std::swap(pt1, pt2);
+    std::swap(input[0], input[1]);
+  }
+
+  if (pt1 < photon_pt1min) {
+    return false;
+  }
+  if (pt2 < photon_pt2min) {
+    return false;
+  }
+  if (abs(input[0].eta()) > photon_etamax or
+      abs(input[1].eta()) > photon_etamax) {
+    return false;
+  }
+  if (input[0].delta_R(input[1]) < photon_photon_Rsep) {
+    return false;
+  }
+
+  for (unsigned i=0; i<jet_number; i++) {
+    if (DeltaEtaPhi(input[0], jets[i]) < photon_jet_Rsep or
+        DeltaEtaPhi(input[1], jets[i]) < photon_jet_Rsep) {
+      return false;
+    }
+  }
+  for (unsigned i=jet_number; i<jets.size(); i++) {
+    if (DeltaEtaPhi(input[0], jets[i]) < photon_R or
+        DeltaEtaPhi(input[1], jets[i]) < photon_R) {
+      return false;
+    }
+  }
+
+  // photon isolation
+  if (photon_n > 0 and photon_eps > 0) {
+    if (not photonIsolation(event, photon_R, photon_n, photon_eps)) {
+      return false;
+    }
+  }
+
+  // leading jet pt-cut
+  return jets[0].pt() >= jet_pt1min;
 }

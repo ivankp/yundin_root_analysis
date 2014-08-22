@@ -28,10 +28,16 @@ def set_rescaler(selector, params):
         selector.setrescaler_sumpt2()
     elif params.rescaler == 'sumpt2hat':
         selector.setrescaler_sumpt2hat()
+    elif params.rescaler == 'maa':
+        selector.setrescaler_maa()
     elif params.rescaler == 'maaht':
         selector.setrescaler_maaht()
     elif params.rescaler == 'maahthat':
         selector.setrescaler_maahthat()
+    elif params.rescaler == 'mwhthat':
+        selector.setrescaler_mwhthat()
+    elif params.rescaler == 'mwfhthat':
+        selector.setrescaler_mwFhthat()
     elif params.rescaler == 'maa2sumpt2':
         selector.setrescaler_maa2sumpt2()
     elif params.rescaler == 'maa2sumpt2hat':
@@ -219,7 +225,8 @@ Basic options:
 
   -s, --scale               Multiplicative scale factor
   --rescaler=<name>         Use rescaler 'simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat,
-                            'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat'
+                            'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat', 'mwhthat',
+                            'mwfhthat'
 
   -p, --power               Born Alpha_s power (needed only for APPLgrid)
   -f, --frompdf             From PDF set "name.LHgrid:member"
@@ -373,7 +380,7 @@ class Params:
 
         if self.rescaler not in ['simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat',
                                  'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat',
-                                 'minlo']:
+                                 'minlo', 'mwhthat', 'mwfhthat']:
             print "Unknown value for rescaler: %s" % self.rescaler
             usage()
             sys.exit(2)

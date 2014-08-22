@@ -261,12 +261,12 @@ void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCo
 bool Analysis::photonIsolation(const SelectorCommon* event, double photon_R,
                                double photon_n, double photon_eps) const
 {
-  for (int i=0; i<event->nparticle; i++) {
-    if (event->kf[i] != 22) continue;
+  for (int i=0; i<event->get_nparticle(); i++) {
+    if (event->get_kf(i) != 22) continue;
     const double Eeps = input[i].Et()*photon_eps/pow(1. - cos(photon_R), photon_n);
     std::vector<std::pair<double,double> > hadronic;
-    for (int j=0; j<event->nparticle; j++) {
-      if (abs(event->kf[j]) <= 6) {
+    for (int j=0; j<event->get_nparticle(); j++) {
+      if (abs(event->get_kf(j)) <= 6) {
         const double Rij = input[i].delta_R(input[j]);
         if (Rij <= photon_R) {
           hadronic.push_back(make_pair(Rij, input[j].Et()));
@@ -290,7 +290,7 @@ void Analysis::analysis_bin(SelectorCommon* event)
 {
   const Int_t id = event->get_event_id();
   const Double_t weight = event->get_event_weight();
-  const Double_t scale = event->ren_scale;
+  const Double_t scale = event->get_ren_scale();
 
   event_binned += 1;
 
@@ -529,6 +529,10 @@ bool JetMAnalysis::check_cuts(SelectorCommon* event)
 void JetMAnalysis::analysis_bin(SelectorCommon* event)
 {
   BaseClass::analysis_bin(event);
+
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
+
   if (jets.size() >= 3) {
     const double mass_jjj = (jets[0] + jets[1] + jets[2]).m();
     bin_histvec(jet_mass_jjj, id, mass_jjj, weight);
@@ -660,18 +664,18 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
 
   // check for W/Z bosons in first two flavours
   PseudoJetVector leptons;
-  if (event->kf[0] == 11 || event->kf[0] == -11) {
+  if (event->get_kf(0) == 11 || event->get_kf(0) == -11) {
     leptons.push_back(input[0]);
   }
-  if (event->kf[1] == 11 || event->kf[1] == -11) {
+  if (event->get_kf(1) == 11 || event->get_kf(1) == -11) {
     leptons.push_back(input[1]);
   }
 
   PseudoJetVector neutrino;
-  if (event->kf[0] == 12 || event->kf[0] == -12) {
+  if (event->get_kf(0) == 12 || event->get_kf(0) == -12) {
     neutrino.push_back(input[0]);
   }
-  if (event->kf[1] == 12 || event->kf[1] == -12) {
+  if (event->get_kf(1) == 12 || event->get_kf(1) == -12) {
     neutrino.push_back(input[1]);
   }
 
@@ -723,8 +727,8 @@ void VJetAnalysis::analysis_bin(SelectorCommon* event)
 {
   Analysis::analysis_bin(event);
 
-  const Int_t id = event->id;
-  const Double_t weight = event->weight;
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
 
   const fastjet::PseudoJet& vboson = input[0]+input[1];
   const double LLpt = vboson.pt();
@@ -1087,7 +1091,7 @@ bool DiPhotonAnalysisBH::check_cuts(SelectorCommon* event)
     return false;
   }
 
-  assert(event->kf[0] == 22 and event->kf[1] == 22);
+  assert(event->get_kf(0) == 22 and event->get_kf(1) == 22);
 
   double pt1 = input[0].pt();
   double pt2 = input[1].pt();

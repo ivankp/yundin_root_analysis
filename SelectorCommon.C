@@ -307,7 +307,7 @@ double SelectorCommon::rescaler_maa(const double /*scale*/,
                                    const PseudoJetVector& /*jets*/)
 {
   double newscale = (input[0]+input[1]).m();
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -344,11 +344,11 @@ double SelectorCommon::rescaler_mwhthat(const double /*scale*/,
   double mW = (input[0]+input[1]).m();
   double ptW = (input[0]+input[1]).pt();
   double newscale = sqrt(mW*mW+ptW*ptW);
-  const int imax = rescale_n >= 0 ? 2+rescale_n : input.size();
+  const int imax = opt_rescale_n >= 0 ? 2+opt_rescale_n : input.size();
   for (int i=2; i<imax; i++) {
     newscale += input[i].pt();
   }
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 
@@ -359,11 +359,11 @@ double SelectorCommon::rescaler_mwFhthat(const double /*scale*/,
   const double mW = 80.419;
   double ptW = (input[0]+input[1]).pt();
   double newscale = sqrt(mW*mW+ptW*ptW);
-  const int imax = rescale_n >= 0 ? 2+rescale_n : input.size();
+  const int imax = opt_rescale_n >= 0 ? 2+opt_rescale_n : input.size();
   for (int i=2; i<imax; i++) {
     newscale += input[i].pt();
   }
-  newscale *= 0.5*rescale_factor;
+  newscale *= 0.5*opt_rescale_factor;
   return newscale;
 }
 

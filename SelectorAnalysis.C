@@ -46,6 +46,7 @@ void Analysis::clear()
 
   clear_histvec(scale_wgt);
   clear_histvec(scale_nowgt);
+  clear_histvec(jet_ht);
 
   for (unsigned i=0; i<jet_pt_n.size(); i++) {
     clear_histvec(jet_pt_n[i]);
@@ -303,14 +304,17 @@ void Analysis::analysis_bin(SelectorCommon* event)
   bin_histvec(scale_wgt, id, scale, weight);
   bin_histvec(scale_nowgt, id, scale, Double_t(1.));
 
+  double jetht = 0.;
   for (unsigned i=0; i<jets.size() and i<jet_pt_n.size(); i++) {
     const double jetpt = jets[i].pt();
+    jetht += jetpt;
     const double jeteta = jets[i].eta();
     bin_histvec(jet_pt_n[i], id, jetpt, weight);
     bin_histvec(jet_eta_n[i], id, jeteta, weight);
     fill_grid(g_jet_pt_n[i], id, jetpt, weight, event);
     fill_grid(g_jet_eta_n[i], id, jeteta, weight, event);
   }
+  bin_histvec(jet_ht, id, jetht, weight);
 }
 
 void Analysis::analysis_finalize()
@@ -339,6 +343,7 @@ void Analysis::output_histograms(const TString& filename, std::ofstream& stream,
 
   output_histvec(scale_wgt, filename, stream, dryrun);
   output_histvec(scale_nowgt, filename, stream, dryrun);
+  output_histvec(jet_ht, filename, stream, dryrun);
 
   for (unsigned i=0; i<=jet_number; i++) {
     output_histvec(jet_pt_n[i], filename, stream, dryrun);

@@ -40,6 +40,7 @@ class Analysis
     LinearHistogram* jet_inclusive;
     std::vector<Histogram*> scale_wgt;
     std::vector<Histogram*> scale_nowgt;
+    std::vector<Histogram*> jet_ht;
     std::vector<std::vector<Histogram*> > jet_pt_n;
     std::vector<std::vector<Histogram*> > jet_eta_n;
 

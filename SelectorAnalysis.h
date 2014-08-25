@@ -67,6 +67,7 @@ class Analysis
                         const TString& filename, std::ofstream& stream,
                         bool dryrun);
 
+    void clear_histvec(std::vector<LinearHistogram2D*>& histvec);
     void bin_histvec(const std::vector<LinearHistogram2D*>& histvec,
                      int nextevt, double x, double y, double w);
     void output_histvec(const std::vector<LinearHistogram2D*>& histvec,
@@ -101,14 +102,19 @@ class JetAnalysis : public Analysis
 
     double jet_ht2min;
 
+    std::vector<Histogram*> jet_pt12ave;
+
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
                                    bool dryrun);
+    virtual void clear();
 };
 
 class Jet3Analysis : public JetAnalysis
 {
   public:
+    typedef JetAnalysis BaseClass;
+
     static Jet3Analysis* create() { return new Jet3Analysis(); }
 
     Jet3Analysis();
@@ -126,11 +132,14 @@ class Jet3Analysis : public JetAnalysis
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
                                    bool dryrun);
+    virtual void clear();
 };
 
 class FourJetMPIAnalysis : public JetAnalysis
 {
   public:
+    typedef JetAnalysis BaseClass;
+
     static FourJetMPIAnalysis* create() { return new FourJetMPIAnalysis(); }
 
     FourJetMPIAnalysis();
@@ -146,6 +155,7 @@ class FourJetMPIAnalysis : public JetAnalysis
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
                                    bool dryrun);
+    virtual void clear();
 };
 
 class JetMAnalysis : public JetAnalysis

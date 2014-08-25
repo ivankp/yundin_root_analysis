@@ -84,6 +84,14 @@ void Analysis::clear_histvec(std::vector<Histogram*>& histvec)
   histvec.clear();
 }
 
+void Analysis::clear_histvec(std::vector<LinearHistogram2D*>& histvec)
+{
+  for (unsigned j=0; j<histvec.size(); j++) {
+    clear_var(histvec[j]);
+  }
+  histvec.clear();
+}
+
 void Analysis::append_output_filename(const TString& name)
 {
   outputfiles.insert(name);
@@ -377,6 +385,13 @@ JetAnalysis::JetAnalysis()
 {
 }
 
+void JetAnalysis::clear()
+{
+  Analysis::clear();
+
+  clear_histvec(jet_pt12ave);
+}
+
 bool JetAnalysis::check_cuts(SelectorCommon* event)
 {
   if (not Analysis::check_cuts(event)) {
@@ -403,15 +418,18 @@ bool JetAnalysis::check_cuts(SelectorCommon* event)
 
 void JetAnalysis::analysis_bin(SelectorCommon* event)
 {
-//   const Int_t id = event->get_event_id();
-//   const Double_t weight = event->get_event_weight();
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
   Analysis::analysis_bin(event);
+
+  double pt12ave = 0.5*(jets[0].pt()+jets[1].pt());
+  bin_histvec(jet_pt12ave, id, pt12ave, weight);
 }
 
 void JetAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
 {
-  // all jet histograms are already in the base class
   Analysis::output_histograms(filename, stream, dryrun);
+  output_histvec(jet_pt12ave, filename, stream, dryrun);
 }
 
 // ---------------------------------------------------------------------------
@@ -424,6 +442,15 @@ Jet3Analysis::Jet3Analysis()
   : jet_eta1max(10), jet_eta2max(10), jet_eta2min(0),
     jet_jet_DR23min(0), jet_jet_DR23max(10), jet_jet_M12min(0)
 {
+}
+
+void Jet3Analysis::clear()
+{
+  BaseClass::clear();
+
+  clear_histvec(jet_jet_eta23);
+  clear_histvec(jet_jet_phi23);
+  clear_histvec(jet_jet_beta23);
 }
 
 bool Jet3Analysis::check_cuts(SelectorCommon* event)
@@ -570,6 +597,13 @@ void JetMAnalysis::output_grids()
 FourJetMPIAnalysis::FourJetMPIAnalysis() :
   mpivars_d12_bins(1), mpivars_d12_bin_low(0.), mpivars_d12_bin_high(100.)
 {
+}
+
+void FourJetMPIAnalysis::clear()
+{
+  BaseClass::clear();
+
+  clear_histvec(jets_d12_d34);
 }
 
 bool FourJetMPIAnalysis::check_cuts(SelectorCommon* event)

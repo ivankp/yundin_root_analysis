@@ -88,7 +88,7 @@ int RootAnalysis::Finish()
 {
   PyRun_SimpleString("hammer.selector.SlaveTerminate()\n");
   PyRun_SimpleString("hammer.selector.stat_report()\n");
-  Py_Finalize();
+//   Py_Finalize();  // will break Sherpa NTuple output if uncommented
   if (g_argv) {
     delete[] g_argv;
   }

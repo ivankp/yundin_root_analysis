@@ -14,6 +14,7 @@
 #include <fstream>
 
 // Math
+#include <inttypes.h>
 #include <cstdlib>
 #include <cmath>
 using std::abs;
@@ -33,8 +34,8 @@ using std::sqrt;
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
-#define MAXNPARTICLE 16
-#define MAXNUWEIGHT 128
+#define MAXNPARTICLE 100
+#define MAXNUWEIGHT 32
 
 class SelectorCommon : public TSelector
 {
@@ -338,6 +339,9 @@ class SelectorCommon : public TSelector
     long pdf_warning_count;
     double pdf_warning_thresh;
 
+    // exact reweighting
+    int event_trials;
+
   protected:
     double get_alphas(double mur);
     void prepare_event();
@@ -346,6 +350,10 @@ class SelectorCommon : public TSelector
     void reweight_pdfcheck();
     double reweight_applyfixes(double new_me_wgt, double log_r);
     void stat_update(double fac_scale, double ren_scale);
+
+  public:
+    intptr_t this_to_int() const { return reinterpret_cast<intptr_t>(this); }
+    static bool dynamiclib_mode;
 };
 
 #if defined(__MAKECINT__)

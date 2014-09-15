@@ -62,6 +62,7 @@ def get_pdfname(pdfopt, name=''):
 
 
 def process(params):
+    global ROOT, selector
     import ROOT
 
     # we want to handle Ctrl+C
@@ -95,11 +96,6 @@ def process(params):
     ROOT.gROOT.LoadMacro("SelectorCommon.C+")
     if not params.noapplgrid:
         ROOT.gROOT.LoadMacro("appl_grid.h+")
-
-    # create a chain
-    chain = ROOT.TChain("t3")
-    for name in params.inputs:
-        chain.Add(name)
 
     selector = ROOT.SelectorCommon()
 
@@ -189,6 +185,16 @@ def process(params):
     params.analysis_mod.initialize(params, selector)
 
     selector.opt_stat_step = params.stat
+
+    if params.dynamiclib:
+        selector.dynamiclib_mode = True
+        return
+
+    # create a chain
+    chain = ROOT.TChain("t3")
+    for name in params.inputs:
+        chain.Add(name)
+
     chain.Process(selector)
     selector.stat_report()
 
@@ -259,7 +265,7 @@ class Params:
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix=", "cdr2fdhfix=", "pi2o12fix", "debug", "help",
                                   "stat=", "rescaler=", "qfilter=", "grids", "warmup", "nborn=",
-                                  "noapplgrid", "noloopsim"])
+                                  "noapplgrid", "noloopsim", "dynamiclib"])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -281,6 +287,7 @@ class Params:
         self.warmup = False
         self.noapplgrid = False
         self.noloopsim = False
+        self.dynamiclib = False
         self.qfilter = None
         self.stat = 0
         self.rescaler = 'simple'
@@ -330,6 +337,8 @@ class Params:
                 self.noapplgrid = True
             elif op in ("--noloopsim"):
                 self.noloopsim = True
+            elif op in ("--dynamiclib"):
+                self.dynamiclib = True
             elif op in ("--qfilter"):
                 self.qfilter = oparg
             elif op in ("--nborn"):
@@ -426,12 +435,12 @@ class Params:
             usage()
             sys.exit(2)
 
+        self.inputs = []
         if len(args) > 0:
-            self.inputs = []
             for a in args:
                 self.inputs.extend(glob.glob(a))
             self.inputs.sort()
-        else:
+        elif not self.dynamiclib:
             print "Error: missing input files"
             usage()
             sys.exit(2)

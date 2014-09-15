@@ -17,12 +17,15 @@
 // Selector
 // --------------------------------------------------------------------------- //
 
+bool SelectorCommon::dynamiclib_mode = false;
+
 SelectorCommon::SelectorCommon(TTree* /*tree*/)
   : fChain(0), // ROOT
     analysis(0), analysis_mode(MODE_PLAIN),
     stat_Q2_min(1e100), stat_Q2_max(0.),
     stat_x1_min(1e100), stat_x1_max(0.),
-    stat_x2_min(1e100), stat_x2_max(0.)
+    stat_x2_min(1e100), stat_x2_max(0.),
+    event_trials(1)
 {
   // no rescaler by default
   opt_rescaler = 0;
@@ -917,7 +920,9 @@ Bool_t SelectorCommon::Process(Long64_t entry)
     Abort("Keyboard interrupt");
   }
 
-  GetEntry(entry);
+  if (not dynamiclib_mode) {
+    GetEntry(entry);
+  }
   prepare_event();
 
   // set input for analysis
@@ -963,7 +968,7 @@ Bool_t SelectorCommon::Process(Long64_t entry)
 
 void SelectorCommon::process_single_event(bool do_reweight)
 {
-  analysis->event_count += 1;
+  analysis->event_count += event_trials;
 
   // runtime statistics
   if (long(analysis->event_count) % print_event_step == 0) {

@@ -3,7 +3,6 @@
 // Root > T->Process("SelectorCommon.C","some options")
 // Root > T->Process("SelectorCommon.C+")
 
-#include "SelectorCommon.h"
 #include <TH2.h>
 #include <TStyle.h>
 
@@ -12,6 +11,11 @@
 #endif
 
 #include <LHAPDF.h>
+
+#include "SelectorAnalysis.h"
+#include "FlavourKT.h"
+
+#include "SelectorCommon.h"
 
 // --------------------------------------------------------------------------- //
 // Selector
@@ -584,6 +588,14 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   return 0.; // zero means that we use fac_scalefactor/ren_scalefactor
 }
 
+void SelectorCommon::setrescaler_minlo()
+{
+  clustering_def = fastjet::JetDefinition(new FlavourKTPlugin());
+  clustering_def.delete_plugin_when_unused();
+  lambda = LambdaQCD();
+  std::cout << "Set LambdaQCD = " << lambda << std::endl;
+  opt_rescaler = &SelectorCommon::rescaler_minlo;
+}
 
 double SelectorCommon::Deltaf(double Q0sq, double Qsq, int flav)
 {

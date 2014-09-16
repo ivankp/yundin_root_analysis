@@ -279,7 +279,7 @@ bool Analysis::photonIsolation(const SelectorCommon* event, double photon_R,
       if (abs(event->get_kf(j)) <= 6) {
         const double Rij = input[i].delta_R(input[j]);
         if (Rij <= photon_R) {
-          hadronic.push_back(make_pair(Rij, input[j].Et()));
+          hadronic.push_back(std::make_pair(Rij, input[j].Et()));
         }
       }
     }

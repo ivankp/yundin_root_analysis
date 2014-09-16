@@ -22,21 +22,15 @@ using std::pow;
 using std::sqrt;
 
 #include "SherpaAlphaS.h"
-#include "SelectorHistograms.h"
-#include "SelectorAnalysis.h"
-#include "FlavourKT.h"
 
 #ifndef DISABLE_LOOPSIM
 #include <LoopSim.hh>
 #endif // DISABLE_LOOPSIM
 
-// Header file for the classes stored in the TTree if any.
-
-// Fixed size dimensions of array or collections stored in the TTree if any.
-
 #define MAXNPARTICLE 100
 #define MAXNUWEIGHT 32
 
+class Analysis;
 class SelectorCommon : public TSelector
 {
   public :
@@ -240,13 +234,7 @@ class SelectorCommon : public TSelector
     void setrescaler_maa2sumpt2hat() { opt_rescaler = &SelectorCommon::rescaler_maa2sumpt2hat; }
     void setrescaler_mwhthat() { opt_rescaler = &SelectorCommon::rescaler_mwhthat; }
     void setrescaler_mwFhthat() { opt_rescaler = &SelectorCommon::rescaler_mwFhthat; }
-    void setrescaler_minlo() {
-      clustering_def = fastjet::JetDefinition(new FlavourKTPlugin());
-      clustering_def.delete_plugin_when_unused();
-      lambda = LambdaQCD();
-      std::cout << "Set LambdaQCD = " << lambda << std::endl;
-      opt_rescaler = &SelectorCommon::rescaler_minlo;
-    }
+    void setrescaler_minlo();
 
     // static functions
     static const double Nf;

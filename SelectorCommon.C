@@ -675,7 +675,7 @@ void SelectorCommon::reweight_pdfcheck()
         std::cout << "Check your FROMPDF! Reached warning limit " << pdf_warning_count
                   << " no further warnings will be printed\n";
         std::cout << "Check your FROMPDF! Fraction of suspicious events "
-                  << pdf_warning_count/analysis->event_count << "\n";
+                  << pdf_warning_count/analysis->call_count << "\n";
       }
     }
   }
@@ -968,11 +968,12 @@ Bool_t SelectorCommon::Process(Long64_t entry)
 
 void SelectorCommon::process_single_event(bool do_reweight)
 {
+  analysis->call_count += 1;
   analysis->event_count += event_trials;
 
   // runtime statistics
-  if (long(analysis->event_count) % print_event_step == 0) {
-    std::cout << "Processing event " << analysis->event_count << std::endl;
+  if (long(analysis->call_count) % print_event_step == 0) {
+    std::cout << "Processing event " << analysis->call_count << std::endl;
   }
 
   // quark-filter
@@ -997,7 +998,7 @@ void SelectorCommon::process_single_event(bool do_reweight)
     if (opt_stat_step) {
       xsval_cur += event_weight;
       xserr_cur += event_weight*event_weight;
-      if (int(analysis->event_count) % opt_stat_step == 0) {
+      if (int(analysis->call_count) % opt_stat_step == 0) {
         xsvals.push_back(xsval_cur/analysis->event_count);
         xserrs.push_back(sqrt(xserr_cur)/analysis->event_count);
       }

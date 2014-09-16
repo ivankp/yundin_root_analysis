@@ -33,6 +33,7 @@ class Analysis
     double jet_ptmin;
     double jet_etamax;
 
+    double call_count;
     double event_count;
     double event_binned;
 

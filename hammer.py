@@ -14,6 +14,35 @@ except NameError:
     any = lambda x: reduce(lambda a,b: a or b, x)
     all = lambda x: reduce(lambda a,b: a and b, x)
 
+
+selector_list = []
+
+
+def init_pdf_set(pdf_name, pdf_type, member):
+    global pdf_sets, pdf_next_id
+    try: pdf_next_id, pdf_sets
+    except NameError:
+        pdf_next_id = 1
+        pdf_sets = {}
+    key = repr((pdf_name, pdf_type, member))
+    if key not in pdf_sets:
+        ROOT.LHAPDF.initPDFSet(pdf_next_id, pdf_name, pdf_type, member)
+        pdf_sets[key] = pdf_next_id
+        pdf_next_id += 1
+    return pdf_sets[key]
+
+
+def get_next_pdf_id():
+    global next_pdf_id
+    try:
+        next_pdf_id
+    except:
+        next_pdf_id = 1
+    last = next_pdf_id
+    next_pdf_id += 1
+    return last
+
+
 # all custom rescalers
 def set_rescaler(selector, params):
     selector.opt_rescale_n = params.rescale_n
@@ -61,8 +90,13 @@ def get_pdfname(pdfopt, name=''):
     return (pdf, m)
 
 
-def process(params):
-    global ROOT, selector
+def global_init(params):
+    global ROOT
+    try:
+        ROOT
+        return
+    except NameError:
+        pass
     import ROOT
 
     # we want to handle Ctrl+C
@@ -97,6 +131,10 @@ def process(params):
     if not params.noapplgrid:
         ROOT.gROOT.LoadMacro("appl_grid.h+")
 
+
+def process(params):
+    global_init(params)
+
     selector = ROOT.SelectorCommon()
 
     # Initialize reweighting
@@ -116,19 +154,11 @@ def process(params):
 
         selector.opt_rescale_factor = params.scale
 
-        # FROMPDF is always initialized
-        if True:
-            selector.opt_frompdf = 1
-            pdf, m = get_pdfname(params.frompdf, 'FROMPDF')
-            ROOT.LHAPDF.initPDFSet(selector.opt_frompdf, pdf, ROOT.LHAPDF.LHGRID, int(m))
-
-        # TOPDF is initialized and it is different
-        if params.topdf == params.frompdf:
-            selector.opt_topdf = selector.opt_frompdf
-        else:
-            selector.opt_topdf = selector.opt_frompdf + 1
-            pdf, m = get_pdfname(params.topdf, 'TOPDF')
-            ROOT.LHAPDF.initPDFSet(selector.opt_topdf, pdf,  ROOT.LHAPDF.LHGRID, int(m))
+        # initialize FROMPDF and TOPDF
+        pdf, m = get_pdfname(params.frompdf, 'FROMPDF')
+        selector.opt_frompdf = init_pdf_set(pdf, ROOT.LHAPDF.LHGRID, int(m))
+        pdf, m = get_pdfname(params.topdf, 'TOPDF')
+        selector.opt_topdf = init_pdf_set(pdf,  ROOT.LHAPDF.LHGRID, int(m))
 
         # set rescaler after PDFs
         set_rescaler(selector, params)
@@ -188,7 +218,8 @@ def process(params):
 
     if params.dynamiclib:
         selector.dynamiclib_mode = True
-        return
+        selector_list.append(selector)
+        return selector
 
     # create a chain
     chain = ROOT.TChain("t3")
@@ -259,7 +290,9 @@ Other options:
 
 
 class Params:
-    def __init__(self):
+    def __init__(self, optargs=None):
+        if optargs:
+            sys.argv = optargs
         try:
             opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:h",
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
@@ -446,8 +479,8 @@ class Params:
             sys.exit(2)
 
 
-def main():
-    params = Params()
+def main(optargs=None):
+    params = Params(optargs)
     process(params)
 
 

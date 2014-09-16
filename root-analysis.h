@@ -19,7 +19,7 @@ namespace RootAnalysis {
     double usr_wgts[18];
     int alphaspower;
     char part[2];
-    int trials;
+    double trials;
   };
 
   int Init(const std::vector<std::string>& cmdline);

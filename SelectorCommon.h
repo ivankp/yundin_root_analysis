@@ -340,7 +340,7 @@ class SelectorCommon : public TSelector
     double pdf_warning_thresh;
 
     // exact reweighting
-    int event_trials;
+    double event_trials;
 
   protected:
     double get_alphas(double mur);

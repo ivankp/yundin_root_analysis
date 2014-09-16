@@ -63,6 +63,7 @@ void Analysis::reset()
 {
   clear();
 
+  call_count = 0.;
   event_count = 0.;
   event_binned = 0.;
 
@@ -327,7 +328,9 @@ void Analysis::analysis_bin(SelectorCommon* event)
 
 void Analysis::analysis_finalize()
 {
-  std::cout << "Finalize " << long(event_count) << " events (binned " << long(event_binned) << ")\n";
+  std::cout << "Finalize " << long(call_count) << " events"
+            << " (binned " << long(event_binned) << ")"
+            << " [trials " << long(event_count) << "]\n";
   std::set<TString>::iterator it;
   std::ofstream null;
   output_histograms(*it, null, true); // dryrun to get outputfiles

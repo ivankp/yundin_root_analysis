@@ -15,34 +15,45 @@ static std::vector<SelectorCommon*> selector_list;
 
 int RootAnalysis::Init(const std::vector<std::string>& cmdline)
 {
-  int retval = 0;
-  FILE* hammer_file = fopen(cmdline[0].c_str(), "r");
-  if (not hammer_file) {
-    throw;
-  }
-  Py_SetProgramName(const_cast<char*>(cmdline[0].c_str()));  /* optional but recommended */
-  Py_Initialize();
+  static bool firstinit = true;
+  if (firstinit) {
+    firstinit = false;
 
-  int argc = cmdline.size();
-  char** g_argv = new char*[argc];
-  for (int i = 0; i < argc; i++) {
-    g_argv[i] = const_cast<char*>(cmdline[i].c_str());
-  }
-  for (int i = 0; i < argc; i++) {
-    printf("%d : '%s'\n", i, g_argv[i]);
-  }
-  PySys_SetArgv(argc, g_argv);
-  retval = PyRun_SimpleString("import ROOT\nimport hammer\nhammer.main()\n");
-  PyRun_SimpleString("hammer.selector.SlaveBegin(0)\n");
+    FILE* hammer_file = fopen(cmdline[0].c_str(), "r");
+    if (not hammer_file) {
+      throw;
+    }
+    Py_Initialize();
 
-//   PyObject *pGlobal = PyDict_New();
+    const int argc = cmdline.size();
+    char** g_argv = new char*[argc];
+    for (int i = 0; i < argc; i++) {
+      g_argv[i] = const_cast<char*>(cmdline[i].c_str());
+    }
+    for (int i = 0; i < argc; i++) {
+      printf("%d : '%s'\n", i, g_argv[i]);
+    }
+    PySys_SetArgv(argc, g_argv);
+    PyRun_SimpleString("import ROOT\nimport hammer\n");
+  }
+
+  PyObject* py_argv = PyList_New(cmdline.size());
+  for (int i = 0; i < cmdline.size(); i++) {
+    PyList_SetItem(py_argv, i, PyString_FromString(cmdline[i].c_str()));
+  }
+  PyObject* py_funcargs = PyTuple_Pack(1, py_argv);
+  PyObject* py_func = PyObject_GetAttrString(PyImport_AddModule("hammer"), "main");
+  PyObject* py_selector = PyObject_CallObject(py_func, py_funcargs);
+
+  PyRun_SimpleString("hammer.selector_list[-1].SlaveBegin(0)\n");
+
   PyObject* py_Global = PyModule_GetDict(PyImport_AddModule("__main__"));
   PyObject* py_Local = PyModule_GetDict(PyImport_AddModule("hammer"));
-  PyObject* pValue = PyRun_String("selector.this_to_int()", Py_eval_input, py_Global, py_Local);
-//   std::cout << pValue << " "  << PyInt_AsLong(pValue) << std::endl;
-  SelectorCommon* current = reinterpret_cast<SelectorCommon*>(PyInt_AsLong(pValue));
+  PyObject* py_value = PyRun_String("selector_list[-1].this_to_int()", Py_eval_input, py_Global, py_Local);
+  SelectorCommon* current = reinterpret_cast<SelectorCommon*>(PyInt_AsLong(py_value));
   selector_list.push_back(current);
-  Py_DECREF(pValue);
+  Py_DECREF(py_value);
+
   return 0;
 }
 
@@ -86,38 +97,13 @@ int RootAnalysis::Analyse(const NTupleEvent& event)
 
 int RootAnalysis::Finish()
 {
-  PyRun_SimpleString("hammer.selector.SlaveTerminate()\n");
-  PyRun_SimpleString("hammer.selector.stat_report()\n");
+  PyRun_SimpleString(
+"for selector in hammer.selector_list:\n"
+"  selector.SlaveTerminate()\n"
+"  selector.stat_report()\n");
 //   Py_Finalize();  // will break Sherpa NTuple output if uncommented
   if (g_argv) {
     delete[] g_argv;
   }
-  return 0;
-}
-
-int xmain(int argc, char *argv[])
-{
-  char hammer_path[] = "/home/yundin/gitrepos/root-analysis/hammer.py";
-  int retval = 0;
-
-  FILE* hammer_file = fopen(hammer_path, "r");
-  if (not hammer_file) {
-    return -1;
-  }
-  Py_SetProgramName(hammer_path);  /* optional but recommended */
-  Py_Initialize();
-//   PyRun_SimpleFile(hammer_file, hammer_path);
-  for (int i = 0; i < argc; i++) {
-    printf("%d : '%s'\n", i, argv[i]);
-  }
-  PySys_SetArgv(argc-1, &argv[1]);
-  retval = PyRun_SimpleString("import ROOT\nimport hammer\nhammer.main()\n");
-  PyRun_SimpleString("hammer.chain.Process(hammer.selector)\n");
-  PyRun_SimpleString("hammer.selector.stat_report()\n");
-//   PyRun_SimpleString("import hammer\nprint hammer.sys.argv\n");
-//     PyRun_SimpleString("import imp\nhammer = imp.load_source('hammer', 'hammer.py')\nhammer.main()\n");
-
-//   Py_Main(argc, argv);
-  Py_Finalize();
   return 0;
 }

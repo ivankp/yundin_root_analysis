@@ -113,6 +113,9 @@ namespace LHAPDF {
   /// Get LHAPDF version string.
   std::string getVersion();
 
+  /// Get max allowed number of concurrent sets.
+  int getMaxNumSets();
+
   /// Global initialisation.
   void initLHAPDF();
 

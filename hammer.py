@@ -26,6 +26,12 @@ def init_pdf_set(pdf_name, pdf_type, member):
         pdf_sets = {}
     key = repr((pdf_name, pdf_type, member))
     if key not in pdf_sets:
+        try:
+            assert pdf_next_id <= ROOT.LHAPDF.getMaxNumSets()
+        except AssertionError:
+            print "Requested too many LHAPDF sets %d > %d" % (pdf_next_id, ROOT.LHAPDF.getMaxNumSets())
+            print "recompile LHAPDF with --with-max-num-pdfsets %d or more" % pdf_next_id
+            raise
         ROOT.LHAPDF.initPDFSet(pdf_next_id, pdf_name, pdf_type, member)
         pdf_sets[key] = pdf_next_id
         pdf_next_id += 1

@@ -6,6 +6,7 @@ import os
 import re
 import imp
 import glob
+import time
 
 
 # python 2.4 does not have any and all
@@ -13,9 +14,6 @@ try: any, all
 except NameError:
     any = lambda x: reduce(lambda a,b: a or b, x)
     all = lambda x: reduce(lambda a,b: a and b, x)
-
-
-selector_list = []
 
 
 def init_pdf_set(pdf_name, pdf_type, member):
@@ -104,11 +102,6 @@ def global_init(params):
     except NameError:
         pass
     import ROOT
-
-    # we want to handle Ctrl+C
-    sh = ROOT.TSignalHandler(ROOT.kSigInterrupt, False)
-    sh.Add()
-    sh.Connect("Notified()", "TROOT", ROOT.gROOT, "SetInterrupt()")
 
     # add hammer.py directory to macro path
     hammer_path = os.path.dirname(__file__)
@@ -225,9 +218,17 @@ def process(params):
     return selector
 
 
-def readsingle(selector, params):
+def readselectors(selector_list, params):
+    start_time = time.time()
+
+    # we want to handle Ctrl+C
+    sh = ROOT.TSignalHandler(ROOT.kSigInterrupt, False)
+    sh.Add()
+    sh.Connect("Notified()", "TROOT", ROOT.gROOT, "SetInterrupt()")
+
     reader = ROOT.SelectorReader()
-    reader.addSelector(selector)
+    for selector in selector_list:
+        reader.addSelector(selector)
 
     # create a chain
     chain = ROOT.TChain("t3")
@@ -235,28 +236,32 @@ def readsingle(selector, params):
         chain.Add(name)
 
     chain.Process(reader)
-    selector.stat_report()
 
-    if selector.opt_stat_step:
-        import matplotlib.pyplot as plt
-        import numpy as np
+    for selector in selector_list:
+        selector.stat_report()
 
-        yval = []
-        for x in selector.xsvals:
-            yval.append(x)
-        yerr = []
-        for x in selector.xserrs:
-            yerr.append(x)
+        if selector.opt_stat_step:
+            import matplotlib.pyplot as plt
+            import numpy as np
 
-        xval = [1+i*selector.opt_stat_step for i in range(len(yval))]
+            yval = []
+            for x in selector.xsvals:
+                yval.append(x)
+            yerr = []
+            for x in selector.xserrs:
+                yerr.append(x)
 
-        fig = plt.figure()
-        axs = plt.subplot(111)
-        axs.grid(True)
-        axs.plot(xval, yval, lw=2, c='k')
-        axs.plot(xval, np.array(yval)+np.array(yerr), c='r')
-        axs.plot(xval, np.array(yval)-np.array(yerr), c='b')
-        plt.show()
+            xval = [1+i*selector.opt_stat_step for i in range(len(yval))]
+
+            fig = plt.figure()
+            axs = plt.subplot(111)
+            axs.grid(True)
+            axs.plot(xval, yval, lw=2, c='k')
+            axs.plot(xval, np.array(yval)+np.array(yerr), c='r')
+            axs.plot(xval, np.array(yval)-np.array(yerr), c='b')
+            plt.show()
+
+    print "Run time: %d seconds" % (time.time() - start_time)
 
 
 def usage():
@@ -487,14 +492,43 @@ class Params:
             sys.exit(2)
 
 
-def main(optargs=None):
+def libgetselector(optargs):
+    optargs.append('--dynamiclib')
     params = Params(optargs)
     selector = process(params)
-    if params.dynamiclib:
-        selector_list.append(selector)
-        return selector
+    return selector
+
+
+def multiplemain():
+    params_list = []
+    selector_list = []
+    with open(sys.argv[1], 'r') as f:
+        for line in f:
+            print "Command line: ", line
+            optargs = line.split()
+            params = Params(optargs)
+            selector = process(params)
+            params_list.append(params)
+            selector_list.append(selector)
+    if len(selector_list) > 0:
+        if not all(params_list[0].inputs == p.inputs for p in params_list):
+            print "Error: all command lines must have the same input files"
+            sys.exit(2)
+        readselectors(selector_list, params)
     else:
-        readsingle(selector, params)
+        print "Error: empty command file"
+        sys.exit(2)
+
+
+def main():
+    if (len(sys.argv) == 2
+        and sys.argv[1].endswith(".hammer")
+        and os.path.exists(sys.argv[1])):
+        print "Switching to jackhammer mode..."
+        return multiplemain()
+    params = Params()
+    selector = process(params)
+    readselectors([selector], params)
 
 
 if __name__ == '__main__':

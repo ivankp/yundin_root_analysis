@@ -30,9 +30,6 @@ bool RootAnalysis::Init(const std::vector<std::string>& cmdline, const NTupleEve
     for (int i = 0; i < argc; i++) {
       g_argv[i] = const_cast<char*>(cmdline[i].c_str());
     }
-    for (int i = 0; i < argc; i++) {
-      printf("%d : '%s'\n", i, g_argv[i]);
-    }
     PySys_SetArgv(argc, g_argv);
     PyRun_SimpleString("import ROOT\nimport hammer\n");
   }
@@ -42,14 +39,12 @@ bool RootAnalysis::Init(const std::vector<std::string>& cmdline, const NTupleEve
     PyList_SetItem(py_argv, i, PyString_FromString(cmdline[i].c_str()));
   }
   PyObject* py_funcargs = PyTuple_Pack(1, py_argv);
-  PyObject* py_func = PyObject_GetAttrString(PyImport_AddModule("hammer"), "main");
-  PyObject* py_selector = PyObject_CallObject(py_func, py_funcargs);
+  PyObject* py_libgetselector = PyObject_GetAttrString(PyImport_AddModule("hammer"), "libgetselector");
+  PyObject* py_selector = PyObject_CallObject(py_libgetselector, py_funcargs);
 
-  PyRun_SimpleString("hammer.selector_list[-1].SlaveBegin()\n");
+  PyObject* py_this_to_int = PyObject_GetAttrString(py_selector, "this_to_int");
+  PyObject* py_value = PyObject_CallObject(py_this_to_int, 0);
 
-  PyObject* py_Global = PyModule_GetDict(PyImport_AddModule("__main__"));
-  PyObject* py_Local = PyModule_GetDict(PyImport_AddModule("hammer"));
-  PyObject* py_value = PyRun_String("selector_list[-1].this_to_int()", Py_eval_input, py_Global, py_Local);
   SelectorCommon* current = reinterpret_cast<SelectorCommon*>(PyInt_AsLong(py_value));
   selector_list.push_back(current);
   Py_DECREF(py_value);
@@ -72,11 +67,13 @@ bool RootAnalysis::Analyse(const NTupleEvent& event)
 
 bool RootAnalysis::Finish()
 {
-  PyRun_SimpleString(
-"for selector in hammer.selector_list:\n"
-"  selector.SlaveTerminate()\n"
-"  selector.stat_report()\n");
-//   Py_Finalize();  // will break Sherpa NTuple output if uncommented
+  for (unsigned n = 0; n < selector_list.size(); n++) {
+    SelectorCommon* selector = selector_list[n];
+
+    selector->SlaveTerminate();
+    selector->stat_report();
+  }
+
   if (g_argv) {
     delete[] g_argv;
   }

@@ -144,7 +144,9 @@ void SelectorReader::SlaveTerminate()
   // have been processed. When running with PROOF SlaveTerminate() is called
   // on each slave server.
 
-  // smth call SelectorCommon::SlaveTerminate()
+  for (unsigned i = 0; i < selectors.size(); i++) {
+    selectors[i]->SlaveTerminate();
+  }
 }
 
 void SelectorReader::Terminate()

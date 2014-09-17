@@ -7,4 +7,4 @@ clean:
 	rm -f *.d *.o *.so *_ACLiC_*
 
 libroot-analysis.so: root-analysis.cpp SelectorCommon.h
-	$(CXX) -shared -fPIC $(CXXFLAGS) -o $@ $^ `python-config --includes` `python-config --libs` -lCore
+	$(CXX) -shared -fPIC $(CXXFLAGS) -o $@ $^ `python-config --includes` `python-config --libs`

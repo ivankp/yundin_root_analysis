@@ -134,6 +134,7 @@ def global_init(params):
     ROOT.gROOT.LoadMacro("SherpaAlphaS.C+")
     ROOT.gROOT.LoadMacro("FlavourKT.cpp+")
     ROOT.gROOT.LoadMacro("SelectorCommon.C+")
+    ROOT.gROOT.LoadMacro("SelectorReader.C+")
     if not params.noapplgrid:
         ROOT.gROOT.LoadMacro("appl_grid.h+")
 
@@ -221,18 +222,19 @@ def process(params):
     params.analysis_mod.initialize(params, selector)
 
     selector.opt_stat_step = params.stat
+    return selector
 
-    if params.dynamiclib:
-        selector.dynamiclib_mode = True
-        selector_list.append(selector)
-        return selector
+
+def readsingle(selector, params):
+    reader = ROOT.SelectorReader()
+    reader.addSelector(selector)
 
     # create a chain
     chain = ROOT.TChain("t3")
     for name in params.inputs:
         chain.Add(name)
 
-    chain.Process(selector)
+    chain.Process(reader)
     selector.stat_report()
 
     if selector.opt_stat_step:
@@ -487,7 +489,12 @@ class Params:
 
 def main(optargs=None):
     params = Params(optargs)
-    process(params)
+    selector = process(params)
+    if params.dynamiclib:
+        selector_list.append(selector)
+        return selector
+    else:
+        readsingle(selector, params)
 
 
 if __name__ == '__main__':

@@ -1,31 +1,25 @@
 
-// Root > T->Process("SelectorCommon.C")
-// Root > T->Process("SelectorCommon.C","some options")
-// Root > T->Process("SelectorCommon.C+")
-
-#include <TH2.h>
-#include <TStyle.h>
-
+#include <fstream>
 #ifndef NDEBUG
   #include <iostream>
 #endif
 
 #include <LHAPDF.h>
 
+#include "root-analysis.h"
+#include "SelectorReader.h"
 #include "SelectorAnalysis.h"
 #include "FlavourKT.h"
 
 #include "SelectorCommon.h"
 
+
 // --------------------------------------------------------------------------- //
 // Selector
 // --------------------------------------------------------------------------- //
 
-bool SelectorCommon::dynamiclib_mode = false;
-
-SelectorCommon::SelectorCommon(TTree* /*tree*/)
-  : fChain(0), // ROOT
-    analysis(0), analysis_mode(MODE_PLAIN),
+SelectorCommon::SelectorCommon()
+  : analysis(0), analysis_mode(MODE_PLAIN),
     stat_Q2_min(1e100), stat_Q2_max(0.),
     stat_x1_min(1e100), stat_x1_max(0.),
     stat_x2_min(1e100), stat_x2_max(0.),
@@ -74,80 +68,60 @@ SelectorCommon::~SelectorCommon()
   }
 }
 
-void SelectorCommon::Init(TTree *tree)
+void SelectorCommon::Init(const SelectorReader* reader)
 {
-  // The Init() function is called when the selector needs to initialize
-  // a new tree or chain. Typically here the branch addresses and branch
-  // pointers of the tree will be set.
-  // It is normally not necessary to make changes to the generated
-  // code, but the routine can be extended by the user if needed.
-  // Init() will be called many times when running on PROOF
-  // (once per file to be processed).
-
-  // Set branch addresses and branch pointers
-  if (!tree) return;
-  fChain = tree;
-  fChain->SetMakeClass(1);
-
-  fChain->SetBranchAddress("id", &ntuple_id, &b_id);
-  fChain->SetBranchAddress("nparticle", &ntuple_nparticle, &b_nparticle);
-  fChain->SetBranchAddress("px", ntuple_px, &b_px);
-  fChain->SetBranchAddress("py", ntuple_py, &b_py);
-  fChain->SetBranchAddress("pz", ntuple_pz, &b_pz);
-  fChain->SetBranchAddress("E", ntuple_E, &b_E);
-  fChain->SetBranchAddress("alphas", &ntuple_alphas, &b_alphas);
-  fChain->SetBranchAddress("kf", ntuple_kf, &b_kf);
-  fChain->SetBranchAddress("weight", &ntuple_weight, &b_weight);
-  fChain->SetBranchAddress("weight2", &ntuple_weight2, &b_weight2);
-  fChain->SetBranchAddress("me_wgt", &ntuple_me_wgt, &b_me_wtg);
-  fChain->SetBranchAddress("me_wgt2", &ntuple_me_wgt2, &b_me_wtg2);
-  fChain->SetBranchAddress("x1", &ntuple_x1, &b_x1);
-  fChain->SetBranchAddress("x2", &ntuple_x2, &b_x2);
-  fChain->SetBranchAddress("x1p", &ntuple_x1p, &b_x1p);
-  fChain->SetBranchAddress("x2p", &ntuple_x2p, &b_x2p);
-  fChain->SetBranchAddress("id1", &ntuple_id1, &b_id1);
-  fChain->SetBranchAddress("id2", &ntuple_id2, &b_id2);
-  fChain->SetBranchAddress("fac_scale", &ntuple_fac_scale, &b_fac_scale);
-  fChain->SetBranchAddress("ren_scale", &ntuple_ren_scale, &b_ren_scale);
-  fChain->SetBranchAddress("nuwgt", &ntuple_nuwgt, &b_nuwgt);
-  fChain->SetBranchAddress("usr_wgts", &ntuple_usr_wgts, &b_usr_wgts);
-  fChain->SetBranchAddress("alphasPower", &ntuple_alphaspower, &b_alphaspower);
-  fChain->SetBranchAddress("part", ntuple_part, &b_part);
+  input_id = &reader->ntuple_id;
+  input_nparticle = &reader->ntuple_nparticle;
+  input_px = &reader->ntuple_px[0];
+  input_py = &reader->ntuple_py[0];
+  input_pz = &reader->ntuple_pz[0];
+  input_E = &reader->ntuple_E[0];
+  input_alphas = &reader->ntuple_alphas;
+  input_kf = &reader->ntuple_kf[0];
+  input_weight = &reader->ntuple_weight;
+  input_weight2 = &reader->ntuple_weight2;
+  input_me_wgt = &reader->ntuple_me_wgt;
+  input_me_wgt2 = &reader->ntuple_me_wgt2;
+  input_x1 = &reader->ntuple_x1;
+  input_x2 = &reader->ntuple_x2;
+  input_x1p = &reader->ntuple_x1p;
+  input_x2p = &reader->ntuple_x2p;
+  input_id1 = &reader->ntuple_id1;
+  input_id2 = &reader->ntuple_id2;
+  input_fac_scale = &reader->ntuple_fac_scale;
+  input_ren_scale = &reader->ntuple_ren_scale;
+  input_nuwgt = &reader->ntuple_nuwgt;
+  input_usr_wgts = &reader->ntuple_usr_wgts[0];
+  input_alphaspower = &reader->ntuple_alphaspower;
+  input_part = &reader->ntuple_part[0];
 }
 
-Bool_t SelectorCommon::Notify()
+void SelectorCommon::Init(const RootAnalysis::NTupleEvent* event)
 {
-  // The Notify() function is called when a new file is opened. This
-  // can be either for a new TTree in a TChain or when when a new TTree
-  // is started when using PROOF. It is normally not necessary to make changes
-  // to the generated code, but the routine can be extended by the
-  // user if needed. The return value is currently not used.
-
-  if (fChain && fChain->GetCurrentFile()) {
-    std::cout << "File: " << fChain->GetCurrentFile()->GetName() << std::endl;
-  }
-
-  return kTRUE;
-}
-
-void SelectorCommon::Begin(TTree* /*tree*/)
-{
-  // The Begin() function is called at the start of the query.
-  // When running with PROOF Begin() is only called on the client.
-  // The tree argument is deprecated (on PROOF 0 is passed).
-
-//   TString option = GetOption();
-
-}
-
-void SelectorCommon::SlaveBegin(TTree* /*tree*/)
-{
-  // The SlaveBegin() function is called after the Begin() function.
-  // When running with PROOF SlaveBegin() is called on each slave server.
-  // The tree argument is deprecated (on PROOF 0 is passed).
-
-  fastjet::ClusterSequence::set_fastjet_banner_stream(0); // silence fastjet
-  TString option = GetOption();
+  input_id = &event->id;
+  input_nparticle = &event->nparticle;
+  input_px = &event->px[0];
+  input_py = &event->py[0];
+  input_pz = &event->pz[0];
+  input_E = &event->E[0];
+  input_alphas = &event->alphas;
+  input_kf = &event->kf[0];
+  input_weight = &event->weight;
+  input_weight2 = &event->weight2;
+  input_me_wgt = &event->me_wgt;
+  input_me_wgt2 = &event->me_wgt2;
+  input_x1 = &event->x1;
+  input_x2 = &event->x2;
+  input_x1p = &event->x1p;
+  input_x2p = &event->x2p;
+  input_id1 = &event->id1;
+  input_id2 = &event->id2;
+  input_fac_scale = &event->fac_scale;
+  input_ren_scale = &event->ren_scale;
+  input_nuwgt = &event->nuwgt;
+  input_usr_wgts = &event->usr_wgts[0];
+  input_alphaspower = &event->alphaspower;
+  input_part = &event->part[0];
 }
 
 //---------------------------------------------------------------------
@@ -907,34 +881,8 @@ SelectorCommon::PseudoJetVector SelectorCommon::lsinput2fjinput(const std::vecto
 }
 #endif // DISABLE_LOOPSIM
 
-Bool_t SelectorCommon::Process(Long64_t entry)
+bool SelectorCommon::Process()
 {
-  // The Process() function is called for each entry in the tree (or possibly
-  // keyed object in the case of PROOF) to be processed. The entry argument
-  // specifies which entry in the currently loaded tree is to be processed.
-  // It can be passed to either SelectorCommon::GetEntry() or TBranch::GetEntry()
-  // to read either all or the required parts of the data. When processing
-  // keyed objects with PROOF, the object is already loaded and is available
-  // via the fObject pointer.
-  //
-  // This function should contain the "body" of the analysis. It can contain
-  // simple or elaborate selection criteria, run algorithms on the data
-  // of thid and typically fill histograms.
-  //
-  // The processing can be stopped by calling Abort().
-  //
-  // Use fStatus to set the return value of TTree::Process().
-  //
-  // The return value is currently not used.
-
-  // check for Ctrl+C
-  if (gROOT->IsInterrupted()) {
-    Abort("Keyboard interrupt");
-  }
-
-  if (not dynamiclib_mode) {
-    GetEntry(entry);
-  }
   prepare_event();
 
   // set input for analysis
@@ -968,14 +916,15 @@ Bool_t SelectorCommon::Process(Long64_t entry)
       process_single_event(false);
     }
 #else // DISABLE_LOOPSIM
-    Abort("LoopSim mode disabled");
+    std::cerr << "LoopSim mode disabled\n";
+    return false;
 #endif // DISABLE_LOOPSIM
   } else {
-    Abort("Unknown mode");
+    std::cerr << "Unknown mode " << analysis_mode << "\n";
+    return false;
   }
 
-
-  return kTRUE;
+  return true;
 }
 
 void SelectorCommon::process_single_event(bool do_reweight)
@@ -1018,21 +967,17 @@ void SelectorCommon::process_single_event(bool do_reweight)
   }
 }
 
+void SelectorCommon::SlaveBegin()
+{
+  // pass
+}
+
 void SelectorCommon::SlaveTerminate()
 {
   // The SlaveTerminate() function is called after all entries or objects
-  // have been processed. When running with PROOF SlaveTerminate() is called
-  // on each slave server.
+  // have been processed.
 
   analysis->analysis_finalize();
-}
-
-void SelectorCommon::Terminate()
-{
-  // The Terminate() function is the last function to be called during
-  // a query. It always runs on the client, it can be used to present
-  // the results graphically or save the results to file.
-
 }
 
 #include "SelectorHistograms.C"

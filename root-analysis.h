@@ -1,9 +1,11 @@
+
 #include <string>
 #include <vector>
 
 namespace RootAnalysis {
+
   struct NTupleEvent {
-    long int id;
+    int id;
     int nparticle;
     float* px;
     float* py;
@@ -11,18 +13,28 @@ namespace RootAnalysis {
     float* E;
     double alphas;
     int* kf;
-    double weight, me_wgt;
-    double x1, x2, x1p, x2p;
-    int id1, id2;
-    double fac_scale, ren_scale;
+    double weight;
+    double weight2; // unused
+    double me_wgt;
+    double me_wgt2; // unused
+    double x1;
+    double x2;
+    double x1p;
+    double x2p;
+    int id1;
+    int id2;
+    double fac_scale;
+    double ren_scale;
     int nuwgt;
     double usr_wgts[18];
-    int alphaspower;
+    char alphaspower;
     char part[2];
     double trials;
   };
 
-  int Init(const std::vector<std::string>& cmdline);
-  int Analyse(const NTupleEvent& event);
-  int Finish();
+#if !defined(__MAKECINT__)
+  bool Init(const std::vector<std::string>& cmdline, const NTupleEvent* event);
+  bool Analyse(const NTupleEvent& event);
+  bool Finish();
+#endif
 }

@@ -2,16 +2,10 @@
 #ifndef SELECTOR_COMMON_H
 #define SELECTOR_COMMON_H
 
-#include <TROOT.h>
-#include <TChain.h>
-#include <TFile.h>
-#include <TSelector.h>
+#include <Rtypes.h>
 
 // Stuff
-
-#include <TRegexp.h>
 #include <fastjet/ClusterSequence.hh>
-#include <fstream>
 
 // Math
 #include <inttypes.h>
@@ -27,136 +21,82 @@ using std::sqrt;
 #include <LoopSim.hh>
 #endif // DISABLE_LOOPSIM
 
-#define MAXNPARTICLE 100
-#define MAXNUWEIGHT 32
+namespace RootAnalysis {
+class NTupleEvent;
+}
 
+class SelectorReader;
 class Analysis;
-class SelectorCommon : public TSelector
+
+class SelectorCommon
 {
   public :
-    // -----------------------------------------------------------------------
-    // ROOT stuff BEGIN         ROOT stuff BEGIN        ROOT stuff BEGIN
-    // -----------------------------------------------------------------------
-    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
-
     // Declaration of leaf types
-    Int_t           ntuple_id;
-    Int_t           ntuple_nparticle;
-    Float_t         ntuple_px[MAXNPARTICLE];   //[nparticle]
-    Float_t         ntuple_py[MAXNPARTICLE];   //[nparticle]
-    Float_t         ntuple_pz[MAXNPARTICLE];   //[nparticle]
-    Float_t         ntuple_E[MAXNPARTICLE];   //[nparticle]
-    Double_t        ntuple_alphas;
-    Int_t           ntuple_kf[MAXNPARTICLE];   //[nparticle]
-    Double_t        ntuple_weight;
-    Double_t        ntuple_weight2;
-    Double_t        ntuple_me_wgt;
-    Double_t        ntuple_me_wgt2;
-    Double_t        ntuple_x1;
-    Double_t        ntuple_x2;
-    Double_t        ntuple_x1p;
-    Double_t        ntuple_x2p;
-    Int_t           ntuple_id1;
-    Int_t           ntuple_id2;
-    Double_t        ntuple_fac_scale;
-    Double_t        ntuple_ren_scale;
-    Int_t           ntuple_nuwgt;
-    Double_t        ntuple_usr_wgts[MAXNUWEIGHT];   //[nuwgt]
-    Char_t          ntuple_alphaspower;
-    Char_t          ntuple_part[2];
+    const Int_t*          input_id;
+    const Int_t*          input_nparticle;
+    const Float_t*        input_px;   //[nparticle]
+    const Float_t*        input_py;   //[nparticle]
+    const Float_t*        input_pz;   //[nparticle]
+    const Float_t*        input_E;    //[nparticle]
+    const Double_t*       input_alphas;
+    const Int_t*          input_kf;   //[nparticle]
+    const Double_t*       input_weight;
+    const Double_t*       input_weight2;
+    const Double_t*       input_me_wgt;
+    const Double_t*       input_me_wgt2;
+    const Double_t*       input_x1;
+    const Double_t*       input_x2;
+    const Double_t*       input_x1p;
+    const Double_t*       input_x2p;
+    const Int_t*          input_id1;
+    const Int_t*          input_id2;
+    const Double_t*       input_fac_scale;
+    const Double_t*       input_ren_scale;
+    const Int_t*          input_nuwgt;
+    const Double_t*       input_usr_wgts;   //[nuwgt]
+    const Char_t*         input_alphaspower;
+    const Char_t*         input_part;
 
     // Accessor methods
-    Int_t           get_event_id() const { return ntuple_id; }
-    Int_t           get_nparticle() const { return ntuple_nparticle; }
-    const Float_t*  get_px() const { return ntuple_px; }
-    const Float_t*  get_py() const { return ntuple_py; }
-    const Float_t*  get_pz() const { return ntuple_pz; }
-    const Float_t*  get_E() const { return ntuple_E; }
-    Float_t         get_px(int i) const { return ntuple_px[i]; }
-    Float_t         get_py(int i) const { return ntuple_py[i]; }
-    Float_t         get_pz(int i) const { return ntuple_pz[i]; }
-    Float_t         get_E(int i) const { return ntuple_E[i]; }
-    Double_t        orig_alphas() const { return ntuple_alphas; }
-    const Int_t*    get_kf() const { return ntuple_kf; }
-    Int_t           get_kf(int i) const { return ntuple_kf[i]; }
-    Double_t        orig_weight() const { return ntuple_weight; }
-    Double_t        orig_weight2() const { return ntuple_weight2; }
-    Double_t        orig_me_wgt() const { return ntuple_me_wgt; }
-    Double_t        orig_me_wgt2() const { return ntuple_me_wgt2; }
-    Double_t        get_x1() const { return ntuple_x1; }
-    Double_t        get_x2() const { return ntuple_x2; }
-    Double_t        get_x1p() const { return ntuple_x1p; }
-    Double_t        get_x2p() const { return ntuple_x2p; }
-    Int_t           get_id1() const { return ntuple_id1; }
-    Int_t           get_id2() const { return ntuple_id2; }
-    Double_t        orig_fac_scale() const { return ntuple_fac_scale; }
-    Double_t        orig_ren_scale() const { return ntuple_ren_scale; }
-    Int_t           get_nuwgt() const { return ntuple_nuwgt; }
-    const Double_t* orig_usr_wgts() const { return ntuple_usr_wgts; }
-    Double_t        orig_usr_wgts(int i) const { return ntuple_usr_wgts[i]; }
-    Char_t          get_alphaspower() const { return ntuple_alphaspower; }
-    const Char_t*   get_part() const { return ntuple_part; }
-    Char_t          get_part(int i) const { return ntuple_part[i]; }
+    Int_t           get_event_id() const { return *input_id; }
+    Int_t           get_nparticle() const { return *input_nparticle; }
+    const Float_t*  get_px() const { return input_px; }
+    const Float_t*  get_py() const { return input_py; }
+    const Float_t*  get_pz() const { return input_pz; }
+    const Float_t*  get_E() const { return input_E; }
+    Float_t         get_px(int i) const { return input_px[i]; }
+    Float_t         get_py(int i) const { return input_py[i]; }
+    Float_t         get_pz(int i) const { return input_pz[i]; }
+    Float_t         get_E(int i) const { return input_E[i]; }
+    Double_t        orig_alphas() const { return *input_alphas; }
+    const Int_t*    get_kf() const { return input_kf; }
+    Int_t           get_kf(int i) const { return input_kf[i]; }
+    Double_t        orig_weight() const { return *input_weight; }
+    Double_t        orig_weight2() const { return *input_weight2; }
+    Double_t        orig_me_wgt() const { return *input_me_wgt; }
+    Double_t        orig_me_wgt2() const { return *input_me_wgt2; }
+    Double_t        get_x1() const { return *input_x1; }
+    Double_t        get_x2() const { return *input_x2; }
+    Double_t        get_x1p() const { return *input_x1p; }
+    Double_t        get_x2p() const { return *input_x2p; }
+    Int_t           get_id1() const { return *input_id1; }
+    Int_t           get_id2() const { return *input_id2; }
+    Double_t        orig_fac_scale() const { return *input_fac_scale; }
+    Double_t        orig_ren_scale() const { return *input_ren_scale; }
+    Int_t           get_nuwgt() const { return *input_nuwgt; }
+    const Double_t* orig_usr_wgts() const { return input_usr_wgts; }
+    Double_t        orig_usr_wgts(int i) const { return input_usr_wgts[i]; }
+    Int_t           get_alphaspower() const { return Int_t(*input_alphaspower); }
+    const Char_t*   get_part() const { return input_part; }
+    Char_t          get_part(int i) const { return input_part[i]; }
 
-    // List of branches
-    TBranch        *b_id;   //!
-    TBranch        *b_nparticle;   //!
-    TBranch        *b_px;   //!
-    TBranch        *b_py;   //!
-    TBranch        *b_pz;   //!
-    TBranch        *b_E;   //!
-    TBranch        *b_alphas;   //!
-    TBranch        *b_kf;   //!
-    TBranch        *b_weight;   //!
-    TBranch        *b_weight2;   //!
-    TBranch        *b_me_wtg;   //!
-    TBranch        *b_me_wtg2;   //!
-    TBranch        *b_x1;   //!
-    TBranch        *b_x2;   //!
-    TBranch        *b_x1p;   //!
-    TBranch        *b_x2p;   //!
-    TBranch        *b_id1;   //!
-    TBranch        *b_id2;   //!
-    TBranch        *b_fac_scale;   //!
-    TBranch        *b_ren_scale;   //!
-    TBranch        *b_nuwgt;   //!
-    TBranch        *b_usr_wgts;   //!
-    TBranch        *b_alphaspower;   //!
-    TBranch        *b_part;   //!
+    void Init(const SelectorReader* reader);
+    void Init(const RootAnalysis::NTupleEvent* event);
+    bool Process();
+    void SlaveBegin();
+    void SlaveTerminate();
 
-    virtual Int_t   Version() const {
-      return 2;
-    }
-    virtual void    Begin(TTree *tree);
-    virtual void    SlaveBegin(TTree *tree);
-    virtual void    Init(TTree *tree);
-    virtual Bool_t  Notify();
-    virtual Bool_t  Process(Long64_t entry);
-    virtual Int_t   GetEntry(Long64_t entry, Int_t getall = 0) {
-      return fChain ? fChain->GetTree()->GetEntry(entry, getall) : 0;
-    }
-    virtual void    SetOption(const char *option) {
-      fOption = option;
-    }
-    virtual void    SetObject(TObject *obj) {
-      fObject = obj;
-    }
-    virtual void    SetInputList(TList *input) {
-      fInput = input;
-    }
-    virtual TList  *GetOutputList() const {
-      return fOutput;
-    }
-    virtual void    SlaveTerminate();
-    virtual void    Terminate();
-
-    ClassDef(SelectorCommon, 0);
-
-    // -----------------------------------------------------------------------
-    // ROOT stuff END           ROOT stuff END          ROOT stuff END
-    // -----------------------------------------------------------------------
-
-    SelectorCommon(TTree* tree=0);
+    SelectorCommon();
     ~SelectorCommon();
 
     // analysis
@@ -341,7 +281,6 @@ class SelectorCommon : public TSelector
 
   public:
     intptr_t this_to_int() const { return reinterpret_cast<intptr_t>(this); }
-    static bool dynamiclib_mode;
 };
 
 #if defined(__MAKECINT__)

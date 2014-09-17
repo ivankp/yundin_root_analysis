@@ -862,9 +862,55 @@ SelectorCommon::PseudoJetVector SelectorCommon::get_fjinput() const
 std::vector<LSParticle> SelectorCommon::get_lsinput() const
 {
   std::vector<LSParticle> newinput;
+  int i_lep = -1;
+  int i_neu = -1;
   for (int i=0; i<get_nparticle(); i++) {
-    const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), 81 /*get_kf(i)*/);
-    newinput.push_back(vec);
+    int kf = get_kf(i);
+    if (kf == 21 or abs(kf) <= 6) {
+      kf = 81;
+      const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), kf);
+      newinput.push_back(vec);
+    } else if (abs(kf) == 11) {
+      if (i_lep >= 0) {
+        if (get_kf(i_lep) == -kf) {
+          kf = 23;
+          const LSParticle vec = LSParticle(get_px(i) + get_px(i_lep),
+                                            get_py(i) + get_py(i_lep),
+                                            get_pz(i) + get_pz(i_lep),
+                                            get_E(i) + get_E(i_lep), kf);
+          newinput.push_back(vec);
+        } else {
+          std::cout << "Error: don't know how to combine two charged leptons" << std::endl;
+          throw;
+        }
+      } else if (i_neu >= 0 and abs(get_kf(i_neu) + kf) == 1) {
+        kf = get_kf(i_neu) + kf == -1 ? 24 : -24;
+        const LSParticle vec = LSParticle(get_px(i) + get_px(i_neu),
+                                          get_py(i) + get_py(i_neu),
+                                          get_pz(i) + get_pz(i_neu),
+                                          get_E(i) + get_E(i_neu), kf);
+        newinput.push_back(vec);
+      } else {
+        i_lep = i;
+      }
+    } else if (abs(kf) == 12) {
+      if (i_neu >= 0) {
+        std::cout << "Error: don't know how to combine two neutrinos" << std::endl;
+        throw;
+      } else if (i_lep >= 0 and abs(get_kf(i_lep) + kf) == 1) {
+        kf = get_kf(i_lep) + kf == -1 ? 24 : -24;
+        const LSParticle vec = LSParticle(get_px(i) + get_px(i_lep),
+                                          get_py(i) + get_py(i_lep),
+                                          get_pz(i) + get_pz(i_lep),
+                                          get_E(i) + get_E(i_lep), kf);
+        newinput.push_back(vec);
+      } else {
+        i_neu = i;
+      }
+    } else {
+      std::cout << "Error: unknown flavour " << kf << std::endl;
+      throw;
+    }
   }
   return newinput;
 }

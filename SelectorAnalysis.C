@@ -755,8 +755,9 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
   }
 
   // vector boson mass cut
-  const fastjet::PseudoJet& vboson = input[0]+input[1];
-
+  const fastjet::PseudoJet& vboson = abs(event->get_kf(0)) == 24 or
+                                     event->get_kf(0) == 23 ? input[0]
+                                                            : input[0] + input[1];
   double vmass = vboson.m();
   if (vmass < vboson_mass_min || vmass > vboson_mass_max) {
     return false;
@@ -772,7 +773,9 @@ void VJetAnalysis::analysis_bin(SelectorCommon* event)
   const Int_t id = event->get_event_id();
   const Double_t weight = event->get_event_weight();
 
-  const fastjet::PseudoJet& vboson = input[0]+input[1];
+  const fastjet::PseudoJet& vboson = abs(event->get_kf(0)) == 24 or
+                                     event->get_kf(0) == 23 ? input[0]
+                                                            : input[0] + input[1];
   const double LLpt = vboson.pt();
   const double LLeta = vboson.eta();
 

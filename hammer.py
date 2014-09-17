@@ -231,7 +231,7 @@ def readselectors(selector_list, params):
         reader.addSelector(selector)
 
     # create a chain
-    chain = ROOT.TChain("t3")
+    chain = ROOT.TChain(params.treename)
     for name in params.inputs:
         chain.Add(name)
 
@@ -283,6 +283,7 @@ Basic options:
   -t, --topdf               To PDF set "name.LHgrid:member"
 
   --nborn=n                 Set nborn for LoopSim
+  --treename=name           Set name of ROOT tree
 
   --grids                   Specify to activate APPLgrid (for both warmup and fill)
   --warmup                  Select "warmup" mode for APPLgrid (otherwise "fill" mode)
@@ -311,7 +312,7 @@ class Params:
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix=", "cdr2fdhfix=", "pi2o12fix", "debug", "help",
                                   "stat=", "rescaler=", "qfilter=", "grids", "warmup", "nborn=",
-                                  "noapplgrid", "noloopsim", "dynamiclib"])
+                                  "noapplgrid", "noloopsim", "dynamiclib", "treename="])
         except getopt.GetoptError, err:
             print str(err)
             usage()
@@ -339,6 +340,7 @@ class Params:
         self.rescaler = 'simple'
         self.rescale_n = None
         self.nborn = None
+        self.treename = 't3'
 
         for op, oparg in opts:
             if op in ("-h", "--help"):
@@ -389,6 +391,8 @@ class Params:
                 self.qfilter = oparg
             elif op in ("--nborn"):
                 self.nborn = int(oparg)
+            elif op in ("--treename"):
+                self.treename = oparg
             elif op in ("--stat"):
                 self.stat = int(oparg)
             elif op in ("--rescaler"):

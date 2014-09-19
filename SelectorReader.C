@@ -62,8 +62,8 @@ void SelectorReader::Init(TTree *tree)
   fChain->SetBranchAddress("ren_scale", &ntuple_ren_scale, &b_ren_scale);
   fChain->SetBranchAddress("nuwgt", &ntuple_nuwgt, &b_nuwgt);
   fChain->SetBranchAddress("usr_wgts", ntuple_usr_wgts, &b_usr_wgts);
-  fChain->SetBranchAddress("alphasPower", &ntuple_alphaspower, &b_alphaspower);
   fChain->SetBranchAddress("part", ntuple_part, &b_part);
+  fChain->SetBranchAddress("alphasPower", &ntuple_alphaspower, &b_alphaspower);
 }
 
 Bool_t SelectorReader::Notify()

@@ -46,8 +46,8 @@ class SelectorReader : public TSelector
     Double_t        ntuple_ren_scale;
     Int_t           ntuple_nuwgt;
     Double_t        ntuple_usr_wgts[MAXNUWEIGHT];   //[nuwgt]
-    Short_t         ntuple_alphaspower;
     Char_t          ntuple_part[2];
+    Short_t         ntuple_alphaspower;
 
     // List of branches
     TBranch        *b_id;   //!
@@ -72,8 +72,8 @@ class SelectorReader : public TSelector
     TBranch        *b_ren_scale;   //!
     TBranch        *b_nuwgt;   //!
     TBranch        *b_usr_wgts;   //!
-    TBranch        *b_alphaspower;   //!
     TBranch        *b_part;   //!
+    TBranch        *b_alphaspower;   //!
 
     virtual Int_t   Version() const {
       return 2;

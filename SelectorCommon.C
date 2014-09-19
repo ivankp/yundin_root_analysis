@@ -92,8 +92,8 @@ void SelectorCommon::Init(const SelectorReader* reader)
   input_ren_scale = &reader->ntuple_ren_scale;
   input_nuwgt = &reader->ntuple_nuwgt;
   input_usr_wgts = &reader->ntuple_usr_wgts[0];
-  input_alphaspower = &reader->ntuple_alphaspower;
   input_part = &reader->ntuple_part[0];
+  input_alphaspower = &reader->ntuple_alphaspower;
 }
 
 void SelectorCommon::Init(const RootAnalysis::NTupleEvent* event)
@@ -120,8 +120,8 @@ void SelectorCommon::Init(const RootAnalysis::NTupleEvent* event)
   input_ren_scale = &event->ren_scale;
   input_nuwgt = &event->nuwgt;
   input_usr_wgts = &event->usr_wgts[0];
-  input_alphaspower = &event->alphaspower;
   input_part = &event->part[0];
+  input_alphaspower = &event->alphaspower;
 }
 
 //---------------------------------------------------------------------

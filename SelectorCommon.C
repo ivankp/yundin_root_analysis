@@ -394,9 +394,8 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   }
 
   for (unsigned i=0; i<input.size(); i++) {
-    const int flav = get_kf(i);
-    fastjet::PseudoJet parton = input[i];
-    FlavourKTPlugin::addFlavour(parton, flav);
+    const fastjet::PseudoJet& parton = input[i];  // input already has flavour
+    const int flav = FlavourKTPlugin::getFlavour(parton);
     if (/*onlyqcd and */abs(flav) > 6 and flav != 21) { // non-qcd stuff goes into primary system
       primary.push_back(parton);
       continue;

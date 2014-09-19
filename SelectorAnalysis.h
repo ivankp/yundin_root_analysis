@@ -243,6 +243,8 @@ class VJetAnalysis : public Analysis
     double lepton_lepton_Rsep;
     double vboson_onshell_mass;
 
+    fastjet::PseudoJet vboson;  // store vector boson momentum
+
     std::vector<Histogram*> vboson_pt;
     std::vector<Histogram*> vboson_eta;
 

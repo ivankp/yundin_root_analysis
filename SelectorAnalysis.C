@@ -1,6 +1,13 @@
 
 #include <utility>
 
+#include "FlavourKT.h"
+
+static inline int getFlavour(const fastjet::PseudoJet& vec)
+{
+  return FlavourKTPlugin::getFlavour(vec);
+}
+
 // analog of delta_R using pseudorapidity
 static double DeltaEtaPhi(const fastjet::PseudoJet& a, const fastjet::PseudoJet& b)
 {
@@ -169,7 +176,7 @@ bool Analysis::check_cuts(SelectorCommon* /*event*/)
 
   PseudoJetVector jetinput;
   for (unsigned i=0; i<input.size(); i++) {
-    int lhid = FlavourKTPlugin::getFlavour(input[i]);
+    const int lhid = getFlavour(input[i]);
     if (lhid == 21 or abs(lhid) <= 5 or lhid == 81) {
       jetinput.push_back(input[i]);
     }
@@ -272,11 +279,11 @@ bool Analysis::photonIsolation(const SelectorCommon* event, double photon_R,
                                double photon_n, double photon_eps) const
 {
   for (int i=0; i<event->get_nparticle(); i++) {
-    if (event->get_kf(i) != 22) continue;
+    if (getFlavour(input[i]) != 22) continue;
     const double Eeps = input[i].Et()*photon_eps/pow(1. - cos(photon_R), photon_n);
     std::vector<std::pair<double,double> > hadronic;
     for (int j=0; j<event->get_nparticle(); j++) {
-      if (abs(event->get_kf(j)) <= 6) {
+      if (abs(getFlavour(input[j])) <= 6) {
         const double Rij = input[i].delta_R(input[j]);
         if (Rij <= photon_R) {
           hadronic.push_back(std::make_pair(Rij, input[j].Et()));
@@ -706,19 +713,37 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
 
   // check for W/Z bosons in first two flavours
   PseudoJetVector leptons;
-  if (event->get_kf(0) == 11 || event->get_kf(0) == -11) {
+  const int flavour0 = getFlavour(input[0]);
+  const int flavour1 = getFlavour(input[1]);
+  if (flavour0 == 11 || flavour0 == -11) {
     leptons.push_back(input[0]);
   }
-  if (event->get_kf(1) == 11 || event->get_kf(1) == -11) {
+  if (flavour1 == 11 || flavour1 == -11) {
     leptons.push_back(input[1]);
   }
 
   PseudoJetVector neutrino;
-  if (event->get_kf(0) == 12 || event->get_kf(0) == -12) {
+  if (flavour0 == 12 || flavour0 == -12) {
     neutrino.push_back(input[0]);
   }
-  if (event->get_kf(1) == 12 || event->get_kf(1) == -12) {
+  if (flavour1 == 12 || flavour1 == -12) {
     neutrino.push_back(input[1]);
+  }
+  if (leptons.size() + neutrino.size() == 2) {
+    vboson = input[0] + input[1];
+  } else {
+    bool found = false;
+    for (unsigned i = 0; i < input.size(); i++) {
+      const int flav_i = getFlavour(input[i]);
+      if (flav_i == 23 || flav_i == 24) {
+        vboson = input[i];
+        found = true;
+        break;
+      }
+    }
+    if (not found) {
+      return false;
+    }
   }
 
   // missing energy/neutrino cuts
@@ -755,9 +780,6 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
   }
 
   // vector boson mass cut
-  const fastjet::PseudoJet& vboson = abs(event->get_kf(0)) == 24 or
-                                     event->get_kf(0) == 23 ? input[0]
-                                                            : input[0] + input[1];
   double vmass = vboson.m();
   if (vmass < vboson_mass_min || vmass > vboson_mass_max) {
     return false;
@@ -773,9 +795,6 @@ void VJetAnalysis::analysis_bin(SelectorCommon* event)
   const Int_t id = event->get_event_id();
   const Double_t weight = event->get_event_weight();
 
-  const fastjet::PseudoJet& vboson = abs(event->get_kf(0)) == 24 or
-                                     event->get_kf(0) == 23 ? input[0]
-                                                            : input[0] + input[1];
   const double LLpt = vboson.pt();
   const double LLeta = vboson.eta();
 
@@ -784,7 +803,6 @@ void VJetAnalysis::analysis_bin(SelectorCommon* event)
 
   fill_grid(g_vboson_pt, id, LLpt, weight, event);
   fill_grid(g_vboson_eta, id, LLeta, weight, event);
-
 }
 
 void VJetAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
@@ -845,7 +863,7 @@ bool PhotonJetAnalysis::check_cuts(SelectorCommon* event)
     return false;
   }
 
-  assert(event->get_kf(0) == 22 and event->get_kf(1) != 22);  // safe-guard against di-photon
+  assert(getFlavour(input[0]) == 22 and getFlavour(input[1]) != 22);  // safe-guard against di-photon
 
   const fastjet::PseudoJet& photon = input[0];
 
@@ -992,7 +1010,7 @@ bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
     return false;
   }
 
-  assert(event->get_kf(0) == 22 and event->get_kf(1) == 22);
+  assert(getFlavour(input[0]) == 22 and getFlavour(input[1]) == 22);
 
   double pt1 = input[0].pt();
   double pt2 = input[1].pt();
@@ -1136,7 +1154,7 @@ bool DiPhotonAnalysisBH::check_cuts(SelectorCommon* event)
     return false;
   }
 
-  assert(event->get_kf(0) == 22 and event->get_kf(1) == 22);
+  assert(getFlavour(input[0]) == 22 and getFlavour(input[1]) == 22);
 
   double pt1 = input[0].pt();
   double pt2 = input[1].pt();

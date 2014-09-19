@@ -27,7 +27,7 @@ namespace RootAnalysis {
     double ren_scale;
     int nuwgt;
     double usr_wgts[18];
-    char alphaspower;
+    short alphaspower;
     char part[2];
     double trials;
   };

@@ -54,7 +54,7 @@ class SelectorCommon
     const Double_t*       input_ren_scale;
     const Int_t*          input_nuwgt;
     const Double_t*       input_usr_wgts;   //[nuwgt]
-    const Char_t*         input_alphaspower;
+    const Short_t*        input_alphaspower;
     const Char_t*         input_part;
 
     // Accessor methods

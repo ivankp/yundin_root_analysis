@@ -46,7 +46,7 @@ class SelectorReader : public TSelector
     Double_t        ntuple_ren_scale;
     Int_t           ntuple_nuwgt;
     Double_t        ntuple_usr_wgts[MAXNUWEIGHT];   //[nuwgt]
-    Char_t          ntuple_alphaspower;
+    Short_t         ntuple_alphaspower;
     Char_t          ntuple_part[2];
 
     // List of branches

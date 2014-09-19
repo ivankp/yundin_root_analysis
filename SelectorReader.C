@@ -6,6 +6,8 @@
   #include <iostream>
 #endif
 
+#include <fastjet/ClusterSequence.hh>
+
 #include "SelectorCommon.h"
 #include "SelectorReader.h"
 

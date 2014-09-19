@@ -8,7 +8,6 @@
 #include <TSelector.h>
 
 // Stuff
-#include <fastjet/ClusterSequence.hh>
 
 #define MAXNPARTICLE 100
 #define MAXNUWEIGHT 32

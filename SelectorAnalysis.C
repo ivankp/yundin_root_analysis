@@ -194,9 +194,13 @@ bool Analysis::check_cuts(SelectorCommon* /*event*/)
   return jets.size() >= jet_number;
 }
 
+#ifdef DISABLE_APPLGRID
+void Analysis::fill_grid(Grid* /*grid*/, int /*nextevt*/, double /*x*/, double /*w*/, SelectorCommon* /*event*/)
+{
+}
+#else // ! DISABLE_APPLGRID
 void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event)
 {
-#ifndef DISABLE_APPLGRID
   static const int lhaids[] = {5,-5,4,-4,3,-3,2,-2,1,-1};
 
   if (grid) {
@@ -271,8 +275,8 @@ void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCo
                  x, event->coll_weights[4+3], 0, order);
     }
   }
-#endif // DISABLE_APPLGRID
 }
+#endif // DISABLE_APPLGRID
 
 
 bool Analysis::photonIsolation(const SelectorCommon* event, double photon_R,

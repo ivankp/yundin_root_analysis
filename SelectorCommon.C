@@ -954,12 +954,15 @@ bool SelectorCommon::Process()
 
     LoopSim loopsim = LoopSim(get_event_order(), iloops, lsevent, opt_loopsim_R, opt_loopsim_nborn);
 
+    const int orig_trials = event_trials;
     while (loopsim.there_is_a_next_event()) {
       const Event& newlsevent = loopsim.extract_next_event();
       analysis->set_input(lsinput2fjinput(newlsevent.particles));
       event_weight = newlsevent.weight;
       process_single_event(false);
+      event_trials = 0;
     }
+    event_trials = orig_trials;
 #else // DISABLE_LOOPSIM
     std::cerr << "LoopSim mode disabled\n";
     return false;

@@ -218,6 +218,7 @@ class SelectorCommon
     // LoopSim parameters
     double opt_loopsim_R;
     int opt_loopsim_nborn;
+    int opt_loopsim_nmax;  // used by LoopSim for RS events
 
     // qfilter
     int opt_filter_inq;

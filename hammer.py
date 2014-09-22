@@ -145,6 +145,8 @@ def process(params):
         selector.opt_born_alphaspower = params.power
     if params.nborn is not None:
         selector.opt_loopsim_nborn = params.nborn
+    if params.maxparticles is not None:
+        selector.opt_loopsim_nmax = params.maxparticles
 
     if params.qfilter:
         selector.opt_filter_inq = params.qfilter[0]
@@ -283,6 +285,7 @@ Basic options:
   -t, --topdf               To PDF set "name.LHgrid:member"
 
   --nborn=n                 Set nborn for LoopSim
+  --maxparticles=n          Set maxparticles for LoopSim (needed for RS)
   --treename=name           Set name of ROOT tree
 
   --grids                   Specify to activate APPLgrid (for both warmup and fill)
@@ -311,7 +314,7 @@ class Params:
             opts, args = getopt.getopt(sys.argv[1:], "a:n:s:p:o:r:f:t:h",
                                  ["analysis=", "njet=", "scale=", "power=", "output=", "runname=",
                                   "frompdf=", "topdf=", "beta0fix=", "cdr2fdhfix=", "pi2o12fix", "debug", "help",
-                                  "stat=", "rescaler=", "qfilter=", "grids", "warmup", "nborn=",
+                                  "stat=", "rescaler=", "qfilter=", "grids", "warmup", "nborn=", "maxparticles=",
                                   "noapplgrid", "noloopsim", "dynamiclib", "treename="])
         except getopt.GetoptError, err:
             print str(err)
@@ -340,6 +343,7 @@ class Params:
         self.rescaler = 'simple'
         self.rescale_n = None
         self.nborn = None
+        self.maxparticles = None
         self.treename = 't3'
 
         for op, oparg in opts:
@@ -391,6 +395,8 @@ class Params:
                 self.qfilter = oparg
             elif op in ("--nborn"):
                 self.nborn = int(oparg)
+            elif op in ("--maxparticles"):
+                self.maxparticles = int(oparg)
             elif op in ("--treename"):
                 self.treename = oparg
             elif op in ("--stat"):

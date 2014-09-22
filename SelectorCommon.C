@@ -55,8 +55,9 @@ SelectorCommon::SelectorCommon()
   opt_born_alphaspower = -1;
 
   // used by LoopSim
-  opt_loopsim_nborn = 0.;
-  opt_loopsim_R = 1.0;
+  opt_loopsim_R = 1.;
+  opt_loopsim_nborn = 0;
+  opt_loopsim_nmax = 0;
 }
 
 
@@ -946,10 +947,18 @@ bool SelectorCommon::Process()
 
     int iloops = int(get_part(0) == 'V' or get_part(0) == 'I');
 
-    static int max_particle = get_nparticle();
     if (get_part(0) == 'R') {
-      max_particle = std::max(max_particle, get_nparticle());
-      iloops = max_particle - get_nparticle();
+      if (opt_loopsim_nmax < get_nparticle()) {
+        std::cerr << "Error: set --maxparticles= seems too small: "
+                  << opt_loopsim_nmax << " < " << get_nparticle() << std::endl;
+        return false;
+      }
+      if (opt_loopsim_nmax - get_nparticle() > 1) {
+        std::cerr << "Error: --maxparticles= seems too large: "
+                  << opt_loopsim_nmax << " >> " << get_nparticle() << std::endl;
+        return false;
+      }
+      iloops = opt_loopsim_nmax - get_nparticle();
     }
 
     LoopSim loopsim = LoopSim(get_event_order(), iloops, lsevent, opt_loopsim_R, opt_loopsim_nborn);

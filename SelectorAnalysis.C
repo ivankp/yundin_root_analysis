@@ -177,7 +177,8 @@ bool Analysis::check_cuts(SelectorCommon* /*event*/)
   PseudoJetVector jetinput;
   for (unsigned i=0; i<input.size(); i++) {
     const int lhid = getFlavour(input[i]);
-    if (lhid == 21 or abs(lhid) <= 5 or lhid == 81) {
+    // gluons, light quarks, everything above 80
+    if (lhid == 21 or abs(lhid) <= 5 or abs(lhid) >= 81) {
       jetinput.push_back(input[i]);
     }
   }

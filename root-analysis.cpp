@@ -54,12 +54,13 @@ bool RootAnalysis::Init(const std::vector<std::string>& cmdline, const NTupleEve
   return true;
 }
 
-bool RootAnalysis::Analyse(const NTupleEvent& event)
+bool RootAnalysis::Analyse(const NTupleEvent* event)
 {
   for (unsigned n = 0; n < selector_list.size(); n++) {
     SelectorCommon* selector = selector_list[n];
 
-    selector->event_trials = event.trials;
+    selector->Init(event);
+    selector->event_trials = event->trials;
     selector->Process();
   }
   return true;

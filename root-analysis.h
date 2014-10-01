@@ -34,7 +34,7 @@ namespace RootAnalysis {
 
 #if !defined(__MAKECINT__)
   bool Init(const std::vector<std::string>& cmdline, const NTupleEvent* event);
-  bool Analyse(const NTupleEvent& event);
+  bool Analyse(const NTupleEvent* event);
   bool Finish();
 #endif
 }

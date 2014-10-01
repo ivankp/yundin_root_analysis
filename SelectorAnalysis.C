@@ -326,9 +326,11 @@ void Analysis::analysis_bin(SelectorCommon* event)
   bin_histvec(scale_nowgt, id, scale, Double_t(1.));
 
   double jetht = 0.;
-  for (unsigned i=0; i<jets.size() and i<jet_pt_n.size(); i++) {
+  for (unsigned i=0; i<jets.size(); i++) {
     const double jetpt = jets[i].pt();
     jetht += jetpt;
+
+    if (i >= jet_pt_n.size()) continue;
     const double jeteta = jets[i].eta();
     bin_histvec(jet_pt_n[i], id, jetpt, weight);
     bin_histvec(jet_eta_n[i], id, jeteta, weight);

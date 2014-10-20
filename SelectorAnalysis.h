@@ -18,9 +18,9 @@ class Analysis
     virtual ~Analysis();
 
     void set_input(PseudoJetVector newinput);
-    virtual bool check_cuts(SelectorCommon* event);
-    virtual void analysis_bin(SelectorCommon* event);
-    virtual void analysis_finalize();
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
+    virtual void analysis_finalize(const SelectorCommon* event);
 
     PseudoJetVector input;
     PseudoJetVector jets;
@@ -80,8 +80,9 @@ class Analysis
                                    bool dryrun);
     virtual void output_grids();
     virtual void clear();
+    virtual void finalize_stat(std::ostream& stream, const SelectorCommon* event);
 
-    void fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event);
+    void fill_grid(Grid* grid, int nextevt, double x, double w, const SelectorCommon* event);
 
     bool photonIsolation(const SelectorCommon* event, double photon_R,
                          double photon_n, double photon_eps) const;
@@ -94,8 +95,8 @@ class JetAnalysis : public Analysis
 
     JetAnalysis();
 
-    virtual bool check_cuts(SelectorCommon* event);
-    virtual void analysis_bin(SelectorCommon* event);
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
 
     double jet_pt1min;
     double jet_pt2min;
@@ -120,8 +121,8 @@ class Jet3Analysis : public JetAnalysis
 
     Jet3Analysis();
 
-    virtual bool check_cuts(SelectorCommon* event);
-    virtual void analysis_bin(SelectorCommon* event);
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
 
     double jet_eta1max, jet_eta2max, jet_eta2min;
     double jet_jet_DR23min, jet_jet_DR23max, jet_jet_M12min;
@@ -148,8 +149,8 @@ class FourJetMPIAnalysis : public JetAnalysis
     double mpivars_d12_bin_low;
     double mpivars_d12_bin_high;
 
-    virtual bool check_cuts(SelectorCommon* event);
-    virtual void analysis_bin(SelectorCommon* event);
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
 
     std::vector<LinearHistogram2D*> jets_d12_d34;
 
@@ -168,8 +169,8 @@ class JetMAnalysis : public JetAnalysis
 
     JetMAnalysis();
 
-    virtual bool check_cuts(SelectorCommon* event);
-    virtual void analysis_bin(SelectorCommon* event);
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
 
     double ystar_min;
     double ystar_max;
@@ -192,8 +193,8 @@ class PhotonJetAnalysis : public Analysis
 
     PhotonJetAnalysis();
 
-    virtual bool check_cuts(SelectorCommon* event);
-    virtual void analysis_bin(SelectorCommon* event);
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
 
     double jet_pt1min;  // extra cut on leading jet-pt
     double photon_R;
@@ -229,8 +230,8 @@ class VJetAnalysis : public Analysis
 
     VJetAnalysis();
 
-    virtual bool check_cuts(SelectorCommon* event);
-    virtual void analysis_bin(SelectorCommon* event);
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
 
     double lepton_ptmin;
     double lepton_etamax;
@@ -267,8 +268,8 @@ class DiPhotonAnalysis : public Analysis
 
     DiPhotonAnalysis();
 
-    virtual bool check_cuts(SelectorCommon* event);
-    virtual void analysis_bin(SelectorCommon* event);
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
 
     double jet_pt1min;  // extra cut on leading jet-pt
 
@@ -312,7 +313,7 @@ class DiPhotonAnalysisBH : public DiPhotonAnalysis
   public:
     static DiPhotonAnalysisBH* create() { return new DiPhotonAnalysisBH(); }
 
-    virtual bool check_cuts(SelectorCommon* event);
+    virtual bool check_cuts(const SelectorCommon* event);
 };
 
 #if defined(__MAKECINT__)

@@ -23,6 +23,7 @@ SelectorCommon::SelectorCommon()
     stat_Q2_min(1e100), stat_Q2_max(0.),
     stat_x1_min(1e100), stat_x1_max(0.),
     stat_x2_min(1e100), stat_x2_max(0.),
+    event_prev_id(-1), event_groups(0),
     event_trials(1)
 {
   // no rescaler by default
@@ -642,6 +643,11 @@ void SelectorCommon::prepare_event()
       std::cout << "Check your opt_born_alphaspower = " << opt_born_alphaspower
                 << " != " << get_alphaspower() - event_order << " (" << get_event_id() << ")\n";
   }
+
+  if (event_prev_id != get_event_id()) {
+    event_prev_id = get_event_id();
+    event_groups++;
+  }
 }
 
 void SelectorCommon::reweight_pdfcheck()
@@ -1034,7 +1040,7 @@ void SelectorCommon::SlaveTerminate()
   // The SlaveTerminate() function is called after all entries or objects
   // have been processed.
 
-  analysis->analysis_finalize();
+  analysis->analysis_finalize(this);
 }
 
 #include "SelectorHistograms.C"

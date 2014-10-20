@@ -256,6 +256,10 @@ class SelectorCommon
     double stat_x1_min, stat_x1_max;
     double stat_x2_min, stat_x2_max;
 
+    // counting events
+    Int_t event_prev_id;
+    long event_groups;
+
     // eventoscope
     int opt_stat_step;
     double xsval_cur, xserr_cur;

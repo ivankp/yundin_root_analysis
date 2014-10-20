@@ -170,7 +170,7 @@ void Analysis::set_input(PseudoJetVector newinput)
   input.swap(newinput);
 }
 
-bool Analysis::check_cuts(SelectorCommon* /*event*/)
+bool Analysis::check_cuts(const SelectorCommon* /*event*/)
 {
   jets.clear();
 
@@ -196,7 +196,7 @@ bool Analysis::check_cuts(SelectorCommon* /*event*/)
 }
 
 #ifdef DISABLE_APPLGRID
-void Analysis::fill_grid(Grid* /*grid*/, int /*nextevt*/, double /*x*/, double /*w*/, SelectorCommon* /*event*/)
+void Analysis::fill_grid(Grid* /*grid*/, int /*nextevt*/, double /*x*/, double /*w*/, const SelectorCommon* /*event*/)
 {
 }
 #else // ! DISABLE_APPLGRID
@@ -308,7 +308,7 @@ bool Analysis::photonIsolation(const SelectorCommon* event, double photon_R,
 }
 
 
-void Analysis::analysis_bin(SelectorCommon* event)
+void Analysis::analysis_bin(const SelectorCommon* event)
 {
   const Int_t id = event->get_event_id();
   const Double_t weight = event->get_event_weight();
@@ -340,11 +340,10 @@ void Analysis::analysis_bin(SelectorCommon* event)
   bin_histvec(jet_ht, id, jetht, weight);
 }
 
-void Analysis::analysis_finalize()
+void Analysis::analysis_finalize(const SelectorCommon* event)
 {
-  std::cout << "Finalize " << long(call_count) << " events"
-            << " (binned " << long(event_binned) << ")"
-            << " [trials " << long(event_count) << "]\n";
+  finalize_stat(std::cout, event);
+
   std::set<TString>::iterator it;
   std::ofstream null;
   output_histograms(*it, null, true); // dryrun to get outputfiles
@@ -356,9 +355,20 @@ void Analysis::analysis_finalize()
 
     output_histograms(*it, outfile, false);
 
+    finalize_stat(outfile << "### ", event);
     outfile.close();
   }
   output_grids();
+}
+
+void Analysis::finalize_stat(std::ostream& stream, const SelectorCommon* event)
+{
+  stream << "Finalize: "
+         << "groups " << event->event_groups
+         << ", events " << long(call_count)
+         << " (binned " << long(event_binned) << ")"
+         << " [trials " << long(event_count) << "]"
+         << std::endl;
 }
 
 void Analysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
@@ -409,7 +419,7 @@ void JetAnalysis::clear()
   clear_histvec(jet_pt12ave);
 }
 
-bool JetAnalysis::check_cuts(SelectorCommon* event)
+bool JetAnalysis::check_cuts(const SelectorCommon* event)
 {
   if (not Analysis::check_cuts(event)) {
     return false;
@@ -433,7 +443,7 @@ bool JetAnalysis::check_cuts(SelectorCommon* event)
   return true;
 }
 
-void JetAnalysis::analysis_bin(SelectorCommon* event)
+void JetAnalysis::analysis_bin(const SelectorCommon* event)
 {
   const Int_t id = event->get_event_id();
   const Double_t weight = event->get_event_weight();
@@ -470,7 +480,7 @@ void Jet3Analysis::clear()
   clear_histvec(jet_jet_beta23);
 }
 
-bool Jet3Analysis::check_cuts(SelectorCommon* event)
+bool Jet3Analysis::check_cuts(const SelectorCommon* event)
 {
   if (not JetAnalysis::check_cuts(event)) {
     return false;
@@ -497,7 +507,7 @@ bool Jet3Analysis::check_cuts(SelectorCommon* event)
   return true;
 }
 
-void Jet3Analysis::analysis_bin(SelectorCommon* event)
+void Jet3Analysis::analysis_bin(const SelectorCommon* event)
 {
   JetAnalysis::analysis_bin(event);
 
@@ -556,7 +566,7 @@ void JetMAnalysis::clear()
   clear_histvec(jet_mass_jjj);
 }
 
-bool JetMAnalysis::check_cuts(SelectorCommon* event)
+bool JetMAnalysis::check_cuts(const SelectorCommon* event)
 {
   if (not BaseClass::check_cuts(event)) {
     return false;
@@ -575,7 +585,7 @@ bool JetMAnalysis::check_cuts(SelectorCommon* event)
   return true;
 }
 
-void JetMAnalysis::analysis_bin(SelectorCommon* event)
+void JetMAnalysis::analysis_bin(const SelectorCommon* event)
 {
   BaseClass::analysis_bin(event);
 
@@ -623,7 +633,7 @@ void FourJetMPIAnalysis::clear()
   clear_histvec(jets_d12_d34);
 }
 
-bool FourJetMPIAnalysis::check_cuts(SelectorCommon* event)
+bool FourJetMPIAnalysis::check_cuts(const SelectorCommon* event)
 {
   if (not JetAnalysis::check_cuts(event)) {
     return false;
@@ -632,7 +642,7 @@ bool FourJetMPIAnalysis::check_cuts(SelectorCommon* event)
   return true;
 }
 
-void FourJetMPIAnalysis::analysis_bin(SelectorCommon* event)
+void FourJetMPIAnalysis::analysis_bin(const SelectorCommon* event)
 {
   JetAnalysis::analysis_bin(event);
 
@@ -712,7 +722,7 @@ void VJetAnalysis::reset()
   Analysis::reset();
 }
 
-bool VJetAnalysis::check_cuts(SelectorCommon* event)
+bool VJetAnalysis::check_cuts(const SelectorCommon* event)
 {
   if (not Analysis::check_cuts(event)) {
     return false;
@@ -795,7 +805,7 @@ bool VJetAnalysis::check_cuts(SelectorCommon* event)
   return true;
 }
 
-void VJetAnalysis::analysis_bin(SelectorCommon* event)
+void VJetAnalysis::analysis_bin(const SelectorCommon* event)
 {
   Analysis::analysis_bin(event);
 
@@ -864,7 +874,7 @@ void PhotonJetAnalysis::reset()
   Analysis::reset();
 }
 
-bool PhotonJetAnalysis::check_cuts(SelectorCommon* event)
+bool PhotonJetAnalysis::check_cuts(const SelectorCommon* event)
 {
   if (not Analysis::check_cuts(event)) {
     return false;
@@ -912,7 +922,7 @@ bool PhotonJetAnalysis::check_cuts(SelectorCommon* event)
   return jets[0].pt() >= jet_pt1min;
 }
 
-void PhotonJetAnalysis::analysis_bin(SelectorCommon* event)
+void PhotonJetAnalysis::analysis_bin(const SelectorCommon* event)
 {
   Analysis::analysis_bin(event);
 
@@ -1011,7 +1021,7 @@ void DiPhotonAnalysis::reset()
   Analysis::reset();
 }
 
-bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
+bool DiPhotonAnalysis::check_cuts(const SelectorCommon* event)
 {
   if (not Analysis::check_cuts(event)) {
     return false;
@@ -1070,7 +1080,7 @@ bool DiPhotonAnalysis::check_cuts(SelectorCommon* event)
   return jets[0].pt() >= jet_pt1min;
 }
 
-void DiPhotonAnalysis::analysis_bin(SelectorCommon* event)
+void DiPhotonAnalysis::analysis_bin(const SelectorCommon* event)
 {
   Analysis::analysis_bin(event);
 
@@ -1155,7 +1165,7 @@ void DiPhotonAnalysis::output_grids()
   }
 }
 
-bool DiPhotonAnalysisBH::check_cuts(SelectorCommon* event)
+bool DiPhotonAnalysisBH::check_cuts(const SelectorCommon* event)
 {
   if (not Analysis::check_cuts(event)) {
     return false;

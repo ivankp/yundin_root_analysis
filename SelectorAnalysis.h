@@ -27,6 +27,7 @@ class Analysis
 
     void setJetNumber(const unsigned n);
     void setAntiKt(double R);
+    void setKt(double R);
 
     fastjet::JetDefinition jet_definition;
     unsigned jet_number;

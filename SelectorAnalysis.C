@@ -145,6 +145,11 @@ void Analysis::setAntiKt(double R)
   jet_definition = fastjet::JetDefinition(fastjet::antikt_algorithm, R);
 }
 
+void Analysis::setKt(double R)
+{
+  jet_definition = fastjet::JetDefinition(fastjet::kt_algorithm, R);
+}
+
 void Analysis::set_input(PseudoJetVector newinput)
 {
   input.clear();

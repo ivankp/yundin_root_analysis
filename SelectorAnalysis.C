@@ -24,7 +24,7 @@ static double DeltaEtaPhi(const fastjet::PseudoJet& a, const fastjet::PseudoJet&
 // --------------------------------------------------------------------------- //
 
 Analysis::Analysis()
-  : jet_number(0), jet_ptmin(0), jet_etamax(100),
+  : jet_number(0), jet_ptmin(0), jet_etamax(0), jet_ymax(0),
     jet_exclusive(0), jet_inclusive(0), g_jet_inclusive(0)
 {
 }
@@ -57,6 +57,7 @@ void Analysis::clear()
 
   clear_histvec(jet_pt_n);
   clear_histvec(jet_eta_n);
+  clear_histvec(jet_y_n);
 
 }
 
@@ -73,6 +74,7 @@ void Analysis::reset()
 
   jet_pt_n.resize(jet_number+1);
   jet_eta_n.resize(jet_number+1);
+  jet_y_n.resize(jet_number+1);
 
   g_jet_pt_n.resize(jet_number+1);
   g_jet_eta_n.resize(jet_number+1);
@@ -165,7 +167,8 @@ bool Analysis::check_cuts(const SelectorCommon* /*event*/)
     fastjet::ClusterSequence cs(jetinput, jet_definition);
     PseudoJetVector alljets = fastjet::sorted_by_pt(cs.inclusive_jets(jet_ptmin));
     for (unsigned i=0; i<alljets.size(); i++) {
-      if (abs(alljets[i].eta()) <= jet_etamax) {
+      if ((jet_etamax == 0. or abs(alljets[i].eta()) <= jet_etamax) and
+          (jet_ymax == 0. or abs(alljets[i].rap()) <= jet_ymax)) {
         jets.push_back(alljets[i]);
       }
     }
@@ -311,8 +314,10 @@ void Analysis::analysis_bin(const SelectorCommon* event)
 
     if (i >= jet_pt_n.size()) continue;
     const double jeteta = jets[i].eta();
+    const double jety = jets[i].rapidity();
     bin_histvec(jet_pt_n[i], id, jetpt, weight);
     bin_histvec(jet_eta_n[i], id, jeteta, weight);
+    bin_histvec(jet_y_n[i], id, jety, weight);
     fill_grid(g_jet_pt_n[i], id, jetpt, weight, event);
     fill_grid(g_jet_eta_n[i], id, jeteta, weight, event);
   }
@@ -362,6 +367,7 @@ void Analysis::output_histograms(const TString& filename, std::ofstream& stream,
   for (unsigned i=0; i<=jet_number; i++) {
     output_histvec(jet_pt_n[i], filename, stream, dryrun);
     output_histvec(jet_eta_n[i], filename, stream, dryrun);
+    output_histvec(jet_y_n[i], filename, stream, dryrun);
   }
 }
 

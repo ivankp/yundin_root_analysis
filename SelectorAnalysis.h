@@ -32,6 +32,7 @@ class Analysis
     unsigned jet_number;
     double jet_ptmin;
     double jet_etamax;
+    double jet_ymax;
 
     double call_count;
     double event_count;
@@ -44,6 +45,7 @@ class Analysis
     std::vector<HistogramBase*> jet_ht;
     std::vector<std::vector<HistogramBase*> > jet_pt_n;
     std::vector<std::vector<HistogramBase*> > jet_eta_n;
+    std::vector<std::vector<HistogramBase*> > jet_y_n;
 
     Grid* g_jet_inclusive;
     std::vector<Grid*> g_jet_pt_n;

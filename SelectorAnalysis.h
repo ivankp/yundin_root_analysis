@@ -11,7 +11,7 @@ class Analysis
 {
   public:
     typedef std::vector<fastjet::PseudoJet> PseudoJetVector;
-    typedef std::vector<std::vector<Histogram*> > HistogramVector;
+    typedef std::vector<std::vector<HistogramBase*> > HistogramVector;
     static Analysis* create() { return new Analysis(); }
 
     Analysis();
@@ -39,11 +39,11 @@ class Analysis
 
     LinearHistogram* jet_exclusive;
     LinearHistogram* jet_inclusive;
-    std::vector<Histogram*> scale_wgt;
-    std::vector<Histogram*> scale_nowgt;
-    std::vector<Histogram*> jet_ht;
-    std::vector<std::vector<Histogram*> > jet_pt_n;
-    std::vector<std::vector<Histogram*> > jet_eta_n;
+    std::vector<HistogramBase*> scale_wgt;
+    std::vector<HistogramBase*> scale_nowgt;
+    std::vector<HistogramBase*> jet_ht;
+    std::vector<std::vector<HistogramBase*> > jet_pt_n;
+    std::vector<std::vector<HistogramBase*> > jet_eta_n;
 
     Grid* g_jet_inclusive;
     std::vector<Grid*> g_jet_pt_n;
@@ -61,19 +61,16 @@ class Analysis
 
     void append_output_filename(const TString& name);
 
-    void clear_histvec(std::vector<Histogram*>& histvec);
-    void bin_histvec(const std::vector<Histogram*>& histvec,
-                     int nextevt, double x, double w);
-    void output_histvec(const std::vector<Histogram*>& histvec,
+    void clear_histvec(std::vector<HistogramBase*>& histvec);
+    void clear_histvec(std::vector<std::vector<HistogramBase*> >& histvecvec);
+    void output_histvec(const std::vector<HistogramBase*>& histvec,
                         const TString& filename, std::ofstream& stream,
                         bool dryrun);
 
-    void clear_histvec(std::vector<LinearHistogram2D*>& histvec);
-    void bin_histvec(const std::vector<LinearHistogram2D*>& histvec,
+    void bin_histvec(const std::vector<HistogramBase*>& histvec,
+                     int nextevt, double x, double w);
+    void bin_histvec(const std::vector<HistogramBase*>& histvec,
                      int nextevt, double x, double y, double w);
-    void output_histvec(const std::vector<LinearHistogram2D*>& histvec,
-                        const TString& filename, std::ofstream& stream,
-                        bool dryrun);
 
 
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
@@ -104,7 +101,7 @@ class JetAnalysis : public Analysis
 
     double jet_ht2min;
 
-    std::vector<Histogram*> jet_pt12ave;
+    std::vector<HistogramBase*> jet_pt12ave;
 
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
@@ -127,9 +124,9 @@ class Jet3Analysis : public JetAnalysis
     double jet_eta1max, jet_eta2max, jet_eta2min;
     double jet_jet_DR23min, jet_jet_DR23max, jet_jet_M12min;
 
-    std::vector<Histogram*> jet_jet_eta23;
-    std::vector<Histogram*> jet_jet_phi23;
-    std::vector<Histogram*> jet_jet_beta23;
+    std::vector<HistogramBase*> jet_jet_eta23;
+    std::vector<HistogramBase*> jet_jet_phi23;
+    std::vector<HistogramBase*> jet_jet_beta23;
 
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
@@ -152,7 +149,7 @@ class FourJetMPIAnalysis : public JetAnalysis
     virtual bool check_cuts(const SelectorCommon* event);
     virtual void analysis_bin(const SelectorCommon* event);
 
-    std::vector<LinearHistogram2D*> jets_d12_d34;
+    std::vector<HistogramBase*> jets_d12_d34;
 
   protected:
     virtual void output_histograms(const TString& filename, std::ofstream& stream,
@@ -175,7 +172,7 @@ class JetMAnalysis : public JetAnalysis
     double ystar_min;
     double ystar_max;
 
-    std::vector<Histogram*> jet_mass_jjj;
+    std::vector<HistogramBase*> jet_mass_jjj;
 
     Grid* g_jet_mass_jjj;
 
@@ -204,10 +201,10 @@ class PhotonJetAnalysis : public Analysis
     double photon_etamax;
     double photon_jet_Rsep;
 
-    std::vector<Histogram*> photon_pt;
-    std::vector<Histogram*> photon_eta;
-    std::vector<Histogram*> photon_jet_R11;
-    std::vector<Histogram*> jet_jet_phi12;
+    std::vector<HistogramBase*> photon_pt;
+    std::vector<HistogramBase*> photon_eta;
+    std::vector<HistogramBase*> photon_jet_R11;
+    std::vector<HistogramBase*> jet_jet_phi12;
 
     Grid* g_photon_pt;
     Grid* g_photon_eta;
@@ -246,8 +243,8 @@ class VJetAnalysis : public Analysis
 
     fastjet::PseudoJet vboson;  // store vector boson momentum
 
-    std::vector<Histogram*> vboson_pt;
-    std::vector<Histogram*> vboson_eta;
+    std::vector<HistogramBase*> vboson_pt;
+    std::vector<HistogramBase*> vboson_eta;
 
     Grid* g_vboson_pt;
     Grid* g_vboson_eta;
@@ -283,15 +280,15 @@ class DiPhotonAnalysis : public Analysis
     double photon_photon_Rsep;
     double photon_jet_Rsep;
 
-    std::vector<Histogram*> photon_mass;
-    std::vector<Histogram*> photon_pt;
-    std::vector<Histogram*> photon_eta;
-    std::vector<Histogram*> photon_jet_R11;
-    std::vector<Histogram*> jet_jet_phi12;
-    std::vector<Histogram*> jet_jet_mass;
-    std::vector<Histogram*> jet_jet_eta12;
-    std::vector<Histogram*> diphoton_dijet_phi;
-    std::vector<Histogram*> diphoton_dijet_ystar;
+    std::vector<HistogramBase*> photon_mass;
+    std::vector<HistogramBase*> photon_pt;
+    std::vector<HistogramBase*> photon_eta;
+    std::vector<HistogramBase*> photon_jet_R11;
+    std::vector<HistogramBase*> jet_jet_phi12;
+    std::vector<HistogramBase*> jet_jet_mass;
+    std::vector<HistogramBase*> jet_jet_eta12;
+    std::vector<HistogramBase*> diphoton_dijet_phi;
+    std::vector<HistogramBase*> diphoton_dijet_ystar;
 
     Grid* g_photon_mass;
     Grid* g_photon_pt;
@@ -326,9 +323,8 @@ class DiPhotonAnalysisBH : public DiPhotonAnalysis
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class DiPhotonAnalysisBH;
-#pragma link C++ class std::vector<Histogram*>;
-#pragma link C++ class std::vector<LinearHistogram2D*>;
-#pragma link C++ class std::vector<std::vector<Histogram*> >;
+#pragma link C++ class std::vector<HistogramBase*>;
+#pragma link C++ class std::vector<std::vector<HistogramBase*> >;
 #pragma link C++ class std::vector<Grid*>;
 #endif
 

@@ -55,15 +55,9 @@ void Analysis::clear()
   clear_histvec(scale_nowgt);
   clear_histvec(jet_ht);
 
-  for (unsigned i=0; i<jet_pt_n.size(); i++) {
-    clear_histvec(jet_pt_n[i]);
-  }
-  jet_pt_n.clear();
+  clear_histvec(jet_pt_n);
+  clear_histvec(jet_eta_n);
 
-  for (unsigned i=0; i<jet_eta_n.size(); i++) {
-    clear_histvec(jet_eta_n[i]);
-  }
-  jet_eta_n.clear();
 }
 
 void Analysis::reset()
@@ -84,7 +78,7 @@ void Analysis::reset()
   g_jet_eta_n.resize(jet_number+1);
 }
 
-void Analysis::clear_histvec(std::vector<Histogram*>& histvec)
+void Analysis::clear_histvec(std::vector<HistogramBase*>& histvec)
 {
   for (unsigned j=0; j<histvec.size(); j++) {
     clear_var(histvec[j]);
@@ -92,12 +86,12 @@ void Analysis::clear_histvec(std::vector<Histogram*>& histvec)
   histvec.clear();
 }
 
-void Analysis::clear_histvec(std::vector<LinearHistogram2D*>& histvec)
+void Analysis::clear_histvec(std::vector<std::vector<HistogramBase*> >& histvecvec)
 {
-  for (unsigned j=0; j<histvec.size(); j++) {
-    clear_var(histvec[j]);
+  for (unsigned n=0; n<histvecvec.size(); n++) {
+    clear_histvec(histvecvec[n]);
   }
-  histvec.clear();
+  histvecvec.clear();
 }
 
 void Analysis::append_output_filename(const TString& name)
@@ -105,7 +99,7 @@ void Analysis::append_output_filename(const TString& name)
   outputfiles.insert(name);
 }
 
-void Analysis::output_histvec(const std::vector<Histogram*>& histvec,
+void Analysis::output_histvec(const std::vector<HistogramBase*>& histvec,
                               const TString& filename, std::ofstream& stream,
                               bool dryrun)
 {
@@ -120,22 +114,7 @@ void Analysis::output_histvec(const std::vector<Histogram*>& histvec,
   }
 }
 
-void Analysis::output_histvec(const std::vector<LinearHistogram2D*>& histvec,
-                              const TString& filename, std::ofstream& stream,
-                              bool dryrun)
-{
-  for (unsigned i=0; i<histvec.size(); i++) {
-    if (dryrun) {
-      append_output_filename(histvec[i]->getFile());
-    } else {
-      if (filename == histvec[i]->getFile()) {
-        histvec[i]->print(stream, runname, event_count);
-      }
-    }
-  }
-}
-
-void Analysis::bin_histvec(const std::vector<Histogram*>& histvec,
+void Analysis::bin_histvec(const std::vector<HistogramBase*>& histvec,
                           int nextevt, double x, double w)
 {
   for (unsigned i=0; i<histvec.size(); i++) {
@@ -143,11 +122,11 @@ void Analysis::bin_histvec(const std::vector<Histogram*>& histvec,
   }
 }
 
-void Analysis::bin_histvec(const std::vector<LinearHistogram2D*>& histvec,
+void Analysis::bin_histvec(const std::vector<HistogramBase*>& histvec,
                           int nextevt, double x, double y, double w)
 {
   for (unsigned i=0; i<histvec.size(); i++) {
-    histvec[i]->bin(nextevt, x, y, w);
+    histvec[i]->bin2d(nextevt, x, y, w);
   }
 }
 

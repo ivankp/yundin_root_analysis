@@ -8,17 +8,31 @@
 // Hammer histograms
 // --------------------------------------------------------------------------- //
 
-class Histogram
+class HistogramBase
+{
+  public:
+    virtual ~HistogramBase() {}
+
+    virtual void print(std::ostream& stream, const TString& runname,
+                       double count, bool unweight=true) = 0;
+    virtual void bin(int nextevt, double x, double w) = 0;
+    virtual void bin2d(int nextevt, double x, double y, double w) = 0;
+
+    virtual TString getFile() const = 0;
+};
+
+class Histogram : public HistogramBase
 {
   public:
     Histogram(const TString& filename_, const TString& name_,
               int nbin_, double x1_, double x2_);
-    virtual ~Histogram() {};
+    virtual ~Histogram() {}
 
     virtual void bin(int nextevt, double x, double w) = 0;
+    virtual void bin2d(int /*nextevt*/, double /*x*/, double /*y*/, double /*w*/) { throw; }
     virtual void print(std::ostream& stream, const TString& runname, double count, bool unweight=true);
 
-    TString getFile() const;
+    virtual TString getFile() const;
 
   protected:
     typedef std::pair<int, double> TIdxWgt;
@@ -124,7 +138,7 @@ class SmearedQuadraticHistogram : public SmearedHistogram
     const double slope;
 };
 
-template <typename Hist1D> class Histogram2D
+template <typename Hist1D> class Histogram2D : public HistogramBase
 {
   public:
     Histogram2D(const TString& filename_, const TString& name_,
@@ -132,10 +146,11 @@ template <typename Hist1D> class Histogram2D
                 int nbiny_, double y1_, double y2_);
     virtual ~Histogram2D() {}
 
-    virtual void bin(int nextevt, double x, double y, double w) = 0;
+    virtual void bin(int /*nextevt*/, double /*x*/, double /*w*/) { throw; }
+    virtual void bin2d(int nextevt, double x, double y, double w) = 0;
     virtual void print(std::ostream& stream, const TString& runname, double count, bool unweight=true);
 
-    TString getFile() const;
+    virtual TString getFile() const;
 
   protected:
     std::vector<Hist1D> hists1d;
@@ -159,7 +174,7 @@ class LinearHistogram2D : public Histogram2D<LinearHistogram>
                       int nbinx_, double x1_, double x2_,
                       int nbiny_, double y1_, double y2_,
                       double param1=0, double param2=0, double param3=0);
-    void bin(int nextevt, double x, double y, double w);
+    void bin2d(int nextevt, double x, double y, double w);
 
   protected:
     double step;
@@ -244,6 +259,7 @@ class Grid
 #endif // DISABLE_APPLGRID
 
 #if defined(__MAKECINT__)
+#pragma link C++ class HistogramBase;
 #pragma link C++ class Histogram;
 #pragma link C++ class ListHistogram;
 #pragma link C++ class LinearHistogram;

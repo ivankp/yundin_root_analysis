@@ -375,7 +375,7 @@ LinearHistogram2D::LinearHistogram2D(const TString& filename_, const TString& na
   setedges();
 }
 
-void LinearHistogram2D::bin(int nextevt, double x, double y, double w)
+void LinearHistogram2D::bin2d(int nextevt, double x, double y, double w)
 {
   if (y < y1 or y >= y2) return;
   int n = static_cast<int>(nbin*(y-y1)/y12);

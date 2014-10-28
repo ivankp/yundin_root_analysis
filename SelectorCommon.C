@@ -31,6 +31,8 @@ SelectorCommon::SelectorCommon()
   opt_rescale_factor = 1.;
   opt_rescale_n = -1;
 
+  opt_alphas_ignore = 0;
+
   // print event number every 1e6 events
   print_event_step = 1e6;
   // set pdf warning threshold to 1e-9

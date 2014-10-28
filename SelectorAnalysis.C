@@ -1202,3 +1202,123 @@ bool DiPhotonAnalysisBH::check_cuts(const SelectorCommon* event)
   // leading jet pt-cut
   return jets[0].pt() >= jet_pt1min;
 }
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+//   HiggsJetsAnalysis
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+HiggsJetsAnalysis::HiggsJetsAnalysis()
+  : min_dijet_m(0), min_dijet_y(0)
+{
+}
+
+void HiggsJetsAnalysis::clear()
+{
+  Analysis::clear();
+
+  clear_histvec(jet_jet_mass_ij);
+  clear_histvec(jet_jet_dy_ij);
+  clear_histvec(jet_jet_dphi_ij);
+  clear_histvec(jet_jet_dR_ij);
+
+  clear_histvec(higgs_pt);
+  clear_histvec(higgs_eta);
+  clear_histvec(higgs_y);
+
+  clear_histvec(higgs_dijet_pt_ij);
+  clear_histvec(higgs_dijet_dphi_ij);
+}
+
+void HiggsJetsAnalysis::reset()
+{
+  Analysis::reset();
+
+  const int n = (jet_number+1)*jet_number/2;
+
+  jet_jet_mass_ij.resize(n);
+  jet_jet_dy_ij.resize(n);
+  jet_jet_dphi_ij.resize(n);
+  jet_jet_dR_ij.resize(n);
+
+  higgs_dijet_pt_ij.resize(n);
+  higgs_dijet_dphi_ij.resize(n);
+}
+
+bool HiggsJetsAnalysis::check_cuts(const SelectorCommon* event)
+{
+  if (not Analysis::check_cuts(event)) {
+    return false;
+  }
+
+  assert(getFlavour(input[0]) == 25);
+
+  if (min_dijet_m != 0. and
+      (jets[0] + jets[1]).m() < min_dijet_m) {
+    return false;
+  }
+  if (min_dijet_y != 0. and
+      abs(jets[0].rapidity() - jets[1].rapidity()) < min_dijet_y) {
+    return false;
+  }
+
+  return true;
+}
+
+void HiggsJetsAnalysis::analysis_bin(const SelectorCommon* event)
+{
+  Analysis::analysis_bin(event);
+
+  const Int_t id = event->get_event_id();
+  const Double_t weight = event->get_event_weight();
+
+  const fastjet::PseudoJet& Hmom = input[0];
+  const double Hpt = Hmom.pt();
+  const double Heta = Hmom.eta();
+  const double Hy = Hmom.rapidity();
+
+  bin_histvec(higgs_pt, id, Hpt, weight);
+  bin_histvec(higgs_eta, id, Heta, weight);
+  bin_histvec(higgs_y, id, Hy, weight);
+
+  for (unsigned j=1; j<jets.size(); j++) {
+    for (unsigned i=0; i<j; i++) {
+      const double jjm = (jets[i] + jets[j]).m();
+      const double jjdphi = abs(jets[i].delta_phi_to(jets[j]));
+      const double jjdy = abs(jets[i].rapidity() - jets[j].rapidity());
+      const double jjdR = jets[i].delta_R(jets[j]);
+      const double Hjjpt = (Hmom + jets[i] + jets[j]).pt();
+      const double Hjjdphi = abs(Hmom.delta_phi_to(jets[i] + jets[j]));
+      const int n = (j-1)*j/2 + i;
+      bin_histvec(jet_jet_mass_ij[n], id, jjm, weight);
+      bin_histvec(jet_jet_dy_ij[n], id, jjdphi, weight);
+      bin_histvec(jet_jet_dphi_ij[n], id, jjdy, weight);
+      bin_histvec(jet_jet_dR_ij[n], id, jjdR, weight);
+      bin_histvec(higgs_dijet_pt_ij[n], id, Hjjpt, weight);
+      bin_histvec(higgs_dijet_dphi_ij[n], id, Hjjdphi, weight);
+    }
+  }
+}
+
+void HiggsJetsAnalysis::output_histograms(const TString& filename, std::ofstream& stream, bool dryrun)
+{
+  // all jet histograms are already in the base class
+  Analysis::output_histograms(filename, stream, dryrun);
+
+  output_histvec(higgs_pt, filename, stream, dryrun);
+  output_histvec(higgs_eta, filename, stream, dryrun);
+  output_histvec(higgs_y, filename, stream, dryrun);
+
+  for (unsigned j=1; j<jet_number+1; j++) {
+    for (unsigned i=0; i<j; i++) {
+      const int n = (j-1)*j/2 + i;
+      output_histvec(jet_jet_mass_ij[n], filename, stream, dryrun);
+      output_histvec(jet_jet_dy_ij[n], filename, stream, dryrun);
+      output_histvec(jet_jet_dphi_ij[n], filename, stream, dryrun);
+      output_histvec(jet_jet_dR_ij[n], filename, stream, dryrun);
+      output_histvec(higgs_dijet_pt_ij[n], filename, stream, dryrun);
+      output_histvec(higgs_dijet_dphi_ij[n], filename, stream, dryrun);
+    }
+  }
+}

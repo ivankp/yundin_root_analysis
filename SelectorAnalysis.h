@@ -315,6 +315,40 @@ class DiPhotonAnalysisBH : public DiPhotonAnalysis
     virtual bool check_cuts(const SelectorCommon* event);
 };
 
+class HiggsJetsAnalysis : public Analysis
+{
+  public:
+    static HiggsJetsAnalysis* create() { return new HiggsJetsAnalysis(); }
+
+    HiggsJetsAnalysis();
+
+    virtual bool check_cuts(const SelectorCommon* event);
+    virtual void analysis_bin(const SelectorCommon* event);
+
+    double min_dijet_m;
+    double min_dijet_y;
+
+    std::vector<std::vector<HistogramBase*> > jet_jet_mass_ij;
+    std::vector<std::vector<HistogramBase*> > jet_jet_dy_ij;
+    std::vector<std::vector<HistogramBase*> > jet_jet_dphi_ij;
+    std::vector<std::vector<HistogramBase*> > jet_jet_dR_ij;
+
+    std::vector<HistogramBase*> higgs_pt;
+    std::vector<HistogramBase*> higgs_eta;
+    std::vector<HistogramBase*> higgs_y;
+
+    std::vector<std::vector<HistogramBase*> > higgs_dijet_pt_ij;
+    std::vector<std::vector<HistogramBase*> > higgs_dijet_dphi_ij;
+
+    virtual void reset();
+
+  protected:
+    virtual void output_histograms(const TString& filename, std::ofstream& stream,
+                                   bool dryrun);
+    virtual void clear();
+};
+
+
 #if defined(__MAKECINT__)
 #pragma link C++ class Analysis;
 #pragma link C++ class JetAnalysis;
@@ -325,6 +359,7 @@ class DiPhotonAnalysisBH : public DiPhotonAnalysis
 #pragma link C++ class PhotonJetAnalysis;
 #pragma link C++ class DiPhotonAnalysis;
 #pragma link C++ class DiPhotonAnalysisBH;
+#pragma link C++ class HiggsJetsAnalysis;
 #pragma link C++ class std::vector<HistogramBase*>;
 #pragma link C++ class std::vector<std::vector<HistogramBase*> >;
 #pragma link C++ class std::vector<Grid*>;

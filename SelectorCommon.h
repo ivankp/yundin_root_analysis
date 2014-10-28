@@ -86,7 +86,7 @@ class SelectorCommon
     Int_t           get_nuwgt() const { return *input_nuwgt; }
     const Double_t* orig_usr_wgts() const { return input_usr_wgts; }
     Double_t        orig_usr_wgts(int i) const { return input_usr_wgts[i]; }
-    Int_t           get_alphaspower() const { return Int_t(*input_alphaspower); }
+    Int_t           get_alphaspower() const { return Int_t(*input_alphaspower) - opt_alphas_ignore; }
     const Char_t*   get_part() const { return input_part; }
     Char_t          get_part(int i) const { return input_part[i]; }
 
@@ -193,6 +193,7 @@ class SelectorCommon
     double opt_rescale_factor;
     int opt_rescale_n;
     RescalerType opt_rescaler;
+    int opt_alphas_ignore;  // number of non-QCD alphas powers
 
     double fac_scalefactor;
     double ren_scalefactor;

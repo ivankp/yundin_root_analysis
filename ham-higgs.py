@@ -33,6 +33,7 @@ def add_histograms_all(analysis, params, smear=0.):
     filename = (params.output % name) + '.hist'
 
     def Histogram(*args):
+        print "Histogram", args
         if smear == 0.:
             return ROOT.LinearHistogram(*args)
         else:
@@ -42,40 +43,40 @@ def add_histograms_all(analysis, params, smear=0.):
 
     # if there is not enough limits, last one is taken for excess elements
 
-    histdefs = {
-        "higgs_pt"             : ("higgs_pt_60", 60, 0, 300),
-        "higgs_pt"             : ("higgs_pt_200", 200, 0, 500),
-        "higgs_pt"             : ("higgs_pt_100", 100, 0, 500),
-        "higgs_pt"             : ("higgs_pt_50", 50, 0, 500),
-        "higgs_eta"            : ("higgs_eta_lh", 20, -5, 5),
-        "higgs_eta"            : ("higgs_eta_20", 20, -4.4, 4.4),
-        "higgs_eta"            : ("higgs_eta_40", 40, -4.4, 4.4),
-        "higgs_y"              : ("higgs_y_lh", 20, -5, 5),
-        "higgs_y"              : ("higgs_y_20", 20, -4.4, 4.4),
-        "higgs_y"              : ("higgs_y_40", 40, -4.4, 4.4),
-        "jjj_ystar"            : ("jjj_ystar_20", 20, -5, 5),
-        "jet_pt_n"             : ("jet_pT_%d_60", 60, 0, 300),
-        "jet_pt_n"             : ("jet_pT_%d_200", 200, 0, 500),
-        "jet_pt_n"             : ("jet_pT_%d_100", 100, 0, 500),
-        "jet_pt_n"             : ("jet_pT_%d_50", 50, 0, 500),
-        "jet_eta_n"            : ("jet_eta_%d_lh", 20, -5, 5),
-        "jet_eta_n"            : ("jet_eta_%d_20", 20, -4.4, 4.4),
-        "jet_eta_n"            : ("jet_eta_%d_40", 40, -4.4, 4.4),
-        "jet_y_n"              : ("jet_y_%d_lh", 20, -5, 5),
-        "jet_y_n"              : ("jet_y_%d_20", 20, -4.4, 4.4),
-        "jet_y_n"              : ("jet_y_%d_40", 40, -4.4, 4.4),
-        "jet_jet_mass_ij"      : ("jet_jet_mass_%d%d_25", 25, 0, 1000),
-        "jet_jet_mass_ij"      : ("jet_jet_mass_%d%d_100", 100, 0, 1000),
-        "jet_jet_dy_ij"        : ("jet_jet_dy_%d%d_20", 20, 0, 10),
-        "jet_jet_dphi_ij"      : ("jet_jet_dphi_%d%d_20", 20, 0, math.pi+1e-10),
-        "jet_jet_dR_ij"        : ("jet_jet_dR_%d%d_10", 10, 0, 5),
-        "jet_jet_dR_ij"        : ("jet_jet_dR_%d%d_50", 50, 0, 5),
-        "higgs_dijet_pt_ij"    : ("higgs_dijet_pt_%d%d_60", 60, 0, 300),
-        "higgs_dijet_dphi_ij"  : ("higgs_dijet_dphi_%d%d_20", 20, 0, math.pi+1e-10),
-        "higgs_dijet_ystar_ij" : ("higgs_dijet_ystar_%d%d_20", 20, 0, 10),
-    }
+    histdefs = [
+        ["higgs_pt"             , ("higgs_pt_60", 60, 0, 300)],
+        ["higgs_pt"             , ("higgs_pt_200", 200, 0, 500)],
+        ["higgs_pt"             , ("higgs_pt_100", 100, 0, 500)],
+        ["higgs_pt"             , ("higgs_pt_50", 50, 0, 500)],
+        ["higgs_eta"            , ("higgs_eta_lh", 20, -5, 5)],
+        ["higgs_eta"            , ("higgs_eta_20", 20, -4.4, 4.4)],
+        ["higgs_eta"            , ("higgs_eta_40", 40, -4.4, 4.4)],
+        ["higgs_y"              , ("higgs_y_lh", 20, -5, 5)],
+        ["higgs_y"              , ("higgs_y_20", 20, -4.4, 4.4)],
+        ["higgs_y"              , ("higgs_y_40", 40, -4.4, 4.4)],
+        ["jjj_ystar"            , ("jjj_ystar_20", 20, -5, 5)],
+        ["jet_pt_n"             , ("jet_pT_%d_60", 60, 0, 300)],
+        ["jet_pt_n"             , ("jet_pT_%d_200", 200, 0, 500)],
+        ["jet_pt_n"             , ("jet_pT_%d_100", 100, 0, 500)],
+        ["jet_pt_n"             , ("jet_pT_%d_50", 50, 0, 500)],
+        ["jet_eta_n"            , ("jet_eta_%d_lh", 20, -5, 5)],
+        ["jet_eta_n"            , ("jet_eta_%d_20", 20, -4.4, 4.4)],
+        ["jet_eta_n"            , ("jet_eta_%d_40", 40, -4.4, 4.4)],
+        ["jet_y_n"              , ("jet_y_%d_lh", 20, -5, 5)],
+        ["jet_y_n"              , ("jet_y_%d_20", 20, -4.4, 4.4)],
+        ["jet_y_n"              , ("jet_y_%d_40", 40, -4.4, 4.4)],
+        ["jet_jet_mass_ij"      , ("jet_jet_mass_%d%d_25", 25, 0, 1000)],
+        ["jet_jet_mass_ij"      , ("jet_jet_mass_%d%d_100", 100, 0, 1000)],
+        ["jet_jet_dy_ij"        , ("jet_jet_dy_%d%d_20", 20, 0, 10)],
+        ["jet_jet_dphi_ij"      , ("jet_jet_dphi_%d%d_20", 20, 0, math.pi+1e-10)],
+        ["jet_jet_dR_ij"        , ("jet_jet_dR_%d%d_10", 10, 0, 5)],
+        ["jet_jet_dR_ij"        , ("jet_jet_dR_%d%d_50", 50, 0, 5)],
+        ["higgs_dijet_pt_ij"    , ("higgs_dijet_pt_%d%d_60", 60, 0, 300)],
+        ["higgs_dijet_dphi_ij"  , ("higgs_dijet_dphi_%d%d_20", 20, 0, math.pi+1e-10)],
+        ["higgs_dijet_ystar_ij" , ("higgs_dijet_ystar_%d%d_20", 20, 0, 10)],
+    ]
 
-    for hname, hparam in sorted(histdefs.items()):
+    for hname, hparam in sorted(histdefs):
         histparam = hparam[1:]
         assert len(histparam) >= 3
         if '%d%d' in hparam[0]:

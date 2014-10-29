@@ -7,11 +7,6 @@ import re
 import sys
 import math
 
-def get(i, arr):
-    if i < len(arr):
-        return arr[i]
-    else:
-        return arr[-1]
 
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
@@ -40,8 +35,6 @@ def add_histograms_all(analysis, params, smear=0.):
             # add smearing parameter
             newargs = args + (smear,)
             return ROOT.SmearedLinearHistogram(*newargs)
-
-    # if there is not enough limits, last one is taken for excess elements
 
     histdefs = [
         ["higgs_pt"             , ("higgs_pt_60", 60, 0, 300)],

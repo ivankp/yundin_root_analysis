@@ -337,9 +337,11 @@ class HiggsJetsAnalysis : public Analysis
     std::vector<HistogramBase*> higgs_pt;
     std::vector<HistogramBase*> higgs_eta;
     std::vector<HistogramBase*> higgs_y;
+    std::vector<HistogramBase*> jjj_ystar;
 
     std::vector<std::vector<HistogramBase*> > higgs_dijet_pt_ij;
     std::vector<std::vector<HistogramBase*> > higgs_dijet_dphi_ij;
+    std::vector<std::vector<HistogramBase*> > higgs_dijet_ystar_ij;
 
     virtual void reset();
 

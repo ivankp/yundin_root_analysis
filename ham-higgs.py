@@ -43,7 +43,7 @@ def add_histograms_all(analysis, params, smear=0.):
     # if there is not enough limits, last one is taken for excess elements
 
     histdefs = {
-        "higgs_pt"             : ("higgs_pt_60", 0, 300),
+        "higgs_pt"             : ("higgs_pt_60", 60, 0, 300),
         "higgs_pt"             : ("higgs_pt_200", 200, 0, 500),
         "higgs_pt"             : ("higgs_pt_100", 100, 0, 500),
         "higgs_pt"             : ("higgs_pt_50", 50, 0, 500),
@@ -53,6 +53,7 @@ def add_histograms_all(analysis, params, smear=0.):
         "higgs_y"              : ("higgs_y_lh", 20, -5, 5),
         "higgs_y"              : ("higgs_y_20", 20, -4.4, 4.4),
         "higgs_y"              : ("higgs_y_40", 40, -4.4, 4.4),
+        "jjj_ystar"            : ("jjj_ystar_20", 20, -5, 5),
         "jet_pt_n"             : ("jet_pT_%d_60", 60, 0, 300),
         "jet_pt_n"             : ("jet_pT_%d_200", 200, 0, 500),
         "jet_pt_n"             : ("jet_pT_%d_100", 100, 0, 500),
@@ -71,10 +72,12 @@ def add_histograms_all(analysis, params, smear=0.):
         "jet_jet_dR_ij"        : ("jet_jet_dR_%d%d_50", 50, 0, 5),
         "higgs_dijet_pt_ij"    : ("higgs_dijet_pt_%d%d_60", 60, 0, 300),
         "higgs_dijet_dphi_ij"  : ("higgs_dijet_dphi_%d%d_20", 20, 0, math.pi+1e-10),
+        "higgs_dijet_ystar_ij" : ("higgs_dijet_ystar_%d%d_20", 20, 0, 10),
     }
 
     for hname, hparam in sorted(histdefs.items()):
         histparam = hparam[1:]
+        assert len(histparam) >= 3
         if '%d%d' in hparam[0]:
             for j in range(1, params.njet+1):
                 for i in range(j):
@@ -105,6 +108,8 @@ def initialize(params, selector):
     analysis.setAntiKt(0.4)
     analysis.jet_ptmin = 30
     analysis.jet_etamax = 4.4
+    #analysis.min_dijet_m = 400
+    #analysis.min_dijet_y = 2.8
     selector.opt_alphas_ignore = 2  # two powers of alphaS are not reweighted
 
     # Extract smear value from the output pattern

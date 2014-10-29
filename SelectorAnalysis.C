@@ -1231,9 +1231,11 @@ void HiggsJetsAnalysis::clear()
   clear_histvec(higgs_pt);
   clear_histvec(higgs_eta);
   clear_histvec(higgs_y);
+  clear_histvec(jjj_ystar);
 
   clear_histvec(higgs_dijet_pt_ij);
   clear_histvec(higgs_dijet_dphi_ij);
+  clear_histvec(higgs_dijet_ystar_ij);
 }
 
 void HiggsJetsAnalysis::reset()
@@ -1249,6 +1251,7 @@ void HiggsJetsAnalysis::reset()
 
   higgs_dijet_pt_ij.resize(n);
   higgs_dijet_dphi_ij.resize(n);
+  higgs_dijet_ystar_ij.resize(n);
 }
 
 bool HiggsJetsAnalysis::check_cuts(const SelectorCommon* event)
@@ -1287,14 +1290,22 @@ void HiggsJetsAnalysis::analysis_bin(const SelectorCommon* event)
   bin_histvec(higgs_eta, id, Heta, weight);
   bin_histvec(higgs_y, id, Hy, weight);
 
+  if (jets.size() >= 3) {
+    const double ystar = 0.5*(jets[0].rap() + jets[1].rap()) - jets[2].rap();
+    bin_histvec(jjj_ystar, id, ystar, weight);
+  }
+
   for (unsigned j=1; j<jets.size(); j++) {
     for (unsigned i=0; i<j; i++) {
-      const double jjm = (jets[i] + jets[j]).m();
-      const double jjdphi = abs(jets[i].delta_phi_to(jets[j]));
-      const double jjdy = abs(jets[i].rapidity() - jets[j].rapidity());
-      const double jjdR = jets[i].delta_R(jets[j]);
-      const double Hjjpt = (Hmom + jets[i] + jets[j]).pt();
-      const double Hjjdphi = abs(Hmom.delta_phi_to(jets[i] + jets[j]));
+      const fastjet::PseudoJet& jet1 = jets[i];
+      const fastjet::PseudoJet& jet2 = jets[j];
+      const double jjm = (jet1 + jet2).m();
+      const double jjdphi = abs(jet1.delta_phi_to(jet2));
+      const double jjdy = abs(jet1.rapidity() - jet2.rapidity());
+      const double jjdR = jet1.delta_R(jet2);
+      const double Hjjpt = (Hmom + jet1 + jet2).pt();
+      const double Hjjdphi = abs(Hmom.delta_phi_to(jet1 + jet2));
+      const double Hjjystar = abs(Hmom.rap() - 0.5*(jet1.rap() + jet2.rap()));
       const int n = (j-1)*j/2 + i;
       bin_histvec(jet_jet_mass_ij[n], id, jjm, weight);
       bin_histvec(jet_jet_dy_ij[n], id, jjdphi, weight);
@@ -1302,6 +1313,7 @@ void HiggsJetsAnalysis::analysis_bin(const SelectorCommon* event)
       bin_histvec(jet_jet_dR_ij[n], id, jjdR, weight);
       bin_histvec(higgs_dijet_pt_ij[n], id, Hjjpt, weight);
       bin_histvec(higgs_dijet_dphi_ij[n], id, Hjjdphi, weight);
+      bin_histvec(higgs_dijet_ystar_ij[n], id, Hjjystar, weight);
     }
   }
 }
@@ -1314,6 +1326,7 @@ void HiggsJetsAnalysis::output_histograms(const TString& filename, std::ofstream
   output_histvec(higgs_pt, filename, stream, dryrun);
   output_histvec(higgs_eta, filename, stream, dryrun);
   output_histvec(higgs_y, filename, stream, dryrun);
+  output_histvec(jjj_ystar, filename, stream, dryrun);
 
   for (unsigned j=1; j<jet_number+1; j++) {
     for (unsigned i=0; i<j; i++) {
@@ -1324,6 +1337,7 @@ void HiggsJetsAnalysis::output_histograms(const TString& filename, std::ofstream
       output_histvec(jet_jet_dR_ij[n], filename, stream, dryrun);
       output_histvec(higgs_dijet_pt_ij[n], filename, stream, dryrun);
       output_histvec(higgs_dijet_dphi_ij[n], filename, stream, dryrun);
+      output_histvec(higgs_dijet_ystar_ij[n], filename, stream, dryrun);
     }
   }
 }

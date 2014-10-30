@@ -621,7 +621,7 @@ double SelectorCommon::LambdaQCD(double muR, double aS) const
 double SelectorCommon::get_alphas(double mur)
 {
   if (use_sherpa_alphas) {
-    return sherpa_alphas->AlphaS(mur);
+    return sherpa_alphas->AlphaS(mur*mur);
   } else {
     return LHAPDF::alphasPDF(opt_topdf, mur);
   }

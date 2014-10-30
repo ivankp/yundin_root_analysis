@@ -16,6 +16,19 @@ except NameError:
     all = lambda x: reduce(lambda a,b: a and b, x)
 
 
+def init_pdf_set_by_name(pdf_name, member):
+    pdf_ext = {
+        '.LHgrid' : ROOT.LHAPDF.LHGRID,
+        '.LHpdf' : ROOT.LHAPDF.LHPDF,
+    }
+    pdf_type = ROOT.LHAPDF.LHGRID  # LHgrid is default
+    for ext, value in pdf_ext.items():
+        if pdf_name.endswith(ext):
+            pdf_name = pdf_name[:-len(ext)]
+            pdf_type = value
+            break
+    return init_pdf_set(pdf_name, pdf_type, member)
+
 def init_pdf_set(pdf_name, pdf_type, member):
     global pdf_sets, pdf_next_id
     try: pdf_next_id, pdf_sets
@@ -158,9 +171,9 @@ def process(params):
 
         # initialize FROMPDF and TOPDF
         pdf, m = get_pdfname(params.frompdf, 'FROMPDF')
-        selector.opt_frompdf = init_pdf_set(pdf, ROOT.LHAPDF.LHGRID, int(m))
+        selector.opt_frompdf = init_pdf_set_by_name(pdf, int(m))
         pdf, m = get_pdfname(params.topdf, 'TOPDF')
-        selector.opt_topdf = init_pdf_set(pdf,  ROOT.LHAPDF.LHGRID, int(m))
+        selector.opt_topdf = init_pdf_set_by_name(pdf, int(m))
 
         # set rescaler after PDFs
         set_rescaler(selector, params)
@@ -363,9 +376,9 @@ class Params:
             elif op in ("-r", "--runname"):
                 self.runname = re.sub(r'\s+', r'_', oparg)
             elif op in ("-f", "--frompdf"):
-                self.frompdf = oparg.replace('.LHgrid', '')
+                self.frompdf = oparg
             elif op in ("-t", "--topdf"):
-                self.topdf = oparg.replace('.LHgrid', '')
+                self.topdf = oparg
             elif op in ("--beta0fix"):
                 try:
                     self.beta0fix = int(oparg)

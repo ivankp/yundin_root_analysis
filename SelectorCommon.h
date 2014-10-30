@@ -194,6 +194,7 @@ class SelectorCommon
     int opt_rescale_n;
     RescalerType opt_rescaler;
     int opt_alphas_ignore;  // number of non-QCD alphas powers
+    double opt_ignore_scale;  // scale for extra alphas powers
 
     double fac_scalefactor;
     double ren_scalefactor;

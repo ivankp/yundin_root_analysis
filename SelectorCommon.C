@@ -32,6 +32,7 @@ SelectorCommon::SelectorCommon()
   opt_rescale_n = -1;
 
   opt_alphas_ignore = 0;
+  opt_ignore_scale = 0.;
 
   // print event number every 1e6 events
   print_event_step = 1e6;
@@ -729,6 +730,9 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
 
   if (scalefactor != 0.) {  // zero means that alphafactor is set in rescaler
     alphafactor = pow(get_alphas(ren_scale)/orig_alphas(), get_alphaspower());
+    if (opt_ignore_scale != 0.) {
+      alphafactor *= pow(LHAPDF::alphasPDF(opt_topdf, opt_ignore_scale)/LHAPDF::alphasPDF(opt_frompdf, opt_ignore_scale), opt_alphas_ignore);
+    }
   }
 
   const double log_r = log(ren_scalefactor*ren_scalefactor);  // log(murnew^2/murold^2)

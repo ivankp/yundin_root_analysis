@@ -105,6 +105,7 @@ def initialize(params, selector):
     #analysis.min_dijet_m = 400
     #analysis.min_dijet_y = 2.8
     selector.opt_alphas_ignore = 2  # two powers of alphaS are not reweighted
+    selector.opt_ignore_scale = 125.  # two powers of alphaS are not reweighted
 
     # Extract smear value from the output pattern
     smearpat = r'-smear(\d+\.?\d*)-'

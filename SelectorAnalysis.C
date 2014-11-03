@@ -1308,8 +1308,8 @@ void HiggsJetsAnalysis::analysis_bin(const SelectorCommon* event)
       const double Hjjystar = abs(Hmom.rap() - 0.5*(jet1.rap() + jet2.rap()));
       const int n = (j-1)*j/2 + i;
       bin_histvec(jet_jet_mass_ij[n], id, jjm, weight);
-      bin_histvec(jet_jet_dy_ij[n], id, jjdphi, weight);
-      bin_histvec(jet_jet_dphi_ij[n], id, jjdy, weight);
+      bin_histvec(jet_jet_dy_ij[n], id, jjdy, weight);
+      bin_histvec(jet_jet_dphi_ij[n], id, jjdphi, weight);
       bin_histvec(jet_jet_dR_ij[n], id, jjdR, weight);
       bin_histvec(higgs_dijet_pt_ij[n], id, Hjjpt, weight);
       bin_histvec(higgs_dijet_dphi_ij[n], id, Hjjdphi, weight);

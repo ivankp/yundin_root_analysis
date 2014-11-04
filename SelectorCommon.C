@@ -882,6 +882,10 @@ std::vector<LSParticle> SelectorCommon::get_lsinput() const
       kf = 81;
       const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), kf);
       newinput.push_back(vec);
+    } else if (kf == 22) {
+      kf = 22;
+      const LSParticle vec = LSParticle(get_px(i), get_py(i), get_pz(i), get_E(i), kf);
+      newinput.push_back(vec);
     } else if (abs(kf) == 11) {
       if (i_lep >= 0) {
         if (get_kf(i_lep) == -kf) {
@@ -927,14 +931,30 @@ std::vector<LSParticle> SelectorCommon::get_lsinput() const
   return newinput;
 }
 
+bool sortQCD(fastjet::PseudoJet p1, fastjet::PseudoJet p2) {
+  int idx1 = 0; int idx2 = 0;
+  if (FlavourKTPlugin::getFlavour(p1) == 81 or abs(FlavourKTPlugin::getFlavour(p1))<=6) idx1=1;
+  if (FlavourKTPlugin::getFlavour(p2) == 81 or abs(FlavourKTPlugin::getFlavour(p2))<=6) idx2=1;
+  return idx1 < idx2;
+}
+
 SelectorCommon::PseudoJetVector SelectorCommon::lsinput2fjinput(const std::vector<LSParticle>& in)
 {
+//  std::cout << "# LSevent: " << std::endl;
   PseudoJetVector out;
   for (unsigned i=0; i<in.size(); i++) {
     fastjet::PseudoJet vec = fastjet::PseudoJet(in[i].px(), in[i].py(), in[i].pz(), in[i].E());
     FlavourKTPlugin::addFlavour(vec, in[i].flavour().pdg_id());
     out.push_back(vec);
+//    std::cout << FlavourKTPlugin::getFlavour(out[i]) << std::endl;
   }
+//  std::cout << "# end" << std::endl;
+  std::sort(out.begin(), out.end(), sortQCD);
+//  std::cout << "# sort LSevent: " << std::endl;
+  for (unsigned i=0; i<in.size(); i++) {
+//    std::cout << FlavourKTPlugin::getFlavour(out[i]) << std::endl;
+  }
+//  std::cout << "# end" << std::endl;
   return out;
 }
 #endif // DISABLE_LOOPSIM

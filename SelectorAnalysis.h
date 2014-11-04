@@ -282,6 +282,8 @@ class DiPhotonAnalysis : public Analysis
 
     double photon_photon_Rsep;
     double photon_jet_Rsep;
+    double photon_photon_mass_min;
+    double photon_photon_mass_max;
 
     std::vector<HistogramBase*> photon_mass;
     std::vector<HistogramBase*> photon_pt;

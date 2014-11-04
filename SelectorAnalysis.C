@@ -986,7 +986,8 @@ DiPhotonAnalysis::DiPhotonAnalysis()
   : jet_pt1min(0),
     photon_R(0), photon_n(0), photon_eps(0),
     photon_pt1min(0), photon_pt2min(0), photon_etamax(0),
-    photon_photon_Rsep(0), photon_jet_Rsep(0)
+    photon_photon_Rsep(0), photon_jet_Rsep(0),
+    photon_photon_mass_min(0), photon_photon_mass_max(1e10)
 {
   g_photon_mass = 0;
   g_photon_pt = 0;
@@ -1017,7 +1018,9 @@ bool DiPhotonAnalysis::check_cuts(const SelectorCommon* event)
     return false;
   }
 
-  assert(getFlavour(input[0]) == 22 and getFlavour(input[1]) == 22);
+  if (not(getFlavour(input[0]) == 22 and getFlavour(input[1]) == 22)) {
+    return false;
+  }
 
   double pt1 = input[0].pt();
   double pt2 = input[1].pt();
@@ -1059,6 +1062,11 @@ bool DiPhotonAnalysis::check_cuts(const SelectorCommon* event)
     }
   }
 
+  double AAmass = (input[0]+input[1]).m();
+  if (AAmass < photon_photon_mass_min or AAmass > photon_photon_mass_max) {
+    return false;
+  }
+
   // photon isolation
   if (photon_n > 0 and photon_eps > 0) {
     if (not photonIsolation(event, photon_R, photon_n, photon_eps)) {
@@ -1067,7 +1075,10 @@ bool DiPhotonAnalysis::check_cuts(const SelectorCommon* event)
   }
 
   // leading jet pt-cut
-  return jets[0].pt() >= jet_pt1min;
+  if (jets.size() > 0) {
+    return jets[0].pt() >= jet_pt1min;
+  }
+  return true;
 }
 
 void DiPhotonAnalysis::analysis_bin(const SelectorCommon* event)

@@ -107,6 +107,7 @@ class SelectorCommon
     PseudoJetVector get_fjinput() const;
 #ifndef DISABLE_LOOPSIM
     std::vector<LSParticle> get_lsinput() const;
+//    bool sortQCD(fastjet::PseudoJet p1, fastjet::PseudoJet p2);
     static PseudoJetVector lsinput2fjinput(const std::vector<LSParticle>& in);
 #endif
 

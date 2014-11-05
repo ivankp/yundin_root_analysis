@@ -12,7 +12,7 @@ import math
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 
-def add_histograms_all(analysis, params, smear=0.):
+def add_histograms_all(analysis, params, smear=[0.]):
     # Quadratic slope = lastbinwidth/firstbinwidth
     # ROOT.LinearHistogram(file_name, hist_name, n_bins, obs_min, obs_max)
     # ROOT.QuadraticHistogram(file_name, hist_name, n_bins, obs_min, obs_max, slope)
@@ -24,17 +24,24 @@ def add_histograms_all(analysis, params, smear=0.):
     # map(bin_edges.push_back, [1, 2, 3, 4, 5, 6])  # 5 bins in [1, 6)
     # ROOT.ListHistogram(file_name, hist_name, bin_edges)
 
-    name = "l_s%g" % (smear,)
-    filename = (params.output % name) + '.hist'
+    def get_filename(s):
+        name = "l_s%g" % (s,)
+        filename = (params.output % name) + '.hist'
+        return filename
 
-    def Histogram(*args):
-        print "Histogram", args
-        if smear == 0.:
+    def Histogram(s, *args):
+        if s == 0.:
+            print "LinearHistogram ", args
             return ROOT.LinearHistogram(*args)
         else:
-            # add smearing parameter
-            newargs = args + (smear,)
-            return ROOT.SmearedLinearHistogram(*newargs)
+            args += (s,)  # add smearing parameter
+            print "SmearedHistogram", args
+            return ROOT.SmearedLinearHistogram(*args)
+
+    def AddHistogram(hvec, *args):
+        for s in smear:
+            filename = get_filename(s)
+            hvec.push_back(Histogram(s, filename, *args))
 
     histdefs = [
         ["higgs_pt"             , ("higgs_pt_60", 60, 0, 300)],
@@ -77,14 +84,14 @@ def add_histograms_all(analysis, params, smear=0.):
                 for i in range(j):
                     histname = hparam[0] % (i+1, j+1)
                     n = (j-1)*j/2 + i
-                    getattr(analysis, hname)[n].push_back(Histogram(filename, histname, *histparam))
+                    AddHistogram(getattr(analysis, hname)[n], histname, *histparam)
         elif '%d' in hparam[0]:
             for i in range(params.njet+1):
                 histname = hparam[0] % (i+1)
-                getattr(analysis, hname)[i].push_back(Histogram(filename, histname, *histparam))
+                AddHistogram(getattr(analysis, hname)[i], histname, *histparam)
         else:
             histname = hparam[0]
-            getattr(analysis, hname).push_back(Histogram(filename, histname, *histparam))
+            AddHistogram(getattr(analysis, hname), histname, *histparam)
 
     return
 
@@ -102,22 +109,27 @@ def initialize(params, selector):
     analysis.setAntiKt(0.4)
     analysis.jet_ptmin = 30
     analysis.jet_etamax = 4.4
-    #analysis.min_dijet_m = 400
-    #analysis.min_dijet_y = 2.8
+    if 'vbf' in params.output:
+        analysis.min_dijet_m = 400
+        analysis.min_dijet_y = 2.8
     selector.opt_alphas_ignore = 2  # two powers of alphaS are not reweighted
     selector.opt_ignore_scale = 125.  # two powers of alphaS are not reweighted
 
-    # Extract smear value from the output pattern
-    smearpat = r'-smear(\d+\.?\d*)-'
+    # Extract smear value from the output pattern, e.g. -smear0.3- or -smear0,0.1,0.3-
+    smearpat = r'-smear(\d+\.?\d*|[\d.,]+)-'
     m = re.match(r".*?%s.*?" % smearpat, params.output)
     if m:
-        s = float(m.group(1))
         params.output = re.sub(smearpat, '-', params.output)
+        val = m.group(1)
+        try:
+            smear = [float(val)]
+        except ValueError:
+            smear = eval(val)
     else:
-        s = 0.
+        smear = [0.]
 
     # Add analysis histograms (see the function above)
-    add_histograms_all(analysis, params, smear=s)
+    add_histograms_all(analysis, params, smear=smear)
 
     # assign to selector
     selector.analysis = analysis

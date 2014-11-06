@@ -810,11 +810,13 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   } else {
     std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
   }
-  const double appl_alphas = pow(orig_alphas()/(2.*M_PI), get_alphaspower());
-  for (int i=0; i<coll_weights_count; i++) {
-    coll_weights[i] /= appl_alphas;
+  if (Grid::valid) {
+    const double appl_factor = alphafactor/pow(get_alphas(ren_scale)/(2.*M_PI), get_alphaspower());
+    for (int i=0; i<coll_weights_count; i++) {
+      coll_weights[i] *= appl_factor;
+    }
+    naked_weight = new_me_wgt*appl_factor;
   }
-  naked_weight = new_me_wgt/appl_alphas;
   event_weight = weight*alphafactor;
 
   stat_update(fac_scale, ren_scale);

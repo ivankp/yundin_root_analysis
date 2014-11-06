@@ -396,12 +396,12 @@ int Grid::nloops = 0;
 
 GridOpts Grid::def_opts = GridOpts(50, 0., 16e6, 5,
                                    50, 1e-6, 1., 5);
+bool Grid::valid = false;
 
 #ifndef DISABLE_APPLGRID
 
 ntuple_pdf* Grid::pdf_object = 0;
 
-bool Grid::valid = false;
 
 void Grid::static_init()
 {

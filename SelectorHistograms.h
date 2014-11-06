@@ -215,9 +215,9 @@ class Grid
     static int nloops;
 
     static GridOpts def_opts;
+    static bool valid;
 
     static ntuple_pdf* pdf_object;
-    static bool valid;
     static void static_init();
 
     static Grid* capture(Grid* p) { return p; }
@@ -253,6 +253,7 @@ class Grid
     static int nloops;
 
     static GridOpts def_opts;
+    static bool valid;
 
     void write(double /*count*/) { assert(0); }
 };

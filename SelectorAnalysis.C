@@ -187,7 +187,7 @@ void Analysis::fill_grid(Grid* /*grid*/, int /*nextevt*/, double /*x*/, double /
 {
 }
 #else // ! DISABLE_APPLGRID
-void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, SelectorCommon* event)
+void Analysis::fill_grid(Grid* grid, int nextevt, double x, double w, const SelectorCommon* event)
 {
   static const int lhaids[] = {5,-5,4,-4,3,-3,2,-2,1,-1};
 

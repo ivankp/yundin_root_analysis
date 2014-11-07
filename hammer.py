@@ -251,7 +251,7 @@ def readselectors(selector_list, params):
         chain.Add(name)
 
     chain.SetMaxEntryLoop(2**50)
-    chain.Process(reader)
+    chain.Process(reader, "", chain.GetMaxEntryLoop(), 0)
 
     for selector in selector_list:
         selector.stat_report()

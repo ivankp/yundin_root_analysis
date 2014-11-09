@@ -250,7 +250,8 @@ def readselectors(selector_list, params):
     for name in params.inputs:
         chain.Add(name)
 
-    chain.SetMaxEntryLoop(2**50)
+    chain.GetFile()   # force opening of the first file
+    chain.SetMaxEntryLoop(2**60)
     chain.Process(reader, "", chain.GetMaxEntryLoop(), 0)
 
     for selector in selector_list:

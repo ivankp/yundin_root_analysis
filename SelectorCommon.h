@@ -279,7 +279,7 @@ class SelectorCommon
     double event_trials;
 
   protected:
-    double get_alphas(double mur);
+    double get_alphas(int pdf, double mur, bool use_sherpa=false);
     void prepare_event();
     void reweight(const PseudoJetVector& input,
                   const PseudoJetVector& jets);

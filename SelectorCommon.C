@@ -481,7 +481,7 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   for (unsigned i = 0; i < minlo_scales.size(); i++) {
     const double minlo_qi = minlo_scales[i];
     minlo_mur *= minlo_qi;
-    const double as = get_alphas(opt_rescale_factor*minlo_qi);
+    const double as = get_alphas(opt_topdf, opt_rescale_factor*minlo_qi);
     minlo_alpha += as;
     alphafactor *= as/orig_alphas();
   }
@@ -489,7 +489,7 @@ double SelectorCommon::rescaler_minlo(const double /*scale*/,
   // then m powers corresponding to primary system
   for (int i = minlo_scales.size(); i < born_alphaspower; i++) {
     minlo_mur *= minlo_Q;
-    const double as = get_alphas(opt_rescale_factor*minlo_Q);
+    const double as = get_alphas(opt_topdf, opt_rescale_factor*minlo_Q);
     minlo_alpha += as;
     alphafactor *= as/orig_alphas();
   }
@@ -618,12 +618,12 @@ double SelectorCommon::LambdaQCD(double muR, double aS) const
   return Lam;
 }
 
-double SelectorCommon::get_alphas(double mur)
+double SelectorCommon::get_alphas(int pdf, double mur, bool use_sherpa)
 {
-  if (use_sherpa_alphas) {
+  if (use_sherpa) {
     return sherpa_alphas->AlphaS(mur*mur);
   } else {
-    return LHAPDF::alphasPDF(opt_topdf, mur);
+    return LHAPDF::alphasPDF(pdf, mur);
   }
 }
 
@@ -728,10 +728,14 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   const double fac_scale = get_fac_scale();
   const double ren_scale = get_ren_scale();
 
+  const double to_alphas = get_alphas(opt_topdf, ren_scale, use_sherpa_alphas);
+
   if (scalefactor != 0.) {  // zero means that alphafactor is set in rescaler
-    alphafactor = pow(get_alphas(ren_scale)/orig_alphas(), get_alphaspower());
-    if (opt_ignore_scale != 0.) {
-      alphafactor *= pow(LHAPDF::alphasPDF(opt_topdf, opt_ignore_scale)/LHAPDF::alphasPDF(opt_frompdf, opt_ignore_scale), opt_alphas_ignore);
+    alphafactor = pow(to_alphas/orig_alphas(), get_alphaspower());
+    if (opt_extra_scale != 0.) {  // change extra alphas to new PDF and/or scale
+      const double aux_ratio = get_alphas(opt_topdf, opt_ignore_scale)
+                               /get_alphas(opt_frompdf, opt_ignore_scale);
+      alphafactor *= pow(aux_ratio, opt_alphas_ignore);
     }
   }
 
@@ -811,7 +815,7 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     std::cout << "Unknown value for nuwgt = " << nuwgt << std::endl;
   }
   if (Grid::valid) {
-    const double appl_factor = alphafactor/pow(get_alphas(ren_scale)/(2.*M_PI), get_alphaspower());
+    const double appl_factor = alphafactor/pow(to_alphas/(2.*M_PI), get_alphaspower());
     for (int i=0; i<coll_weights_count; i++) {
       coll_weights[i] *= appl_factor;
     }

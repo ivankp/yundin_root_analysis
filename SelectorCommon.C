@@ -31,8 +31,10 @@ SelectorCommon::SelectorCommon()
   opt_rescale_factor = 1.;
   opt_rescale_n = -1;
 
-  opt_alphas_ignore = 0;
-  opt_ignore_scale = 0.;
+  // extra alphas powers settings
+  opt_extra_alphas = 0;
+  opt_extra_scale = 0.;
+  opt_extra_factor = 1.;
 
   // print event number every 1e6 events
   print_event_step = 1e6;
@@ -695,8 +697,15 @@ double SelectorCommon::reweight_applyfixes(double new_me_wgt, double log_r)
   // fix for wrong alpha power in old Sherpa ntuples
   if (opt_beta0fix > 0) {
     const double beta0pole2_fac = beta0pole2(get_id1(), get_id2(), get_nparticle(), get_kf());
-//     usr_wgts[0] -= (opt_beta0fix - (get_alphaspower()-1))*2.*usr_wgts[1]*beta0pole2_fac;
-    new_me_wgt -= (opt_beta0fix - (get_alphaspower()-1))*2.*usr_wgts[1]*beta0pole2_fac*log_r;
+    const double beta0born = 2.*usr_wgts[1]*beta0pole2_fac;
+    new_me_wgt -= (opt_beta0fix - (get_alphaspower()-1))*beta0born*log_r;
+  }
+
+  if (opt_extra_alphas and get_part(0) == 'V') {
+    const double beta0pole2_fac = beta0pole2(get_id1(), get_id2(), get_nparticle(), get_kf());
+    const double beta0born = 2.*usr_wgts[1]*beta0pole2_fac;
+    const double scale_ratio = opt_extra_factor*opt_extra_scale/orig_ren_scale();
+    new_me_wgt += opt_extra_alphas*beta0born*(log(scale_ratio*scale_ratio)-log_r);
   }
 
   return new_me_wgt;
@@ -733,9 +742,9 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   if (scalefactor != 0.) {  // zero means that alphafactor is set in rescaler
     alphafactor = pow(to_alphas/orig_alphas(), get_alphaspower());
     if (opt_extra_scale != 0.) {  // change extra alphas to new PDF and/or scale
-      const double aux_ratio = get_alphas(opt_topdf, opt_ignore_scale)
-                               /get_alphas(opt_frompdf, opt_ignore_scale);
-      alphafactor *= pow(aux_ratio, opt_alphas_ignore);
+      const double aux_ratio = get_alphas(opt_topdf, opt_extra_scale*opt_extra_factor)
+                               /get_alphas(opt_frompdf, opt_extra_scale);
+      alphafactor *= pow(aux_ratio, opt_extra_alphas);
     }
   }
 

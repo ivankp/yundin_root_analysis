@@ -391,7 +391,7 @@ void LinearHistogram2D::bin2d(int nextevt, double x, double y, double w)
 double Grid::aparam = 5.;
 std::string Grid::pdf_function = "ntuplejets";
 bool Grid::pdfWeight = false;
-int Grid::born_alphapower = 0;
+int Grid::born_alphaspower = -1;
 int Grid::nloops = 0;
 
 GridOpts Grid::def_opts = GridOpts(50, 0., 16e6, 5,
@@ -409,6 +409,12 @@ void Grid::static_init()
     return;
   }
   valid = true;
+
+  if (born_alphaspower < 0) {
+    std::cout << "Invalid born_alphaspower = " << born_alphaspower
+              << " Check your file for typos" << std::endl;
+    exit(0);
+  }
 
   appl::grid::transformvar(aparam);
   if (pdf_function == "ntuplejets") {
@@ -454,7 +460,7 @@ Grid::Grid(const std::string& name,
   m_grid = new appl::grid(edges,
                           opts.Q2bins, opts.Q2low, opts.Q2high, opts.Q2order,
                           opts.Xbins, opts.Xlow, opts.Xhigh, opts.Xorder,
-                          pdf_function, born_alphapower, nloops);
+                          pdf_function, born_alphaspower, nloops);
   m_grid->reweight(pdfWeight);
 }
 

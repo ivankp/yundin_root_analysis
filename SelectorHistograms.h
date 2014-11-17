@@ -211,7 +211,7 @@ class Grid
     static double aparam;
     static std::string pdf_function;
     static bool pdfWeight;
-    static int born_alphapower;
+    static int born_alphaspower;
     static int nloops;
 
     static GridOpts def_opts;
@@ -249,7 +249,7 @@ class Grid
     static double aparam;
     static std::string pdf_function;
     static bool pdfWeight;
-    static int born_alphapower;
+    static int born_alphaspower;
     static int nloops;
 
     static GridOpts def_opts;

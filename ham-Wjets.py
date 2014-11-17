@@ -127,7 +127,7 @@ def initialize(params, selector):
     ROOT.Grid.nloops = 1                     # number of loops, 0 - LO, 1 - NLO
     ROOT.Grid.pdf_function = "ntuplevjets"  # 'ntuplephjets' for photons, 'ntuplejets' for jets
     ROOT.Grid.aparam = 5.
-    ROOT.Grid.born_alphapower = selector.born_alphapower
+    ROOT.Grid.born_alphaspower = selector.born_alphaspower
     # set the limits on x1, x2 and Q2
     fac = selector.rescale_factor
     ROOT.Grid.def_opts = ROOT.GridOpts(50, (22*fac)**2, (3900*fac)**2, 5,

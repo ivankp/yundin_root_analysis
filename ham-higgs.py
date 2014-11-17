@@ -12,6 +12,33 @@ import math
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 
+# Grid helper
+def create_grid(name, edges, params):
+    if not params.grids:
+        return None
+    if params.warmup and os.path.exists(name):
+        bakname = name + '.bak'
+        print "WARNING: warmup file exists, moving '%s' to '%s'" % (name, bakname)
+        os.rename(name, bakname)
+    if not os.path.exists(name):
+        if not params.warmup:
+            print "ERROR: No --warmup option, but grid '%s' is not found" % name
+            sys.exit(2)
+        obs = ROOT.std.vector('double')()
+        for ed in edges:
+            obs.push_back(ed)
+        grid = ROOT.Grid.capture(ROOT.Grid(name, obs))
+    else:
+        grid = ROOT.Grid.capture(ROOT.Grid(name))
+    if not grid.isWarmup():
+        assert not params.warmup
+        grid.setFilename(name.replace('.root', '-o.root'))
+    return grid
+
+# -------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+
 def add_histograms_all(analysis, params, smear=[0.]):
     # Quadratic slope = lastbinwidth/firstbinwidth
     # ROOT.LinearHistogram(file_name, hist_name, n_bins, obs_min, obs_max)
@@ -99,22 +126,56 @@ def add_histograms_all(analysis, params, smear=[0.]):
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 
+def add_grids_all(analysis, params):
+    # total xs grid
+    if True:
+        obs = [-0.5, 0.5]  # only one bin to save memory
+        filename = (params.output % 'totxs') + '.root'  # has to end with '.root'
+        analysis.g_jet_inclusive = create_grid(filename, obs, params)
+
+    # inclusive jets grid
+    if False:
+        obs = (lambda n: np.linspace(-0.5, n+0.5, n+2))(params.njet+1)
+        filename = (params.output % 'incl') + '.root'  # has to end with '.root'
+        analysis.g_jet_inclusive = create_grid(filename, obs, params)
+
+    if False:
+        obs = np.linspace(0, 500, 15+1)
+        filename = (params.output % 'phmass') + '.root'  # has to end with '.root'
+        analysis.g_photon_mass = create_grid(filename, obs, params)
+
+    return
+
+# -------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+
 # main function which is called from hammer.py
 def initialize(params, selector):
     print "Using higgs analysis %s" % __file__
 
+    jet_R = 0.4
+    jetrpat = r'-R(\d+\.?\d*)-'
+    m = re.match(r".*?%s.*?" % jetrpat, params.output)
+    if m:
+        jet_R = float(m.group(1))
+
     analysis = ROOT.HiggsJetsAnalysis.create()
     analysis.runname = params.runname
     analysis.setJetNumber(params.njet)
-    analysis.setAntiKt(0.4)
+    analysis.setAntiKt(jet_R)
     analysis.jet_ptmin = 30
     analysis.jet_etamax = 4.4
     if 'vbf' in params.output:
         analysis.min_dijet_m = 400
         analysis.min_dijet_y = 2.8
-    selector.opt_extra_alphas = 2
     selector.opt_extra_scale = 125
-    selector.opt_extra_factor = selector.opt_rescale_factor
+    selector.opt_extra_alphas = 2
+    selector.opt_extra_factor = 1
+    if params.rescaler in ['mult_higgs', 'fixed_higgs']:
+        selector.opt_extra_alphas = 0
+    if params.rescaler == 'multiplicative':
+        selector.opt_extra_factor = selector.opt_rescale_factor
 
     # Extract smear value from the output pattern, e.g. -smear0.3- or -smear0,0.1,0.3-
     smearpat = r'-smear(\d+\.?\d*|[\d.,]+)-'
@@ -129,8 +190,24 @@ def initialize(params, selector):
     else:
         smear = [0.]
 
-    # Add analysis histograms (see the function above)
-    add_histograms_all(analysis, params, smear=smear)
+    if not params.grids:
+        # Add analysis histograms (see the function above)
+        add_histograms_all(analysis, params, smear=smear)
+    else:
+        # Setting up grids
+        ROOT.Grid.nloops = 1                     # number of loops, 0 - LO, 1 - NLO
+        ROOT.Grid.pdf_function = "ntuplejets"    # 'ntuplephjets' for photons, 'ntuplejets' for jets
+        ROOT.Grid.aparam = 5.
+        ROOT.Grid.born_alphaspower = selector.opt_born_alphaspower
+        # set the limits on x1, x2 and Q2
+        fac = selector.opt_rescale_factor
+        if 'vbf' in params.output:
+            ROOT.Grid.def_opts = ROOT.GridOpts(100, (90*fac)**2, (4000*fac)**2, 5,
+                                               100, 0.0044, 1., 5)
+        else:
+            ROOT.Grid.def_opts = ROOT.GridOpts(100, (90*fac)**2, (4000*fac)**2, 5,
+                                               100, 0.00054, 1., 5)
+        add_grids_all(analysis, params)
 
     # assign to selector
     selector.analysis = analysis

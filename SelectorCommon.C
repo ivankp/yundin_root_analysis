@@ -383,6 +383,41 @@ double SelectorCommon::rescaler_maa2sumpt2hat(const double /*scale*/,
   return newscale;
 }
 
+// change everything to opt_rescale_factor*newscale,
+// assuming "extra_power" alpha_s powers already at extra_scale
+void SelectorCommon::rescaler_higgs_helper(double newscale, double extra_scale, int extra_power)
+{
+  fac_scalefactor = opt_rescale_factor*newscale/orig_fac_scale();
+  ren_scalefactor = opt_rescale_factor*newscale/orig_ren_scale();
+
+  const double to_alphas = get_alphas(opt_topdf, opt_rescale_factor*newscale);
+
+  alphafactor = pow(to_alphas/orig_alphas(), get_alphaspower() - extra_power);
+  alphafactor *= pow(to_alphas/get_alphas(opt_frompdf, extra_scale), extra_power);
+}
+
+// change everything to opt_rescale_factor*orig_ren_scale(),
+// assuming 2 alpha_s powers already at opt_extra_scale
+double SelectorCommon::rescaler_mult_higgs(const double /*scale*/,
+                                      const PseudoJetVector& /*input*/,
+                                      const PseudoJetVector& /*jets*/)
+{
+  assert(opt_extra_alphas == 0 && opt_extra_scale != 0);
+  rescaler_higgs_helper(orig_ren_scale(), opt_extra_scale, 2);
+  return 0;
+}
+
+// change everything to opt_rescale_factor*opt_extra_scale,
+// assuming 2 alpha_s powers already at opt_extra_scale
+double SelectorCommon::rescaler_fixed_higgs(const double /*scale*/,
+                                      const PseudoJetVector& /*input*/,
+                                      const PseudoJetVector& /*jets*/)
+{
+  assert(opt_extra_alphas == 0 && opt_extra_scale != 0);
+  rescaler_higgs_helper(opt_extra_scale, opt_extra_scale, 2);
+  return 0;
+}
+
 double SelectorCommon::rescaler_minlo(const double /*scale*/,
                                       const PseudoJetVector& input,
                                       const PseudoJetVector& /*jets*/)

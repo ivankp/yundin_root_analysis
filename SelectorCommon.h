@@ -55,7 +55,7 @@ class SelectorCommon
     const Int_t*          input_nuwgt;
     const Double_t*       input_usr_wgts;   //[nuwgt]
     const Char_t*         input_part;
-    const Short_t*        input_alphaspower;
+    const Char_t*         input_alphaspower;
 
     // Accessor methods
     Int_t           get_event_id() const { return *input_id; }

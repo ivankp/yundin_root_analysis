@@ -28,7 +28,7 @@ namespace RootAnalysis {
     int nuwgt;
     double usr_wgts[18];
     char part[2];
-    short alphaspower;
+    char alphaspower;
     double trials;
   };
 

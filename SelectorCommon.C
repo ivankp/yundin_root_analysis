@@ -1,8 +1,8 @@
 
 #include <fstream>
-#ifndef NDEBUG
+// #ifndef NDEBUG
   #include <iostream>
-#endif
+// #endif
 
 #include <LHAPDF.h>
 
@@ -12,6 +12,9 @@
 #include "FlavourKT.h"
 
 #include "SelectorCommon.h"
+
+#define test(var) \
+  std::cout <<"\033[36m"<< #var <<"\033[0m"<< " = " << var << std::endl;
 
 
 // --------------------------------------------------------------------------- //
@@ -772,9 +775,25 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   const double fac_scale = get_fac_scale();
   const double ren_scale = get_ren_scale();
 
+  cout << endl;
+  cout << scientific;
+  cout.precision(10);
+
+  // test(fac_scale)
+  // test(ren_scale)
+
   const double to_alphas = get_alphas(opt_topdf, ren_scale, use_sherpa_alphas);
 
+  test(to_alphas)
+  test(orig_alphas())
+  test(get_alphaspower())
+
+  test( (alphafactor = pow(to_alphas/orig_alphas(), get_alphaspower())) )
+
+  test(alphafactor)
+
   if (scalefactor != 0.) {  // zero means that alphafactor is set in rescaler
+    cout << "scalefactor != 0." << endl;
     alphafactor = pow(to_alphas/orig_alphas(), get_alphaspower());
     if (opt_extra_scale != 0.) {  // change extra alphas to new PDF and/or scale
       const double aux_ratio = get_alphas(opt_topdf, opt_extra_scale*opt_extra_factor)
@@ -866,6 +885,11 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
     naked_weight = new_me_wgt*appl_factor;
   }
   event_weight = weight*alphafactor;
+
+  test(alphafactor)
+
+  // test(orig_weight())
+  test(event_weight)
 
   stat_update(fac_scale, ren_scale);
 }

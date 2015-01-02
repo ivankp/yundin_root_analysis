@@ -1,4 +1,3 @@
-
 #include <fstream>
 // #ifndef NDEBUG
   #include <iostream>
@@ -801,6 +800,9 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
       alphafactor *= pow(aux_ratio, opt_extra_alphas);
     }
   }
+
+  // α
+  // alphafactor = pow(to_alphas/orig_alphas(), get_alphaspower());
 
   const double log_r = log(ren_scalefactor*ren_scalefactor);  // log(murnew^2/murold^2)
   const double log_f = log(fac_scalefactor*fac_scalefactor);  // log(mufnew^2/mufold^2)

@@ -172,7 +172,7 @@ def initialize(params, selector):
     selector.opt_extra_scale = 125
     selector.opt_extra_alphas = 2
     selector.opt_extra_factor = 1
-    if params.rescaler in ['mult_higgs', 'fixed_higgs']:
+    if params.rescaler in ['mult_higgs', 'fixed_higgs', 'hthat_higgs']:
         selector.opt_extra_alphas = 0
     if params.rescaler == 'multiplicative':
         selector.opt_extra_factor = selector.opt_rescale_factor

@@ -420,6 +420,25 @@ double SelectorCommon::rescaler_fixed_higgs(const double /*scale*/,
   return 0;
 }
 
+// change everything to opt_rescale_factor*ht_hat higgs
+// assuming 2 alpha_s powers already at opt_extra_scale
+double SelectorCommon::rescaler_hthat_higgs(const double scale,
+                                      const PseudoJetVector& input,
+                                      const PseudoJetVector& /*jets*/)
+{
+  const double mH2 = input[0].m2();
+  const double ptH2 = input[0].pt2();
+  double newscale = sqrt(mH2 + ptH2);
+  const int imax = opt_rescale_n >= 0 ? 1 + opt_rescale_n : input.size();
+  for (int i=1; i<imax; i++) {
+    newscale += input[i].pt();
+  }
+  newscale *= 0.5*opt_rescale_factor;
+  assert(opt_extra_alphas == 0 && opt_extra_scale != 0);
+  rescaler_higgs_helper(newscale, opt_extra_scale, 2);
+  return 0;
+}
+
 double SelectorCommon::rescaler_minlo(const double /*scale*/,
                                       const PseudoJetVector& input,
                                       const PseudoJetVector& /*jets*/)

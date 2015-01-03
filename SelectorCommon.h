@@ -166,6 +166,9 @@ class SelectorCommon
     double rescaler_fixed_higgs(const double scale,
                           const PseudoJetVector& input,
                           const PseudoJetVector& jets);
+    double rescaler_hthat_higgs(const double scale,
+                          const PseudoJetVector& input,
+                          const PseudoJetVector& jets);
     double rescaler_minlo(const double scale,
                           const PseudoJetVector& input,
                           const PseudoJetVector& jets);
@@ -184,6 +187,7 @@ class SelectorCommon
     void setrescaler_mwFhthat() { opt_rescaler = &SelectorCommon::rescaler_mwFhthat; }
     void setrescaler_mult_higgs() { opt_rescaler = &SelectorCommon::rescaler_mult_higgs; }
     void setrescaler_fixed_higgs() { opt_rescaler = &SelectorCommon::rescaler_fixed_higgs; }
+    void setrescaler_hthat_higgs() { opt_rescaler = &SelectorCommon::rescaler_hthat_higgs; }
     void setrescaler_minlo();
 
     // static functions

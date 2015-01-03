@@ -429,8 +429,11 @@ double SelectorCommon::rescaler_hthat_higgs(const double scale,
   const double mH2 = input[0].m2();
   const double ptH2 = input[0].pt2();
   double newscale = sqrt(mH2 + ptH2);
+  test(newscale)
   const int imax = opt_rescale_n >= 0 ? 1 + opt_rescale_n : input.size();
   for (int i=1; i<imax; i++) {
+    test(i)
+    test(input[i].pt())
     newscale += input[i].pt();
   }
   newscale *= 0.5*opt_rescale_factor;

@@ -763,9 +763,11 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
 
   double scalefactor = 1.;
   if (opt_rescaler) {
+    // cout << "opt_rescaler" << endl;
     scalefactor = (*this.*opt_rescaler)(orig_fac_scale(), input, jets)/orig_fac_scale();
   }
   if (scalefactor != 0.) {  // zero means that fac_scalefactor/ren_scalefactor are set in rescaler
+    // cout << "scalefactor != 0." << endl;
     fac_scalefactor = scalefactor;
     ren_scalefactor = scalefactor;
   }
@@ -774,22 +776,26 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   const double fac_scale = get_fac_scale();
   const double ren_scale = get_ren_scale();
 
+/*
   cout << endl;
   cout << scientific;
   cout.precision(10);
 
-  // test(fac_scale)
-  // test(ren_scale)
+  test(orig_weight())
+  test(orig_fac_scale())
+  test(fac_scalefactor)
+  test(fac_scale)
+*/
 
   const double to_alphas = get_alphas(opt_topdf, ren_scale, use_sherpa_alphas);
 
-  test(to_alphas)
-  test(orig_alphas())
-  test(get_alphaspower())
-
-  test( (alphafactor = pow(to_alphas/orig_alphas(), get_alphaspower())) )
-
-  test(alphafactor)
+  // test(to_alphas)
+  // test(orig_alphas())
+  // test(get_alphaspower())
+  //
+  // test( (alphafactor = pow(to_alphas/orig_alphas(), get_alphaspower())) )
+  //
+  // test(alphafactor)
 
   if (scalefactor != 0.) {  // zero means that alphafactor is set in rescaler
     cout << "scalefactor != 0." << endl;
@@ -888,10 +894,10 @@ void SelectorCommon::reweight(const PseudoJetVector& input,
   }
   event_weight = weight*alphafactor;
 
-  test(alphafactor)
+  // test(alphafactor)
 
   // test(orig_weight())
-  test(event_weight)
+  // test(event_weight)
 
   stat_update(fac_scale, ren_scale);
 }

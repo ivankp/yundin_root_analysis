@@ -460,7 +460,7 @@ class Params:
 
         if self.rescaler not in ['simple', 'ht', 'hthat', 'sumpt2', 'sumpt2hat',
                                  'maaht', 'maahthat', 'maa2sumpt2', 'maa2sumpt2hat',
-                                 'minlo', 'mwhthat', 'mwfhthat',
+                                 'minlo', 'mwhthat', 'mwfhthat', 'hthat_higgs',
                                  'multiplicative', 'mult_higgs', 'fixed_higgs']:
             print "Unknown value for rescaler: %s" % self.rescaler
             usage()
